@@ -1,0 +1,15 @@
+# Dependencies
+node_modules
+
+# Build artifacts
+dist
+build
+
+# Git
+.git
+
+# Live database — synced separately, not in real time (D-013)
+data/db
+
+# Syncthing's own conflict files
+*.sync-conflict-*

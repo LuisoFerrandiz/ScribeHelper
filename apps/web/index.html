@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scribe Helper</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- In dev this 404s and is ignored; in the container the nginx
+         entrypoint generates it from the API_URL env var. -->
+    <script src="/config.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

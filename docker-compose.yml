@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      HOST: 0.0.0.0 # RULES.md R-19: never localhost inside a container
+      PORT: "3000"
+      DATA_DIR: /data
+      TZ: ${TZ:-UTC} # RULES.md R-20: never inferred from the host
+    volumes:
+      - ./data:/data # RULES.md R-13: all data, and the complete backup
+    ports:
+      - "${API_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+    environment:
+      # Address the browser uses to reach the API — must be resolvable
+      # from wherever the browser runs (LAN/host), not the container
+      # network. See apps/web/docker-entrypoint.d/40-scribe-config.sh.
+      API_URL: ${API_URL:-http://localhost:3000}
+      TZ: ${TZ:-UTC}
+    ports:
+      - "${WEB_HTTP_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
