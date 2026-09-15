@@ -7,6 +7,7 @@ services:
       PORT: "3000"
       DATA_DIR: /data
       TZ: ${TZ:-UTC} # RULES.md R-20: never inferred from the host
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - /DATA/Proyectos/Scribe_helper/data:/data # RULES.md R-13: all data, and the complete backup
     ports:

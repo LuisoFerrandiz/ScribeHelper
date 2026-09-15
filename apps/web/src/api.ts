@@ -4,6 +4,7 @@ import type {
   CaseLinkRow,
   CaseRow,
   CaseJuryMemberRow,
+  DraftResult,
   EventRow,
   JuryMemberRow,
   PartyRow,
@@ -116,4 +117,6 @@ export const api = {
     request<PhraseSearchHit[]>(`/phrases/search?box=${box}&q=${encodeURIComponent(q)}`),
   createPhrase: (data: { box: PhraseBox; label?: string; body: string }) => post<PhraseRow>('/phrases', data),
   deletePhrase: (id: number) => del(`/phrases/${id}`),
+
+  generateDraft: (caseId: number, box: PhraseBox) => post<DraftResult>(`/cases/${caseId}/draft`, { box }),
 };

@@ -588,15 +588,61 @@ build.
 
 ---
 
+## D-024 · 2026-09-15 · accepted
+### Phase 4: AI draft panel, Anthropic API, per-box citation check
+
+**Options**
+- Anthropic API vs OpenAI vs a local model
+- API key in `.env` (server-side) vs pasted into the UI and stored in the DB
+- Citation validation: check existence in the uploaded corpus, check RRS
+  reference format only, or both
+
+**Decision**
+- Anthropic API (`@anthropic-ai/sdk`, model `claude-sonnet-5`), called
+  only from `apps/api/src/ai/draft.ts` — the first and only place in the
+  app that reaches the network (RULES.md R-23 exception, ordering per
+  R-34 and CONTEXT.md section 9: this comes after every offline-capable
+  phase).
+- `ANTHROPIC_API_KEY` read from the environment (`.env` → docker-compose
+  → container), same pattern as every other deployment setting. Missing
+  key returns a clear 502 from `POST /cases/:id/draft`, not a silent
+  no-op.
+- One request drafts one box (`procedural_matters`, `facts_found`,
+  `conclusion`, `decision` — the same four as the phrase library, D-022).
+  The prompt is built only from that case's own saved rows (parties,
+  witnesses, the other boxes' current text, and its already-added rule
+  citations) — never from other cases, and the model is told not to cite
+  outside the rules it was given.
+- Citation check = existence only: every `RRS n`/`Rule n` reference the
+  model outputs is extracted (`extractCitations`, keyword-gated regex so
+  ordinary numbers like a race number are never treated as a citation)
+  and checked as a plain substring against the accepted rule corpus's
+  converted Markdown (`validateCitations`). Not an FTS5 `MATCH` — a
+  reference like `42.1(a)` has punctuation the FTS5 tokenizer splits on,
+  same class of gotcha as D-023's UNINDEXED-column bug, so a phrase MATCH
+  would misbehave; plain substring search on the small corpus is simpler
+  and correct.
+- Nothing is written to the case automatically. The panel
+  (`AIDraftPanel.tsx`) shows the draft text and a found/not-found line per
+  citation; the drafter presses Insert, same one-way flow as the phrase
+  picker.
+
+**Consequence:** deploying this feature requires setting
+`ANTHROPIC_API_KEY` in the server's `.env` (Portainer "Repository" method
+picks it up automatically, same as every other variable). Leaving it
+unset keeps the rest of the app fully offline — the draft panel is the
+only feature affected.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.
 
-- **Conversion library** for PDF, Word and Excel to Markdown. Phase 3.
-- **Model assignment.** Current intent: a fast, cheap model for inline
-  completion; a stronger one for the draft panel; prompt caching for the
-  corpus and system prompt. Verify current model names and pricing against
-  Anthropic's documentation at the time of implementation rather than
-  relying on memory.
+- **Inline completion model** (Phase 5) and prompt caching for the corpus
+  and system prompt — Phase 4 settled the draft-panel model
+  (`claude-sonnet-5`) but not this. Verify current model names and
+  pricing against Anthropic's documentation at the time of implementation
+  rather than relying on memory.
 - **Network exposure** of the deployed instance: local network only, or
   reachable from outside. Phase 5.5.

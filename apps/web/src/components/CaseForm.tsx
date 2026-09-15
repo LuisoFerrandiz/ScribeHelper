@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
+import { AIDraftPanel } from './AIDraftPanel';
 import { CopyBox } from './CopyBox';
 import { PhrasePicker } from './PhrasePicker';
 import {
@@ -468,6 +469,11 @@ export function CaseForm({ caseId }: Props) {
           currentText={proceduralMatters}
           onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
+        <AIDraftPanel
+          caseId={caseId}
+          box="procedural_matters"
+          onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
         </>
       )}
@@ -487,6 +493,11 @@ export function CaseForm({ caseId }: Props) {
           currentText={factsFound}
           onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
+        <AIDraftPanel
+          caseId={caseId}
+          box="facts_found"
+          onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
         </>
       )}
@@ -504,6 +515,11 @@ export function CaseForm({ caseId }: Props) {
         <PhrasePicker
           box="conclusion"
           currentText={conclusion}
+          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
+        <AIDraftPanel
+          caseId={caseId}
+          box="conclusion"
           onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </CopyBox>
@@ -573,6 +589,11 @@ export function CaseForm({ caseId }: Props) {
         <PhrasePicker
           box="decision"
           currentText={decision}
+          onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
+        <AIDraftPanel
+          caseId={caseId}
+          box="decision"
           onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </CopyBox>

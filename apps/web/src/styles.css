@@ -223,6 +223,31 @@ textarea:focus {
   border-top: 1px dashed #ddd;
 }
 
+.ai-draft-panel {
+  margin-top: 6px;
+}
+
+.ai-draft-panel > button {
+  font-size: 0.8em;
+  padding: 3px 8px;
+}
+
+.ai-draft-panel-body {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.ai-draft-result {
+  margin-top: 6px;
+}
+
+.ai-draft-result .list {
+  font-size: 0.85em;
+}
+
 .rule-picker input {
   width: 100%;
   padding: 4px 6px;

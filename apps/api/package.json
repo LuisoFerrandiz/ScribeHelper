@@ -13,6 +13,7 @@
     "migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@fastify/cors": "^10.0.2",
     "@fastify/multipart": "^10.1.1",
     "dotenv": "^16.4.7",

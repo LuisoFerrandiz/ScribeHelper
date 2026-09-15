@@ -96,6 +96,18 @@ export interface PhraseSearchHit extends PhraseRow {
   snippet: string;
 }
 
+// Phase 4: alternative AI draft panel (CONTEXT.md section 9). Reuses
+// PhraseBox — same four free-text sections, one draft request each.
+export interface CitationCheck {
+  reference: string;
+  found: boolean;
+}
+
+export interface DraftResult {
+  text: string;
+  citations: CitationCheck[];
+}
+
 export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';

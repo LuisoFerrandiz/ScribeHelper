@@ -4,6 +4,7 @@ import { registerCaseLinkRoutes } from './caseLinks.js';
 import { registerCaseDetailRoute } from './caseDetail.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
+import { registerDraftRoute } from './draft.js';
 
 export function registerRoutes(app: FastifyInstance) {
   registerCrud(app, 'people', { table: 'person', fields: ['full_name'] });
@@ -64,4 +65,5 @@ export function registerRoutes(app: FastifyInstance) {
   registerCaseDetailRoute(app);
   registerResourceRoutes(app);
   registerPhraseRoutes(app);
+  registerDraftRoute(app);
 }
