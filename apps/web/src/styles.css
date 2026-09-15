@@ -132,6 +132,25 @@ textarea {
   margin-top: 8px;
 }
 
+.upload-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.dropzone {
+  border: 2px dashed #bbb;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+}
+
+.dropzone-active {
+  border-color: #2e7d32;
+  background: #eef9ee;
+}
+
 .resource-preview {
   white-space: pre-wrap;
   max-height: 400px;

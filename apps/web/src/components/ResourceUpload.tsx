@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { api } from '../api';
 import type { ExampleScope, ResourceFull, ResourceKind, ResourceRow, RuleLayer } from '../types';
 
@@ -7,19 +7,28 @@ interface Props {
   eventId: number | null;
 }
 
+function titleFromFilename(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  return dot > 0 ? filename.slice(0, dot) : filename;
+}
+
 // Shared upload/review UI for both material stores (CONTEXT.md section 6):
 // rules (authority, layered) and examples (style only, never cited). Same
 // flow for both (D-009): upload -> convert -> review -> accept/reject.
+// Drag-and-drop, one or many files at once — the title is taken from each
+// file's own name, never asked for separately (user's explicit call).
 export function ResourceUpload({ kind, eventId }: Props) {
   const [pending, setPending] = useState<ResourceRow[]>([]);
   const [accepted, setAccepted] = useState<ResourceRow[]>([]);
   const [preview, setPreview] = useState<ResourceFull | null>(null);
-  const [title, setTitle] = useState('');
   const [layer, setLayer] = useState<RuleLayer>('rrs');
   const [scope, setScope] = useState<ExampleScope>('own');
+  const [queued, setQueued] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function refresh() {
     try {
@@ -40,38 +49,56 @@ export function ResourceUpload({ kind, eventId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
-  async function handleUpload(e: FormEvent) {
+  function addFiles(list: FileList | null) {
+    if (!list) return;
+    setQueued((prev) => [...prev, ...Array.from(list)]);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const file = fileRef.current?.files?.[0];
-    if (!file || !title.trim()) return;
+    setDragOver(false);
+    addFiles(e.dataTransfer.files);
+  }
+
+  function removeQueued(index: number) {
+    setQueued((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleUploadAll() {
+    if (queued.length === 0) return;
     if (kind === 'rule' && layer === 'event' && eventId === null) {
       setError('Pick a regatta on the Case tab first — event-layer rules belong to one.');
       return;
     }
 
     setUploading(true);
+    setUploadProgress({ done: 0, total: queued.length });
+    let lastCreated: ResourceFull | null = null;
     try {
-      const form = new FormData();
-      form.append('kind', kind);
-      form.append('title', title.trim());
-      form.append('file', file);
-      if (kind === 'rule') {
-        form.append('layer', layer);
-        if (layer === 'event' && eventId !== null) form.append('event_id', String(eventId));
-      } else {
-        form.append('scope', scope);
+      for (const [i, file] of queued.entries()) {
+        const form = new FormData();
+        form.append('kind', kind);
+        form.append('title', titleFromFilename(file.name));
+        form.append('file', file);
+        if (kind === 'rule') {
+          form.append('layer', layer);
+          if (layer === 'event' && eventId !== null) form.append('event_id', String(eventId));
+        } else {
+          form.append('scope', scope);
+        }
+        lastCreated = await api.uploadResource(form);
+        setUploadProgress({ done: i + 1, total: queued.length });
       }
-
-      const created = await api.uploadResource(form);
-      setTitle('');
-      if (fileRef.current) fileRef.current.value = '';
-      setPreview(created);
+      setQueued([]);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (lastCreated) setPreview(lastCreated);
       await refresh();
       setError(null);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   }
 
@@ -101,8 +128,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
       <h2>{kind === 'rule' ? 'Upload rules' : 'Upload examples'}</h2>
       {error && <p className="error">{error}</p>}
 
-      <form onSubmit={handleUpload} className="inline-form">
-        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <div className="upload-controls">
         {kind === 'rule' ? (
           <select value={layer} onChange={(e) => setLayer(e.target.value as RuleLayer)}>
             <option value="rrs">RRS (permanent)</option>
@@ -115,11 +141,47 @@ export function ResourceUpload({ kind, eventId }: Props) {
             <option value="base">Base</option>
           </select>
         )}
-        <input ref={fileRef} type="file" accept=".pdf,.docx,.xlsx,.xls,.md,.markdown" required />
-        <button type="submit" disabled={uploading}>
-          {uploading ? 'Uploading…' : 'Upload'}
-        </button>
-      </form>
+      </div>
+
+      <div
+        className={`dropzone${dragOver ? ' dropzone-active' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <p>Drag files here, or click to browse</p>
+        <p className="muted">PDF, Word, Excel or Markdown. Title is taken from each file name.</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.docx,.xlsx,.xls,.md,.markdown"
+          onChange={(e) => addFiles(e.target.files)}
+          hidden
+        />
+      </div>
+
+      {queued.length > 0 && (
+        <div className="box">
+          <ul className="list">
+            {queued.map((f, i) => (
+              <li key={`${f.name}-${i}`}>
+                {f.name}{' '}
+                <button type="button" onClick={() => removeQueued(i)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={handleUploadAll} disabled={uploading}>
+            {uploadProgress ? `Uploading ${uploadProgress.done}/${uploadProgress.total}…` : `Upload ${queued.length}`}
+          </button>
+        </div>
+      )}
 
       <section>
         <h3>Pending review</h3>
