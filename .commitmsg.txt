@@ -1,9 +1,0 @@
-Phase 4 follow-up: ground AI draft in the actual rule text, not just the reference number
-
-generateDraft() now loads the accepted rule corpus once per request and
-pulls an excerpt around each cited rule's first match, sent to the
-model as that rule's text. Before this it only sent the bare reference
-string ("RRS 42.1(a)") - the corpus was checked afterward but never
-read while drafting.
-
-Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
