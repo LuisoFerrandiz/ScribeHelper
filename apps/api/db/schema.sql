@@ -126,6 +126,30 @@ CREATE INDEX IF NOT EXISTS idx_party_case ON party(case_id);
 CREATE INDEX IF NOT EXISTS idx_witness_case ON witness(case_id);
 CREATE INDEX IF NOT EXISTS idx_case_rule_citation_case ON case_rule_citation(case_id);
 
+-- Phase 2: reusable wording fragments (CONTEXT.md section 6, `phrases/`).
+-- Tagged by which of the 4 human-written boxes they belong to. Never
+-- presented as a rule (D-007) — even when the wording cites a rule number,
+-- the phrase itself is not authority, just suggested drafting.
+CREATE TABLE IF NOT EXISTS phrase (
+  id INTEGER PRIMARY KEY,
+  box TEXT NOT NULL CHECK (box IN ('procedural_matters', 'facts_found', 'conclusion', 'decision')),
+  label TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL,
+  -- base: seeded once from the World Sailing Preferred Standard Wording
+  -- spreadsheet (D-022), not user-editable/deletable, same base/own split
+  -- as examples (D-007). own: saved by the user from a box's current text.
+  origin TEXT NOT NULL DEFAULT 'own' CHECK (origin IN ('base', 'own')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_phrase_box ON phrase(box);
+CREATE VIRTUAL TABLE IF NOT EXISTS phrase_fts USING fts5(
+  label,
+  body,
+  phrase_id UNINDEXED,
+  tokenize = 'porter unicode61'
+);
+
 -- Phase 3: uploaded material (CONTEXT.md sections 6-7). Two kinds, never
 -- merged (D-007): rules (authority, layered) and examples (style only,
 -- never cited). Same ingestion flow for both (D-009, D-018-followup):

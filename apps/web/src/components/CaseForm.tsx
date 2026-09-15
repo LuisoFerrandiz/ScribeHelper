@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { CopyBox } from './CopyBox';
+import { PhrasePicker } from './PhrasePicker';
 import {
   formatFullDecision,
   formatJuryMembers,
@@ -462,6 +463,11 @@ export function CaseForm({ caseId }: Props) {
           onChange={(e) => setProceduralMatters(e.target.value)}
           rows={4}
         />
+        <PhrasePicker
+          box="procedural_matters"
+          currentText={proceduralMatters}
+          onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
         </>
       )}
@@ -476,6 +482,11 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('facts_found')}
       >
         <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
+        <PhrasePicker
+          box="facts_found"
+          currentText={factsFound}
+          onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
         </>
       )}
@@ -490,6 +501,11 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('conclusion')}
       >
         <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
+        <PhrasePicker
+          box="conclusion"
+          currentText={conclusion}
+          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
 
       {/* 6. Rules Applicable */}
@@ -554,6 +570,11 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('decision')}
       >
         <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
+        <PhrasePicker
+          box="decision"
+          currentText={decision}
+          onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
       </CopyBox>
         </>
       )}

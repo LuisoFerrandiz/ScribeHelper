@@ -188,6 +188,35 @@ textarea:focus {
   background: #eef9ee;
 }
 
+.phrase-picker {
+  margin-top: 6px;
+}
+
+.phrase-picker > button {
+  font-size: 0.8em;
+  padding: 3px 8px;
+}
+
+.phrase-picker-panel {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.phrase-picker-panel input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 0.9em;
+}
+
+.phrase-picker-panel .list {
+  font-size: 0.85em;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
 .rule-picker {
   margin-top: 8px;
   padding-top: 8px;

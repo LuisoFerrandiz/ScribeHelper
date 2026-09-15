@@ -81,6 +81,21 @@ export interface CaseLinkRow {
   linked_case_id: number;
 }
 
+export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
+
+export interface PhraseRow {
+  id: number;
+  box: PhraseBox;
+  label: string;
+  body: string;
+  origin: 'base' | 'own';
+  created_at: string;
+}
+
+export interface PhraseSearchHit extends PhraseRow {
+  snippet: string;
+}
+
 export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';

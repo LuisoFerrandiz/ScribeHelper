@@ -14,6 +14,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY db ./db
+COPY seed ./seed
 
 # Schema is idempotent (CREATE TABLE IF NOT EXISTS) — safe to run on
 # every start (RULES.md R-13: all data, db included, lives under the

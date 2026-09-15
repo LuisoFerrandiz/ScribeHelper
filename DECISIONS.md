@@ -519,6 +519,45 @@ case.
 
 ---
 
+## D-022 · 2026-09-15 · accepted
+### Phase 2 phrase library, seeded from World Sailing's Preferred Standard Wording
+
+**Context:** user has the World Sailing "Preferred Standard Wording"
+spreadsheet (9 sheets: Procedural Matters, Validity, Protest/Redress
+Conclusions, Protest/Redress Decisions, NO Hearing, Reopenings) — public
+guidance wording with bracketed placeholders (`[X]`, `[##]`), organized
+by which part of a decision each fragment belongs to.
+
+**Decision:** built Phase 2 (CONTEXT.md phase table) around this file
+instead of starting the phrase library empty. New `phrase` table
+(box, label, body, origin) + `phrase_fts` (FTS5, same pattern as
+`resource_fts`, D-020). `origin` reuses the base/own split already
+established for examples (D-007): `base` = seeded, not user-editable or
+deletable; `own` = saved by the user from a box's current text
+(`POST /phrases`, "Save current text as phrase" in `PhrasePicker.tsx`).
+
+**Sheet → box mapping**, decided when proposing this to the user:
+Procedural Matters → `procedural_matters`; Validity, Protest/Redress
+Conclusions, Reopenings → `conclusion`; Protest/Redress Decisions →
+`decision`. "NO Hearing" is structured differently (one label heading
+four grouped lines: Suggested Fact / Conclusion / Decision Short /
+Decision) and is parsed specially (`seedPhrases.ts`), splitting each
+group across `facts_found`, `conclusion` and `decision`.
+
+**Seeding mechanics:** the spreadsheet ships in the repo at
+`apps/api/seed/preferred-standard-wording.xlsx` (Dockerfile copies it
+into the image). `seedBasePhrases()` runs from `migrate.ts` on every
+container start, idempotent by checking `COUNT(*) WHERE origin='base'`
+first — not a unique constraint, since near-duplicate wording rows in
+the source are legitimate, not bugs.
+
+**What this is not:** deterministic inline completion (ghost text) or
+ranking phrases by keystroke context — CONTEXT.md's "deterministic
+completion" and D-006's CodeMirror migration are still open. This is the
+browse/search/insert/save half of Phase 2, using plain textareas.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

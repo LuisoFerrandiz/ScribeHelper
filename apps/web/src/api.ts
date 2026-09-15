@@ -8,6 +8,9 @@ import type {
   JuryMemberRow,
   PartyRow,
   PersonRow,
+  PhraseBox,
+  PhraseRow,
+  PhraseSearchHit,
   ResourceFull,
   ResourceKind,
   ResourceRow,
@@ -103,4 +106,10 @@ export const api = {
   rejectResource: (id: number) => request<void>(`/resources/${id}/reject`, { method: 'POST' }),
   deleteResource: (id: number) => del(`/resources/${id}`),
   searchResources: (q: string) => request<ResourceSearchHit[]>(`/resources/search?q=${encodeURIComponent(q)}`),
+
+  listPhrases: (box: PhraseBox) => request<PhraseRow[]>(`/phrases?box=${box}`),
+  searchPhrases: (box: PhraseBox, q: string) =>
+    request<PhraseSearchHit[]>(`/phrases/search?box=${box}&q=${encodeURIComponent(q)}`),
+  createPhrase: (data: { box: PhraseBox; label?: string; body: string }) => post<PhraseRow>('/phrases', data),
+  deletePhrase: (id: number) => del(`/phrases/${id}`),
 };
