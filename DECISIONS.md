@@ -428,6 +428,53 @@ stubs pending the ingestion backend.
 
 ---
 
+## D-020 · 2026-09-15 · accepted
+### Phase 3 ingestion: `resource` table, FTS5, per-format Node conversion
+
+**Decision:** one `resource` table for both rules and examples (kind
+column), storing original + converted paths relative to `dataDir`
+(CONTEXT.md section 8 layout). Conversion via per-format Node libraries,
+verified against DECISIONS.md D-009's open question:
+
+- `.md`/`.markdown` — passthrough
+- `.pdf` — `pdf-parse` v2 (class-based `PDFParse.getText()` API; its v1
+  function-call API is gone in this version)
+- `.docx` — `mammoth.convertToMarkdown` (present at runtime; its bundled
+  `.d.ts` is stale and omits it, so the call is cast narrowly in
+  `convert.ts` rather than typed through the package's own types)
+- `.xlsx`/`.xls` — `xlsx`, sheets rendered as HTML tables (valid inside
+  Markdown, handles merged/ragged cells better than a hand-rolled pipe
+  table)
+
+Upload is multipart (`@fastify/multipart`), FTS5 confirmed working under
+`node:sqlite` (tested directly: `CREATE VIRTUAL TABLE ... USING fts5`
+succeeds). Only accepted `kind = 'rule'` rows are indexed into
+`resource_fts` — examples are never cited (D-007), so never searched for
+citation purposes.
+
+**Why one shared table instead of two:** rules and examples go through
+the identical upload → convert → review → accept/reject flow (D-009);
+splitting into two tables would duplicate every column and every route.
+What differs (layer vs scope, FTS indexing) is handled with nullable
+columns and a CHECK constraint tying them to `kind`.
+
+**Reject deletes the row, not just the files:** CONTEXT.md section 7 says
+reject leaves "no orphans" for files; extended here to mean no orphan
+database row either, since a rejected resource carries no information
+worth keeping. `status` therefore only has two values in practice
+(`pending_review`, `accepted`); no `rejected` value.
+
+**Open risk, unverified:** `pdf-parse` v2 depends on `@napi-rs/canvas`, a
+native (Rust/napi-rs) binary. It should resolve a `linux-musl-x64`
+prebuild automatically when `npm ci` runs inside the `node:24-alpine`
+Docker build (D-012), same as any napi-rs package, but this has not been
+verified by actually building the image — no Docker on this dev machine.
+If the Alpine build fails on this dependency, the fallback is `pdfjs-dist`
+directly (drop `pdf-parse`'s wrapper, use its text-extraction API without
+the canvas-only image/screenshot features this project never calls).
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

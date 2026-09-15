@@ -72,6 +72,37 @@ export interface CaseLinkRow {
   linked_case_id: number;
 }
 
+export type ResourceKind = 'rule' | 'example';
+export type RuleLayer = 'rrs' | 'class' | 'event';
+export type ExampleScope = 'base' | 'own';
+
+export interface ResourceRow {
+  id: number;
+  kind: ResourceKind;
+  layer: RuleLayer | null;
+  event_id: number | null;
+  scope: ExampleScope | null;
+  title: string;
+  original_filename: string;
+  original_path: string;
+  markdown_path: string | null;
+  status: 'pending_review' | 'accepted';
+  conversion_empty: 0 | 1;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
+export interface ResourceFull extends ResourceRow {
+  markdown: string;
+}
+
+export interface ResourceSearchHit {
+  id: number;
+  title: string;
+  layer: RuleLayer;
+  snippet: string;
+}
+
 export interface CaseFull extends CaseRow {
   event: EventRow;
   jury: { id: number; is_chairman: 0 | 1; full_name: string }[];

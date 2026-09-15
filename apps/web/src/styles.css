@@ -132,6 +132,17 @@ textarea {
   margin-top: 8px;
 }
 
+.resource-preview {
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.9em;
+}
+
 .party-row {
   display: flex;
   gap: 8px;

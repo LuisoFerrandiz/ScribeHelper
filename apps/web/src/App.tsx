@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CaseForm } from './components/CaseForm';
 import { CaseSelector } from './components/CaseSelector';
 import { JuryPanel } from './components/JuryPanel';
-import { UploadPlaceholder } from './components/UploadPlaceholder';
+import { ResourceUpload } from './components/ResourceUpload';
 
 type Tab = 'case' | 'jury' | 'upload-examples' | 'upload-rules';
 
@@ -59,8 +59,8 @@ export function App() {
 
       {tab === 'jury' && currentEventId !== null && <JuryPanel eventId={currentEventId} />}
 
-      {tab === 'upload-examples' && <UploadPlaceholder title="Upload examples" />}
-      {tab === 'upload-rules' && <UploadPlaceholder title="Upload rules" />}
+      {tab === 'upload-examples' && <ResourceUpload kind="example" eventId={currentEventId} />}
+      {tab === 'upload-rules' && <ResourceUpload kind="rule" eventId={currentEventId} />}
     </div>
   );
 }

@@ -7,6 +7,10 @@ import type {
   JuryMemberRow,
   PartyRow,
   PersonRow,
+  ResourceFull,
+  ResourceKind,
+  ResourceRow,
+  ResourceSearchHit,
   RuleCitationRow,
   WitnessRow,
 } from './types';
@@ -75,4 +79,17 @@ export const api = {
 
   createCaseLink: (data: CaseLinkRow) => post<CaseLinkRow>('/case-links', data),
   deleteCaseLink: (data: CaseLinkRow) => del('/case-links', data),
+
+  listResources: (kind: ResourceKind, status?: string) =>
+    request<ResourceRow[]>(`/resources?kind=${kind}${status ? `&status=${status}` : ''}`),
+  getResource: (id: number) => request<ResourceFull>(`/resources/${id}`),
+  uploadResource: async (form: FormData): Promise<ResourceFull> => {
+    const res = await fetch(`${API_URL}/resources`, { method: 'POST', body: form });
+    if (!res.ok) throw new Error(`upload failed: ${res.status} ${await res.text().catch(() => '')}`);
+    return res.json();
+  },
+  acceptResource: (id: number) => post<ResourceRow>(`/resources/${id}/accept`, {}),
+  rejectResource: (id: number) => request<void>(`/resources/${id}/reject`, { method: 'POST' }),
+  deleteResource: (id: number) => del(`/resources/${id}`),
+  searchResources: (q: string) => request<ResourceSearchHit[]>(`/resources/search?q=${encodeURIComponent(q)}`),
 };

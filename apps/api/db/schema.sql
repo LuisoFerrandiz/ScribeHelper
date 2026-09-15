@@ -108,3 +108,65 @@ CREATE INDEX IF NOT EXISTS idx_case_event ON protest_case(event_id);
 CREATE INDEX IF NOT EXISTS idx_party_case ON party(case_id);
 CREATE INDEX IF NOT EXISTS idx_witness_case ON witness(case_id);
 CREATE INDEX IF NOT EXISTS idx_case_rule_citation_case ON case_rule_citation(case_id);
+
+-- Phase 3: uploaded material (CONTEXT.md sections 6-7). Two kinds, never
+-- merged (D-007): rules (authority, layered) and examples (style only,
+-- never cited). Same ingestion flow for both (D-009, D-018-followup):
+-- upload original -> convert to .md -> user reviews -> accept (keep both
+-- files) or reject (delete both, no orphans).
+CREATE TABLE IF NOT EXISTS resource (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('rule', 'example')),
+
+  -- Layer precedence for rules (CONTEXT.md section 6): rrs < class < event.
+  -- NULL when kind = 'example'.
+  layer TEXT CHECK (layer IN ('rrs', 'class', 'event')),
+  -- 'event' layer rules (NoR/SIs/amendments) belong to one regatta and are
+  -- replaced every event; NULL for 'rrs'/'class' (permanent, global).
+  event_id INTEGER REFERENCES event(id) ON DELETE CASCADE,
+
+  -- Example scope (CONTEXT.md section 6): base ships with the project and
+  -- is not user-editable/deletable; own is uploaded by the user. NULL when
+  -- kind = 'rule'.
+  scope TEXT CHECK (scope IN ('base', 'own')),
+
+  title TEXT NOT NULL,
+  original_filename TEXT NOT NULL,
+  original_path TEXT NOT NULL, -- data/originals/<uuid>.<ext>, kept next to the .md always
+  markdown_path TEXT, -- data/rules/<layer>/... or data/examples/<scope>/..., set once converted
+
+  -- pending_review: converted, awaiting accept/reject.
+  -- accepted: both files kept, indexed in resource_fts if kind = 'rule'.
+  -- rejected is not stored here — reject deletes both files and this row
+  -- (CONTEXT.md section 7: "no orphans"), so only these two states persist.
+  status TEXT NOT NULL DEFAULT 'pending_review'
+    CHECK (status IN ('pending_review', 'accepted')),
+  -- Conversion produced an empty or near-empty result — the scanned-PDF
+  -- warning (CONTEXT.md section 7), surfaced at review regardless of status.
+  conversion_empty INTEGER NOT NULL DEFAULT 0 CHECK (conversion_empty IN (0, 1)),
+
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  reviewed_at TEXT,
+
+  CHECK (
+    (kind = 'rule' AND layer IS NOT NULL AND scope IS NULL) OR
+    (kind = 'example' AND scope IS NOT NULL AND layer IS NULL)
+  ),
+  CHECK ((layer = 'event') = (event_id IS NOT NULL))
+);
+
+CREATE INDEX IF NOT EXISTS idx_resource_kind_status ON resource(kind, status);
+CREATE INDEX IF NOT EXISTS idx_resource_event ON resource(event_id);
+
+-- Search over accepted rules only (D-011: FTS5, no vector DB — the RRS is
+-- numbered/structured, keyword search is more precise and cheaper here).
+-- Examples are never cited, so they are not indexed for the rule picker.
+-- External-content-free (stores its own copy of title/body) because the
+-- source of truth is the .md file on disk, not the database; resource_id
+-- is UNINDEXED so it comes back with every match without being searched.
+CREATE VIRTUAL TABLE IF NOT EXISTS resource_fts USING fts5(
+  title,
+  body,
+  resource_id UNINDEXED,
+  tokenize = 'porter unicode61'
+);
