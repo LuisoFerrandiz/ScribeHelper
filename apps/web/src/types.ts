@@ -108,6 +108,11 @@ export interface DraftResult {
   citations: CitationCheck[];
 }
 
+// Phase 5: inline ghost-text completion (D-025).
+export interface InlineCompletion {
+  suggestion: string;
+}
+
 export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';

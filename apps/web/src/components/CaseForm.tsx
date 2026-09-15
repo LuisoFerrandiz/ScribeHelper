@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { AIDraftPanel } from './AIDraftPanel';
 import { CopyBox } from './CopyBox';
+import { GhostTextarea } from './GhostTextarea';
 import { PhrasePicker } from './PhrasePicker';
 import {
   formatFullDecision,
@@ -459,9 +460,11 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
       >
-        <textarea
+        <GhostTextarea
+          caseId={caseId}
+          box="procedural_matters"
           value={proceduralMatters}
-          onChange={(e) => setProceduralMatters(e.target.value)}
+          onChange={setProceduralMatters}
           rows={4}
         />
         <PhrasePicker
@@ -487,7 +490,7 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.facts_found}
         onCopied={() => markCopied('facts_found')}
       >
-        <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
+        <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
         <PhrasePicker
           box="facts_found"
           currentText={factsFound}
@@ -511,7 +514,7 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.conclusion}
         onCopied={() => markCopied('conclusion')}
       >
-        <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
+        <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
         <PhrasePicker
           box="conclusion"
           currentText={conclusion}
@@ -585,7 +588,7 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
       >
-        <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
+        <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
         <PhrasePicker
           box="decision"
           currentText={decision}

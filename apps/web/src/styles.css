@@ -248,6 +248,52 @@ textarea:focus {
   font-size: 0.85em;
 }
 
+/* Phase 5 ghost-text completion (D-025): a mirror div sits behind the
+   real textarea, same box metrics on both, so the suggestion appended
+   after the real text shows through the textarea's transparent
+   background exactly where the real text ends. */
+.ghost-textarea {
+  position: relative;
+}
+
+.ghost-textarea textarea,
+.ghost-textarea-mirror {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1.05em;
+  line-height: 1.5;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.ghost-textarea textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  border-color: #ccc;
+}
+
+.ghost-textarea-mirror {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ghost-textarea-real {
+  color: transparent;
+}
+
+.ghost-textarea-suggestion {
+  color: #999;
+}
+
 .rule-picker input {
   width: 100%;
   padding: 4px 6px;

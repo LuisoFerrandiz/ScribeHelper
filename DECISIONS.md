@@ -648,14 +648,59 @@ not twice.
 
 ---
 
+## D-025 · 2026-09-15 · accepted
+### Phase 5: inline ghost-text completion, automatic + Haiku 4.5
+
+**Options**
+- Trigger: manual shortcut (request a continuation on demand) vs
+  automatic ghost text after a typing pause (Copilot-style)
+- Model: same as the draft panel (`claude-sonnet-5`) vs a faster/cheaper
+  one, given this fires far more often
+
+**Decision**
+- Automatic: after `DEBOUNCE_MS` (900ms) of no typing, with the cursor
+  at the end of the box and at least `MIN_CHARS` (15) characters typed,
+  `GhostTextarea` (`apps/web/src/components/GhostTextarea.tsx`) requests
+  a continuation and shows it as gray text after the cursor. Tab accepts
+  it (appended to the real value); typing, moving the cursor, or Escape
+  drops it. Only fires when the cursor is at the very end of the text —
+  mid-text ghost completion is out of scope for this phase.
+- Model: `claude-haiku-4-5-20251001`, a separate route
+  (`POST /cases/:id/complete`, `apps/api/src/ai/complete.ts`) from the
+  draft panel's — short output (`max_tokens: 60`), only the last 1500
+  characters of the box sent as context, and the system prompt forbids
+  introducing a new rule citation, boat, person, or fact: it continues
+  wording already committed to, it does not draft new content the way
+  the Phase 4 panel does. No corpus grounding here (D-024's excerpt
+  lookup) — the cost/latency of reading the corpus on every keystroke
+  pause was not worth it for a completion this short.
+- Ghost text itself is a same-metrics mirror `<div>` behind the real
+  `<textarea>` (`.ghost-textarea` CSS): the mirror's copy of the real
+  text is `color: transparent` (the textarea draws the real glyphs on
+  top, in the same position), and only the suggestion appended after it
+  shows through the textarea's transparent background. Known limitation:
+  the mirror does not track textarea scroll position, so a heavily
+  scrolled box (long text, few visible rows) can misalign — accepted for
+  this phase rather than syncing scroll, since the four boxes are short
+  in practice.
+
+**Consequence:** every one of the four free-text boxes now fires an API
+call on a ~1 second typing pause whenever the drafter is actively
+writing — distinct from Phase 4's on-demand draft panel, this is
+metered, continuous usage. Kept cheap on purpose (Haiku, short output,
+truncated context) but it is the first feature in the app whose cost
+scales with how much you type, not with how many times you click a
+button.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.
 
-- **Inline completion model** (Phase 5) and prompt caching for the corpus
-  and system prompt — Phase 4 settled the draft-panel model
-  (`claude-sonnet-5`) but not this. Verify current model names and
-  pricing against Anthropic's documentation at the time of implementation
-  rather than relying on memory.
+- **Prompt caching** for the rule corpus and system prompts — worth
+  revisiting once real usage volume is known; Phase 4 and 5 both settled
+  their models (`claude-sonnet-5`, `claude-haiku-4-5-20251001`) but ship
+  without caching.
 - **Network exposure** of the deployed instance: local network only, or
   reachable from outside. Phase 5.5.
