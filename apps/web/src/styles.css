@@ -127,3 +127,27 @@ textarea {
   flex-wrap: wrap;
   margin-top: 8px;
 }
+
+.case-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.case-selector input {
+  padding: 6px 8px;
+}
+
+.case-selector input[placeholder='Regatta'] {
+  flex: 2;
+  min-width: 140px;
+}
+
+.case-selector input[placeholder='Case #'] {
+  flex: 1;
+  min-width: 80px;
+}

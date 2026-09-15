@@ -369,6 +369,39 @@ duplicated as an editable control per case.
 
 ---
 
+## D-018 · 2026-09-15 · accepted
+### Event/case creation moved from forms to a find-or-create picker
+
+**Options**
+- Keep the explicit "New event" and "New case" forms (Name/Venue/Timezone;
+  Case number/Day/Race) as the only way to create rows
+- Remove those forms; a regatta/case picker at the top of the case screen
+  resolves free text against existing rows, and creates one when there is
+  no match
+
+**Decision:** the picker. `EventList` becomes a read-only list (click to
+open); a new `CaseSelector` component, shown above `CaseForm`, holds two
+`<input>` + `<datalist>` fields (regatta, case number) and a Go button that
+finds-or-creates both, matching the existing `findOrCreatePerson`/
+`findOrCreateBoat` pattern already used for parties and jury.
+
+**Why:** the judge works during a live regatta and wants to jump between
+cases without a multi-screen click path; typing a name they already used
+should just select it, typing a new one should just work.
+
+**Consequence:** a new event created this way gets `venue: null,
+timezone: 'UTC'` — editable later from the event list only by direct DB
+access today, since there is no edit form yet (open question below). A new
+case gets `day: null, race: null`, filled in by hand in the case form as
+before. No backend changes: purely client-side find-or-create against
+`/events` and `/cases`, same as the existing person/boat pattern.
+
+**Open:** no UI yet to edit an event's venue/timezone after auto-creation,
+or a case's event assignment after auto-creation. Revisit if this proves
+annoying in practice.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

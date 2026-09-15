@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EventList } from './components/EventList';
 import { EventDetail } from './components/EventDetail';
 import { CaseForm } from './components/CaseForm';
+import { CaseSelector } from './components/CaseSelector';
 
 type View =
   | { name: 'events' }
@@ -36,7 +37,16 @@ export function App() {
           onOpenCase={(caseId) => setView({ name: 'case', caseId, eventId: view.eventId })}
         />
       )}
-      {view.name === 'case' && <CaseForm caseId={view.caseId} />}
+      {view.name === 'case' && (
+        <>
+          <CaseSelector
+            eventId={view.eventId}
+            caseId={view.caseId}
+            onSelect={(eventId, caseId) => setView({ name: 'case', caseId, eventId })}
+          />
+          <CaseForm caseId={view.caseId} />
+        </>
+      )}
     </div>
   );
 }
