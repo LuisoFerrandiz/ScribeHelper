@@ -64,6 +64,12 @@ body {
   padding: 6px 8px;
 }
 
+.case-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .case-header {
   display: flex;
   align-items: center;

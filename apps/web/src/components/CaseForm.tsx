@@ -56,6 +56,11 @@ export function CaseForm({ caseId }: Props) {
 
   const [linkCaseId, setLinkCaseId] = useState('');
 
+  // UI grouping only — copy-all still walks the fixed CONTEXT.md box
+  // order (formatFullDecision), unaffected by which tab is active.
+  type CaseTab = 'general' | 'procedural' | 'facts' | 'conclusion' | 'decision';
+  const [caseTab, setCaseTab] = useState<CaseTab>('general');
+
   async function reload() {
     try {
       const [full, allBoats, allPeople, allCases] = await Promise.all([
@@ -248,6 +253,26 @@ export function CaseForm({ caseId }: Props) {
       </div>
       {error && <p className="error">{error}</p>}
 
+      <nav className="case-tabs">
+        <button type="button" onClick={() => setCaseTab('general')} disabled={caseTab === 'general'}>
+          1. General &amp; Parties
+        </button>
+        <button type="button" onClick={() => setCaseTab('procedural')} disabled={caseTab === 'procedural'}>
+          2. Procedural Matters
+        </button>
+        <button type="button" onClick={() => setCaseTab('facts')} disabled={caseTab === 'facts'}>
+          3. Facts Found
+        </button>
+        <button type="button" onClick={() => setCaseTab('conclusion')} disabled={caseTab === 'conclusion'}>
+          4. Conclusion
+        </button>
+        <button type="button" onClick={() => setCaseTab('decision')} disabled={caseTab === 'decision'}>
+          5. Decision
+        </button>
+      </nav>
+
+      {caseTab === 'general' && (
+        <>
       <form onSubmit={handleSaveCase} className="case-meta">
         <label>
           Case number
@@ -357,7 +382,11 @@ export function CaseForm({ caseId }: Props) {
           <button type="submit">Add</button>
         </form>
       </CopyBox>
+        </>
+      )}
 
+      {caseTab === 'procedural' && (
+        <>
       {/* 3. Procedural Matters */}
       <CopyBox
         label="Procedural Matters"
@@ -371,7 +400,11 @@ export function CaseForm({ caseId }: Props) {
           rows={4}
         />
       </CopyBox>
+        </>
+      )}
 
+      {caseTab === 'facts' && (
+        <>
       {/* 4. Facts Found */}
       <CopyBox
         label="Facts Found"
@@ -381,7 +414,11 @@ export function CaseForm({ caseId }: Props) {
       >
         <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
       </CopyBox>
+        </>
+      )}
 
+      {caseTab === 'conclusion' && (
+        <>
       {/* 5. Conclusion */}
       <CopyBox
         label="Conclusion"
@@ -423,7 +460,11 @@ export function CaseForm({ caseId }: Props) {
           <button type="submit">Add</button>
         </form>
       </CopyBox>
+        </>
+      )}
 
+      {caseTab === 'decision' && (
+        <>
       {/* 7. Decision */}
       <CopyBox
         label="Decision"
@@ -433,7 +474,11 @@ export function CaseForm({ caseId }: Props) {
       >
         <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
       </CopyBox>
+        </>
+      )}
 
+      {caseTab === 'general' && (
+        <>
       {/* 8. Jury Members — belongs to the event, read-only here */}
       <CopyBox
         label="Jury Members"
@@ -441,7 +486,7 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.jury_members}
         onCopied={() => markCopied('jury_members')}
       >
-        <p className="muted">Managed at event level. Go back to the event to add or remove.</p>
+        <p className="muted">Managed from the Jury utility (top nav).</p>
         <ul className="list">
           {caseFull.jury.map((j) => (
             <li key={j.id}>
@@ -481,6 +526,8 @@ export function CaseForm({ caseId }: Props) {
           <button type="submit">Link</button>
         </form>
       </section>
+        </>
+      )}
     </div>
   );
 }
