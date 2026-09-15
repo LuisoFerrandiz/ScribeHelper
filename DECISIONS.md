@@ -790,3 +790,21 @@ acceptable trade for "the client can't forge or alter it" — the same
 reasoning that keeps this project off native dependencies everywhere
 else (`node:sqlite` over `better-sqlite3`, D-016; `node:crypto` scrypt
 over `bcrypt`/`argon2` for passwords, this same D-026).
+
+**Second, unrelated fault found while verifying the fix above:** after
+redeploying the code fix, `/health` itself timed out
+(`ERR_CONNECTION_TIMED_OUT`) — a pure networking failure, not an app
+error. `docker inspect` on the `api` container showed
+`NetworkSettings.Ports: {}`: no host port bound at all, despite
+`docker-compose.yml` declaring `ports: "${API_PORT:-3000}:3000"` and
+`API_PORT=3000` being set correctly in the stack's environment
+variables. Portainer's "Update the stack" had rebuilt the image but not
+recreated the container with the port mapping applied. Fixed by forcing
+a full stack redeploy (re-pull + recreate, not just a container
+restart/rebuild) — confirmed via `docker inspect` showing the correct
+`PortBindings` afterward, then `/health` and login both working.
+**Lesson:** after any `docker-compose.yml` change touching `ports:`,
+verify the running container's actual port binding (`docker inspect`,
+or just try reaching the port) — a partial Portainer stack update can
+rebuild the image while silently leaving the old container's network
+config in place.
