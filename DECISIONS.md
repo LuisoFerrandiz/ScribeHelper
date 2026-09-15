@@ -558,6 +558,36 @@ browse/search/insert/save half of Phase 2, using plain textareas.
 
 ---
 
+## D-023 · 2026-09-15 · accepted
+### Reclassify endpoint for resources; fixed an FTS5 type-coercion bug
+
+**Context:** user had uploaded several files as `kind: 'rule'` that were
+actually examples.
+
+**Decision:** `POST /resources/:id/reclassify` (body: `kind`, `layer`
+or `scope`, optional `event_id`) moves the markdown file to the correct
+directory (`storage.ts`'s new `moveMarkdown`) and updates the row,
+instead of requiring delete + re-upload + re-convert. `ResourceUpload.tsx`
+exposes it as a "Move to examples/rules" button in the preview panel.
+
+**Bug found and fixed while testing this:** `DELETE FROM resource_fts
+WHERE resource_id = ?` (and the equivalent in `phrase_fts`) was being
+called with the string `id` straight from `req.params`, never matching
+the integer stored in that `UNINDEXED` FTS5 column — confirmed directly
+against `node:sqlite`: an ordinary table coerces `'1'` to match integer
+`1` in a WHERE clause, but an FTS5 virtual table's UNINDEXED column does
+not apply that affinity coercion. Practical effect: reclassifying a rule
+to an example (or deleting an accepted resource, or deleting a phrase)
+left a stale row in the FTS index — search kept surfacing content that
+should have disappeared. Fixed everywhere by wrapping the id in
+`Number(id)` before comparing against `resource_id`/`phrase_id`.
+
+**Consequence:** any future FTS delete-by-id must remember this — it is
+not a one-off typo, it is how UNINDEXED columns behave in this SQLite
+build.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/connection.js';
 import { convertToMarkdown } from '../resources/convert.js';
-import { deleteStoredFiles, readMarkdown, storeUpload } from '../resources/storage.js';
+import { deleteStoredFiles, moveMarkdown, readMarkdown, storeUpload } from '../resources/storage.js';
 import type { ExampleScope, ResourceKind, RuleLayer } from '../resources/storage.js';
 
 interface ResourceRow {
@@ -157,9 +157,56 @@ export function registerResourceRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: 'not found' });
 
     await deleteStoredFiles({ originalPath: row.original_path, markdownPath: row.markdown_path });
-    db.prepare('DELETE FROM resource_fts WHERE resource_id = ?').run(id);
+    // FTS5 UNINDEXED columns don't get SQLite's usual type-affinity
+    // coercion — a string '1' never matches a stored integer 1, so this
+    // must be Number(id), not the raw string from req.params.
+    db.prepare('DELETE FROM resource_fts WHERE resource_id = ?').run(Number(id));
     db.prepare('DELETE FROM resource WHERE id = ?').run(id);
     reply.code(204).send();
+  });
+
+  // Fixes a wrong kind/layer/scope pick at upload time (moves the file,
+  // updates the row, re-syncs resource_fts — only kind = 'rule' rows are
+  // indexed, D-020) without having to re-upload and re-convert.
+  app.post('/resources/:id/reclassify', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    if (!row.markdown_path) return reply.code(409).send({ error: 'not converted yet' });
+
+    const body = req.body as { kind: ResourceKind; layer?: RuleLayer; scope?: ExampleScope; event_id?: number };
+    const kind = body.kind;
+    const layer = kind === 'rule' ? (body.layer ?? 'rrs') : null;
+    const scope = kind === 'example' ? (body.scope ?? 'own') : null;
+    const eventId = kind === 'rule' && layer === 'event' ? (body.event_id ?? row.event_id) : null;
+    if (kind === 'rule' && layer === 'event' && !eventId) {
+      return reply.code(400).send({ error: 'event_id is required for event-layer rules' });
+    }
+
+    const newMarkdownPath = await moveMarkdown(row.markdown_path, kind, (layer ?? scope)!);
+
+    db.prepare('UPDATE resource SET kind = ?, layer = ?, scope = ?, event_id = ?, markdown_path = ? WHERE id = ?').run(
+      kind,
+      layer,
+      scope,
+      eventId,
+      newMarkdownPath,
+      id,
+    );
+
+    // Re-sync the FTS index: only accepted rules are searchable (D-020).
+    db.prepare('DELETE FROM resource_fts WHERE resource_id = ?').run(Number(id));
+    if (kind === 'rule' && row.status === 'accepted') {
+      const bodyText = await readMarkdown(newMarkdownPath);
+      db.prepare('INSERT INTO resource_fts (title, body, resource_id) VALUES (?, ?, ?)').run(
+        row.title,
+        bodyText,
+        Number(id),
+      );
+    }
+
+    const updated = db.prepare('SELECT * FROM resource WHERE id = ?').get(id);
+    return updated;
   });
 
   app.get('/resources/search', (req) => {

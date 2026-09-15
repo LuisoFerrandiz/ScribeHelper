@@ -62,7 +62,10 @@ export function registerPhraseRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: 'not found' });
     if (row.origin === 'base') return reply.code(403).send({ error: 'base phrases cannot be deleted' });
 
-    db.prepare('DELETE FROM phrase_fts WHERE phrase_id = ?').run(id);
+    // FTS5 UNINDEXED columns skip SQLite's usual type-affinity coercion —
+    // a string '1' never matches a stored integer 1 (same bug class as
+    // resources.ts's resource_fts deletes).
+    db.prepare('DELETE FROM phrase_fts WHERE phrase_id = ?').run(Number(id));
     db.prepare('DELETE FROM phrase WHERE id = ?').run(id);
     reply.code(204).send();
   });

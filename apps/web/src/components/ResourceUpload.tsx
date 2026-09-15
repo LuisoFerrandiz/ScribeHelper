@@ -123,6 +123,15 @@ export function ResourceUpload({ kind, eventId }: Props) {
     await refresh();
   }
 
+  // Fixes a wrong pick at upload time (D-023) — moves the file and
+  // updates the row without re-uploading/re-converting.
+  async function handleMoveToOtherKind(id: number) {
+    const otherKind: ResourceKind = kind === 'rule' ? 'example' : 'rule';
+    await api.reclassifyResource(id, otherKind === 'rule' ? { kind: 'rule', layer: 'rrs' } : { kind: 'example', scope: 'own' });
+    setPreview(null);
+    await refresh();
+  }
+
   return (
     <div className="page">
       <h2>{kind === 'rule' ? 'Upload rules' : 'Upload examples'}</h2>
@@ -204,16 +213,21 @@ export function ResourceUpload({ kind, eventId }: Props) {
         <section className="box">
           <div className="box-header">
             <h2>{preview.title}</h2>
-            {preview.status === 'pending_review' && (
-              <div>
-                <button type="button" onClick={() => handleAccept(preview.id)}>
-                  Accept
-                </button>{' '}
-                <button type="button" onClick={() => handleReject(preview.id)}>
-                  Reject
-                </button>
-              </div>
-            )}
+            <div>
+              {preview.status === 'pending_review' && (
+                <>
+                  <button type="button" onClick={() => handleAccept(preview.id)}>
+                    Accept
+                  </button>{' '}
+                  <button type="button" onClick={() => handleReject(preview.id)}>
+                    Reject
+                  </button>{' '}
+                </>
+              )}
+              <button type="button" onClick={() => handleMoveToOtherKind(preview.id)}>
+                Move to {kind === 'rule' ? 'examples' : 'rules'}
+              </button>
+            </div>
           </div>
           {!!preview.conversion_empty && (
             <p className="error">Conversion produced little or no text — this looks like a scanned document.</p>

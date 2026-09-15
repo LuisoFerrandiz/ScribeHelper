@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { config } from '../config.js';
 
@@ -46,6 +46,23 @@ export async function storeUpload(
 
 export async function readMarkdown(markdownPath: string): Promise<string> {
   return readFile(path.join(config.dataDir, markdownPath), 'utf-8');
+}
+
+// Moves a resource's markdown file to the correct directory when it was
+// filed under the wrong kind/layer/scope (e.g. uploaded as a rule but
+// actually an example) — same basename, new parent directory only.
+export async function moveMarkdown(
+  currentMarkdownPath: string,
+  newKind: ResourceKind,
+  newLayerOrScope: RuleLayer | ExampleScope,
+): Promise<string> {
+  const newRelDir = markdownDir(newKind, newLayerOrScope);
+  const newRel = path.join(newRelDir, path.basename(currentMarkdownPath));
+
+  await mkdir(path.join(config.dataDir, newRelDir), { recursive: true });
+  await rename(path.join(config.dataDir, currentMarkdownPath), path.join(config.dataDir, newRel));
+
+  return newRel;
 }
 
 // Reject deletes both files, no orphans (CONTEXT.md section 7).

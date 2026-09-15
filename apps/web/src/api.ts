@@ -103,6 +103,10 @@ export const api = {
     return res.json();
   },
   acceptResource: (id: number) => post<ResourceRow>(`/resources/${id}/accept`, {}),
+  reclassifyResource: (
+    id: number,
+    data: { kind: ResourceKind; layer?: string; scope?: string; event_id?: number },
+  ) => post<ResourceRow>(`/resources/${id}/reclassify`, data),
   rejectResource: (id: number) => request<void>(`/resources/${id}/reject`, { method: 'POST' }),
   deleteResource: (id: number) => del(`/resources/${id}`),
   searchResources: (q: string) => request<ResourceSearchHit[]>(`/resources/search?q=${encodeURIComponent(q)}`),
