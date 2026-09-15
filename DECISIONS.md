@@ -633,6 +633,19 @@ picks it up automatically, same as every other variable). Leaving it
 unset keeps the rest of the app fully offline — the draft panel is the
 only feature affected.
 
+**Follow-up (same day):** the first version only sent the model each
+cited rule's *reference string* ("RRS 42.1(a)"), never the rule's actual
+text — the corpus was used solely to check the model's citations after
+the fact, not to ground the draft while writing it. Fixed by loading the
+accepted rule corpus once per request and pulling a ~500-character
+excerpt around each cited reference's first match
+(`loadAcceptedRuleCorpus`/`findExcerpt` in `apps/api/src/ai/draft.ts`),
+included in the prompt as that rule's text; the system prompt now tells
+the model to state what a rule requires only when its text was given,
+never guess from the bare number. The same loaded corpus is reused for
+the post-hoc citation check, so it is read from disk once per request,
+not twice.
+
 ---
 
 ## Open questions

@@ -67,7 +67,13 @@ export async function generateDraft(caseId: number, box: DraftBox): Promise<Draf
     .prepare('SELECT rule_reference FROM case_rule_citation WHERE case_id = ? ORDER BY position')
     .all(caseId) as { rule_reference: string }[];
 
-  const prompt = buildPrompt(box, caseRow, parties, witnesses, ruleCitations);
+  const corpus = await loadAcceptedRuleCorpus();
+  const ruleExcerpts = ruleCitations.map((r) => ({
+    reference: r.rule_reference,
+    excerpt: findExcerpt(corpus, r.rule_reference),
+  }));
+
+  const prompt = buildPrompt(box, caseRow, parties, witnesses, ruleExcerpts);
 
   const anthropic = new Anthropic({ apiKey });
   const message = await anthropic.messages.create({
@@ -77,7 +83,9 @@ export async function generateDraft(caseId: number, box: DraftBox): Promise<Draf
       'You draft one section of a World Sailing race protest committee decision. ' +
       'Formal, neutral, third person. Use only the facts given to you — never invent ' +
       'a boat, person, rule, or event you were not told about. Only cite rules that ' +
-      'appear in the "Rules already cited for this case" list; if none apply, cite none. ' +
+      'appear in the "Rules already cited for this case" list, and only state what a ' +
+      'rule requires when its text was given to you below — if a cited rule has no text ' +
+      'attached, mention its number only, never guess its content. If none apply, cite none. ' +
       'Return only the drafted section text, no heading, no preamble.',
     messages: [{ role: 'user', content: prompt }],
   });
@@ -88,8 +96,13 @@ export async function generateDraft(caseId: number, box: DraftBox): Promise<Draf
     .join('\n')
     .trim();
 
-  const citations = await validateCitations(extractCitations(text));
+  const citations = validateCitations(extractCitations(text), corpus);
   return { text, citations };
+}
+
+interface RuleExcerpt {
+  reference: string;
+  excerpt: string | null;
 }
 
 function buildPrompt(
@@ -97,7 +110,7 @@ function buildPrompt(
   caseRow: CaseRow,
   parties: { role: string; sail_number: string | null; boat_name: string | null }[],
   witnesses: { full_name: string; role: string | null }[],
-  ruleCitations: { rule_reference: string }[],
+  ruleExcerpts: RuleExcerpt[],
 ): string {
   const lines: string[] = [];
   lines.push(`Draft the "${BOX_LABEL[box]}" section of the decision.`);
@@ -139,10 +152,17 @@ function buildPrompt(
     lines.push(caseRow.conclusion.trim());
   }
 
-  if (ruleCitations.length > 0) {
+  if (ruleExcerpts.length > 0) {
     lines.push('');
     lines.push('Rules already cited for this case (cite only from this list):');
-    for (const r of ruleCitations) lines.push(`- ${r.rule_reference}`);
+    for (const r of ruleExcerpts) {
+      if (r.excerpt) {
+        lines.push(`- ${r.reference}:`);
+        lines.push(r.excerpt);
+      } else {
+        lines.push(`- ${r.reference} (text not found in the uploaded corpus — number only, no content)`);
+      }
+    }
   } else {
     lines.push('');
     lines.push('No rules have been cited for this case yet — cite none.');
@@ -171,16 +191,10 @@ export function extractCitations(text: string): string[] {
   return [...found];
 }
 
-// Checks each citation against the accepted rule corpus (D-020) — a rule
-// the AI mentions must actually appear in an uploaded, accepted rule
-// document, or it is flagged for the drafter to double-check. Plain
-// substring match on the converted markdown, not FTS5 MATCH: a rule
-// reference like "42.1(a)" has punctuation FTS5's tokenizer splits on,
-// so a phrase MATCH query would misbehave (same class of gotcha as
-// D-023's UNINDEXED-column bug).
-export async function validateCitations(references: string[]): Promise<CitationCheck[]> {
-  if (references.length === 0) return [];
-
+// One read of the accepted rule corpus per draft request, shared by both
+// the excerpt lookup (grounds what the AI is told a rule says, D-024
+// follow-up) and the post-hoc citation check below.
+async function loadAcceptedRuleCorpus(): Promise<string> {
   const acceptedRules = db
     .prepare(`SELECT markdown_path FROM resource WHERE kind = 'rule' AND status = 'accepted'`)
     .all() as { markdown_path: string | null }[];
@@ -188,10 +202,32 @@ export async function validateCitations(references: string[]): Promise<CitationC
   const bodies = await Promise.all(
     acceptedRules.map((r) => (r.markdown_path ? readMarkdown(r.markdown_path) : Promise.resolve(''))),
   );
-  const corpus = bodies.join('\n').toLowerCase();
+  return bodies.join('\n\n');
+}
 
+// Pulls the text around a rule reference's first appearance in the
+// corpus, so the AI is grounded in what the rule actually says instead
+// of the bare number — the same substring approach as the citation
+// check below, for the same reason (FTS5 tokenizer punctuation gotcha).
+function findExcerpt(corpus: string, reference: string, contextChars = 500): string | null {
+  const idx = corpus.toLowerCase().indexOf(reference.toLowerCase());
+  if (idx === -1) return null;
+  const start = Math.max(0, idx - 100);
+  const end = Math.min(corpus.length, idx + contextChars);
+  return corpus.slice(start, end).trim();
+}
+
+// Checks each citation against the accepted rule corpus (D-020) — a rule
+// the AI mentions must actually appear in an uploaded, accepted rule
+// document, or it is flagged for the drafter to double-check. Plain
+// substring match on the converted markdown, not FTS5 MATCH: a rule
+// reference like "42.1(a)" has punctuation FTS5's tokenizer splits on,
+// so a phrase MATCH query would misbehave (same class of gotcha as
+// D-023's UNINDEXED-column bug).
+export function validateCitations(references: string[], corpus: string): CitationCheck[] {
+  const lowerCorpus = corpus.toLowerCase();
   return references.map((reference) => ({
     reference,
-    found: corpus.includes(reference.toLowerCase()),
+    found: lowerCorpus.includes(reference.toLowerCase()),
   }));
 }
