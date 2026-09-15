@@ -31,9 +31,14 @@ declare global {
 const API_URL = window.__API_URL__ ?? import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  // Only set Content-Type when a body is actually going out — Fastify
+  // rejects a request that declares 'application/json' with no body
+  // (FST_ERR_CTP_EMPTY_JSON_BODY), which is what every bodyless DELETE
+  // sent, silently breaking every delete button in the app.
+  const headers = options?.body ? { 'Content-Type': 'application/json' } : undefined;
   const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { ...headers, ...options?.headers },
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
