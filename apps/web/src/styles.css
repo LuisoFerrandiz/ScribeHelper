@@ -207,6 +207,38 @@ h3 {
   font-size: 0.95em;
 }
 
+/* Resource lists (Upload rules/examples) — many short rows, so two
+   columns reads better than one long scroll once uploads pile up. */
+.resource-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resource-grid li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.resource-title {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.icon-button {
+  padding: 2px 7px;
+  font-size: 1em;
+  line-height: 1;
+}
+
 .muted {
   color: #777;
 }

@@ -194,7 +194,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
       <section>
         <h3>Pending review</h3>
-        <ul className="list">
+        <ul className="list resource-grid">
           {pending.map((r) => (
             <li key={r.id}>
               <button type="button" onClick={() => openPreview(r.id)}>
@@ -238,16 +238,22 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
       <section>
         <h3>Accepted</h3>
-        <ul className="list">
+        <ul className="list resource-grid">
           {accepted.map((r) => (
             <li key={r.id}>
-              <button type="button" onClick={() => openPreview(r.id)}>
+              <button type="button" className="resource-title" onClick={() => openPreview(r.id)}>
                 {r.title}
               </button>
               {r.layer && <span className="muted"> — {r.layer}</span>}
               {r.scope && <span className="muted"> — {r.scope}</span>}{' '}
-              <button type="button" onClick={() => handleDelete(r.id)}>
-                Delete
+              <button
+                type="button"
+                className="icon-button"
+                title="Delete"
+                aria-label="Delete"
+                onClick={() => handleDelete(r.id)}
+              >
+                🗑
               </button>
             </li>
           ))}
