@@ -18,7 +18,6 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Scribe Helper</h1>
         <nav>
           <button type="button" onClick={() => setTab('case')} disabled={tab === 'case'}>
             Case
