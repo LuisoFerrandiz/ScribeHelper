@@ -475,6 +475,50 @@ the canvas-only image/screenshot features this project never calls).
 
 ---
 
+## D-021 · 2026-09-15 · accepted
+### Jury Members: per-case panel, not fixed for the whole event
+
+**Context:** CONTEXT.md section 4 states jury members "belong to the
+event, not the case." In practice (user's correction), judges rotate
+between hearings at the same regatta — the panel sitting on one protest
+is usually not the same as on the next one.
+
+**Options**
+- Keep jury fixed per event (as documented), shared read-only by every
+  case
+- Move jury entirely to the case, no event-level concept at all
+- Two-tier: an event-level judge pool (added once) + a per-case panel
+  picked from that pool, chairman decided per case
+
+**Decision:** two-tier. `jury_member` (event, person, is_chairman)
+becomes the event's judge pool — `is_chairman` there is now vestigial,
+kept only for old rows, meaningless going forward. New table
+`case_jury_member` (case, person, is_chairman) holds the panel actually
+sitting on one case. Not FK-enforced against the pool — the pool is a
+picker convenience, not a hard membership rule (consistent with Rules
+Applicable being free text in Phase 1, D-014).
+
+**Why not drop the event-level pool entirely:** the same handful of
+judges typically works most hearings at a given regatta; without a pool,
+every case would retype the same few names from scratch. The pool keeps
+"enter once" (CONTEXT.md section 1) while the panel itself is picked per
+case.
+
+**Consequence:**
+- `JuryPanel.tsx` (Jury utility, top nav) manages the pool only — no
+  chairman toggle there any more.
+- `CaseForm.tsx`'s Jury Members box is now editable (previously
+  read-only): add/remove from the case's panel, chairman picked per
+  case, choices offered from the datalist of the event's pool.
+- `GET /cases/:id/full`'s `jury` array now reads from `case_jury_member`
+  joined on `case_id`, not `jury_member` joined on `event_id`.
+- This directly contradicts CONTEXT.md section 4's current wording,
+  which should be corrected the next time that document is revised by
+  its author — not done here per the standing rule against editing those
+  three files without being asked.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

@@ -16,13 +16,14 @@ export function registerCaseDetailRoute(app: FastifyInstance) {
     const eventId = caseRow.event_id as number;
 
     const event = db.prepare('SELECT * FROM event WHERE id = ?').get(eventId);
+    // Panel sitting on THIS case (D-021) — not the event's whole judge pool.
     const jury = db
       .prepare(
-        `SELECT jury_member.id, jury_member.is_chairman, person.full_name
-         FROM jury_member JOIN person ON person.id = jury_member.person_id
-         WHERE jury_member.event_id = ?`,
+        `SELECT case_jury_member.id, case_jury_member.is_chairman, person.full_name
+         FROM case_jury_member JOIN person ON person.id = case_jury_member.person_id
+         WHERE case_jury_member.case_id = ?`,
       )
-      .all(eventId);
+      .all(id);
 
     const parties = db
       .prepare(

@@ -10,6 +10,11 @@ import {
 } from '../format';
 import type { BoatRow, CaseFull, CaseRow, PartyRole, PersonRow } from '../types';
 
+interface PoolEntry {
+  personId: number;
+  fullName: string;
+}
+
 interface Props {
   caseId: number;
 }
@@ -56,6 +61,12 @@ export function CaseForm({ caseId }: Props) {
 
   const [linkCaseId, setLinkCaseId] = useState('');
 
+  // Judge pool for this case's event (D-021) — who actually sits on THIS
+  // case, and who chairs it, is picked here, not fixed for the event.
+  const [judgePool, setJudgePool] = useState<PoolEntry[]>([]);
+  const [juryPersonName, setJuryPersonName] = useState('');
+  const [juryIsChairman, setJuryIsChairman] = useState(false);
+
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
   type CaseTab = 'general' | 'procedural' | 'facts' | 'conclusion' | 'decision';
@@ -63,16 +74,23 @@ export function CaseForm({ caseId }: Props) {
 
   async function reload() {
     try {
-      const [full, allBoats, allPeople, allCases] = await Promise.all([
+      const [full, allBoats, allPeople, allCases, allPool] = await Promise.all([
         api.getCaseFull(caseId),
         api.listBoats(),
         api.listPeople(),
         api.listCases(),
+        api.listJuryMembers(),
       ]);
       setCaseFull(full);
       setBoats(allBoats);
       setPeople(allPeople);
       setOtherCases(allCases.filter((c) => c.event_id === full.event_id && c.id !== caseId));
+      const nameById = new Map(allPeople.map((p) => [p.id, p.full_name]));
+      setJudgePool(
+        allPool
+          .filter((j) => j.event_id === full.event_id)
+          .map((j) => ({ personId: j.person_id, fullName: nameById.get(j.person_id) ?? '—' })),
+      );
 
       setCaseNumber(full.case_number);
       setDay(full.day ?? '');
@@ -183,6 +201,25 @@ export function CaseForm({ caseId }: Props) {
 
   async function handleRemoveWitness(id: number) {
     await api.deleteWitness(id);
+    await reload();
+  }
+
+  async function handleAddJury(e: FormEvent) {
+    e.preventDefault();
+    const entry = judgePool.find((p) => p.fullName.toLowerCase() === juryPersonName.trim().toLowerCase());
+    if (!entry) return; // must be in the event's pool — added via the Jury utility
+    await api.createCaseJuryMember({
+      case_id: caseId,
+      person_id: entry.personId,
+      is_chairman: juryIsChairman ? 1 : 0,
+    });
+    setJuryPersonName('');
+    setJuryIsChairman(false);
+    await reload();
+  }
+
+  async function handleRemoveJury(id: number) {
+    await api.deleteCaseJuryMember(id);
     await reload();
   }
 
@@ -479,23 +516,49 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'general' && (
         <>
-      {/* 8. Jury Members — belongs to the event, read-only here */}
+      {/* 8. Jury Members — the panel sitting on THIS case (D-021), picked
+          from the event's judge pool (Jury utility, top nav) */}
       <CopyBox
         label="Jury Members"
         text={formatJuryMembers(liveCase)}
         copied={!!copied.jury_members}
         onCopied={() => markCopied('jury_members')}
       >
-        <p className="muted">Managed from the Jury utility (top nav).</p>
         <ul className="list">
           {caseFull.jury.map((j) => (
             <li key={j.id}>
               {j.full_name}
-              {j.is_chairman ? ' (Chairman)' : ''}
+              {j.is_chairman ? ' (Chairman)' : ''}{' '}
+              <button type="button" onClick={() => handleRemoveJury(j.id)}>
+                Remove
+              </button>
             </li>
           ))}
-          {caseFull.jury.length === 0 && <li className="muted">No jury members yet.</li>}
+          {caseFull.jury.length === 0 && <li className="muted">No jury members assigned to this case yet.</li>}
         </ul>
+        {judgePool.length === 0 ? (
+          <p className="muted">No judges in this event's pool yet — add them from the Jury utility (top nav).</p>
+        ) : (
+          <form onSubmit={handleAddJury} className="inline-form">
+            <input
+              list="judge-pool-list"
+              placeholder="Judge name"
+              value={juryPersonName}
+              onChange={(e) => setJuryPersonName(e.target.value)}
+              required
+            />
+            <label>
+              <input type="checkbox" checked={juryIsChairman} onChange={(e) => setJuryIsChairman(e.target.checked)} />
+              Chairman
+            </label>
+            <button type="submit">Add to this case</button>
+          </form>
+        )}
+        <datalist id="judge-pool-list">
+          {judgePool.map((p) => (
+            <option key={p.personId} value={p.fullName} />
+          ))}
+        </datalist>
       </CopyBox>
 
       {/* With Case(s) — not part of the fixed box list, but needed to reach it */}

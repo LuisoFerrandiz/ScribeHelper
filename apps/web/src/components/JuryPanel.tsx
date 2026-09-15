@@ -6,27 +6,26 @@ interface Props {
   eventId: number;
 }
 
-interface JuryRow {
+interface PoolRow {
   id: number;
-  is_chairman: 0 | 1;
   full_name: string;
 }
 
-// Jury members and the panel chairman belong to the event, not the case
-// (CONTEXT.md section 4) — a utility panel, reached from the top nav,
-// scoped to whichever regatta is currently selected in CaseSelector.
+// The event's judge pool (D-021): added once per regatta, never per case.
+// Which of these judges actually sit on a given hearing, and who chairs
+// it, is chosen per case in CaseForm's Jury Members box — judges rotate
+// between hearings, so that can't be fixed here for the whole event.
 export function JuryPanel({ eventId }: Props) {
   const [event, setEvent] = useState<EventRow | null>(null);
   const [people, setPeople] = useState<PersonRow[]>([]);
-  const [jury, setJury] = useState<JuryRow[]>([]);
+  const [pool, setPool] = useState<PoolRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [juryName, setJuryName] = useState('');
-  const [isChairman, setIsChairman] = useState(false);
 
   async function refresh() {
     try {
-      const [events, allPeople, allJury] = await Promise.all([
+      const [events, allPeople, allPool] = await Promise.all([
         api.listEvents(),
         api.listPeople(),
         api.listJuryMembers(),
@@ -34,10 +33,10 @@ export function JuryPanel({ eventId }: Props) {
       setEvent(events.find((e) => e.id === eventId) ?? null);
       setPeople(allPeople);
       const nameById = new Map(allPeople.map((p) => [p.id, p.full_name]));
-      setJury(
-        allJury
+      setPool(
+        allPool
           .filter((j) => j.event_id === eventId)
-          .map((j) => ({ id: j.id, is_chairman: j.is_chairman, full_name: nameById.get(j.person_id) ?? '—' })),
+          .map((j) => ({ id: j.id, full_name: nameById.get(j.person_id) ?? '—' })),
       );
       setError(null);
     } catch (e) {
@@ -57,17 +56,16 @@ export function JuryPanel({ eventId }: Props) {
     return created.id;
   }
 
-  async function handleAddJury(e: FormEvent) {
+  async function handleAdd(e: FormEvent) {
     e.preventDefault();
     if (!juryName.trim()) return;
     const personId = await findOrCreatePerson(juryName.trim());
-    await api.createJuryMember({ event_id: eventId, person_id: personId, is_chairman: isChairman ? 1 : 0 });
+    await api.createJuryMember({ event_id: eventId, person_id: personId, is_chairman: 0 });
     setJuryName('');
-    setIsChairman(false);
     await refresh();
   }
 
-  async function handleRemoveJury(id: number) {
+  async function handleRemove(id: number) {
     await api.deleteJuryMember(id);
     await refresh();
   }
@@ -76,21 +74,24 @@ export function JuryPanel({ eventId }: Props) {
 
   return (
     <div className="page">
-      <h2>Jury — {event.name}</h2>
+      <h2>Judge pool — {event.name}</h2>
+      <p className="muted">
+        Judges available at this regatta. Which ones sit on a given case, and who chairs it, is picked from the
+        Case screen's Jury Members box.
+      </p>
       {error && <p className="error">{error}</p>}
       <ul className="list">
-        {jury.map((j) => (
+        {pool.map((j) => (
           <li key={j.id}>
-            {j.full_name}
-            {j.is_chairman ? ' (Chairman)' : ''}{' '}
-            <button type="button" onClick={() => handleRemoveJury(j.id)}>
+            {j.full_name}{' '}
+            <button type="button" onClick={() => handleRemove(j.id)}>
               Remove
             </button>
           </li>
         ))}
-        {jury.length === 0 && <li className="muted">No jury members yet.</li>}
+        {pool.length === 0 && <li className="muted">No judges in the pool yet.</li>}
       </ul>
-      <form onSubmit={handleAddJury} className="inline-form">
+      <form onSubmit={handleAdd} className="inline-form">
         <input
           list="people-list"
           placeholder="Full name"
@@ -98,10 +99,6 @@ export function JuryPanel({ eventId }: Props) {
           onChange={(e) => setJuryName(e.target.value)}
           required
         />
-        <label>
-          <input type="checkbox" checked={isChairman} onChange={(e) => setIsChairman(e.target.checked)} />
-          Chairman
-        </label>
         <button type="submit">Add</button>
       </form>
       <datalist id="people-list">

@@ -12,9 +12,17 @@ export function registerRoutes(app: FastifyInstance) {
     fields: ['name', 'venue', 'start_date', 'end_date', 'timezone'],
   });
 
+  // Event's judge pool (D-021) — added once per regatta, never per case.
   registerCrud(app, 'jury-members', {
     table: 'jury_member',
     fields: ['event_id', 'person_id', 'is_chairman'],
+  });
+
+  // Panel actually sitting on one case, picked from that case's event
+  // pool (D-021) — chairman is decided here, not at the pool level.
+  registerCrud(app, 'case-jury-members', {
+    table: 'case_jury_member',
+    fields: ['case_id', 'person_id', 'is_chairman'],
   });
 
   registerCrud(app, 'boats', { table: 'boat', fields: ['sail_number', 'boat_name'] });

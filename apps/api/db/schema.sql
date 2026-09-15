@@ -20,14 +20,30 @@ CREATE TABLE IF NOT EXISTS event (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Panel chairman and jury members belong to the event, not the case
--- (CONTEXT.md section 4).
+-- The event's pool of judges available that regatta — added once, never
+-- retyped. Superseded CONTEXT.md section 4 ("belong to the event, not the
+-- case"): judges rotate between hearings at the same regatta, so which
+-- ones sit on a given case, and who chairs it, is decided per case
+-- (case_jury_member below), not fixed for the whole event. is_chairman is
+-- kept here only for backward compatibility with rows written before this
+-- change; it has no meaning going forward (D-021).
 CREATE TABLE IF NOT EXISTS jury_member (
   id INTEGER PRIMARY KEY,
   event_id INTEGER NOT NULL REFERENCES event(id) ON DELETE CASCADE,
   person_id INTEGER NOT NULL REFERENCES person(id),
   is_chairman INTEGER NOT NULL DEFAULT 0 CHECK (is_chairman IN (0, 1)),
   UNIQUE (event_id, person_id)
+);
+
+-- Panel actually sitting on one case, picked from that case's event pool
+-- above (D-021). Not FK-enforced against jury_member — the pool is a
+-- convenience list for the picker, not a hard membership rule.
+CREATE TABLE IF NOT EXISTS case_jury_member (
+  id INTEGER PRIMARY KEY,
+  case_id INTEGER NOT NULL REFERENCES protest_case(id) ON DELETE CASCADE,
+  person_id INTEGER NOT NULL REFERENCES person(id),
+  is_chairman INTEGER NOT NULL DEFAULT 0 CHECK (is_chairman IN (0, 1)),
+  UNIQUE (case_id, person_id)
 );
 
 -- Reusable across cases and events. Not scoped to an event: the same
@@ -104,6 +120,7 @@ CREATE TABLE IF NOT EXISTS case_rule_citation (
 );
 
 CREATE INDEX IF NOT EXISTS idx_jury_member_event ON jury_member(event_id);
+CREATE INDEX IF NOT EXISTS idx_case_jury_member_case ON case_jury_member(case_id);
 CREATE INDEX IF NOT EXISTS idx_case_event ON protest_case(event_id);
 CREATE INDEX IF NOT EXISTS idx_party_case ON party(case_id);
 CREATE INDEX IF NOT EXISTS idx_witness_case ON witness(case_id);

@@ -13,9 +13,18 @@ export interface PersonRow {
   full_name: string;
 }
 
+// Event's judge pool (D-021) — added once per regatta.
 export interface JuryMemberRow {
   id: number;
   event_id: number;
+  person_id: number;
+  is_chairman: 0 | 1;
+}
+
+// Panel actually sitting on one case, picked from that case's event pool.
+export interface CaseJuryMemberRow {
+  id: number;
+  case_id: number;
   person_id: number;
   is_chairman: 0 | 1;
 }

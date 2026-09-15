@@ -3,6 +3,7 @@ import type {
   CaseFull,
   CaseLinkRow,
   CaseRow,
+  CaseJuryMemberRow,
   EventRow,
   JuryMemberRow,
   PartyRow,
@@ -62,6 +63,11 @@ export const api = {
   listJuryMembers: () => request<JuryMemberRow[]>('/jury-members'),
   createJuryMember: (data: Partial<JuryMemberRow>) => post<JuryMemberRow>('/jury-members', data),
   deleteJuryMember: (id: number) => del(`/jury-members/${id}`),
+
+  listCaseJuryMembers: () => request<CaseJuryMemberRow[]>('/case-jury-members'),
+  createCaseJuryMember: (data: Partial<CaseJuryMemberRow>) =>
+    post<CaseJuryMemberRow>('/case-jury-members', data),
+  deleteCaseJuryMember: (id: number) => del(`/case-jury-members/${id}`),
 
   listCases: () => request<CaseRow[]>('/cases'),
   createCase: (data: Partial<CaseRow>) => post<CaseRow>('/cases', data),
