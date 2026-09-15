@@ -20,7 +20,15 @@ export function AIDraftPanel({ caseId, box, onInsert }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DraftResult | null>(null);
 
-  async function handleGenerate() {
+  async function handleToggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    // One button does both jobs — opening the panel generates the draft
+    // straight away, closing and reopening regenerates it. No separate
+    // "generate" button to press first.
+    setOpen(true);
     setLoading(true);
     setError(null);
     try {
@@ -35,14 +43,11 @@ export function AIDraftPanel({ caseId, box, onInsert }: Props) {
 
   return (
     <div className="ai-draft-panel">
-      <button type="button" onClick={() => setOpen((o) => !o)}>
-        {open ? 'Hide AI draft' : 'AI draft'}
+      <button type="button" onClick={handleToggle} disabled={loading}>
+        {loading ? 'Drafting…' : open ? 'Hide AI draft' : 'AI draft'}
       </button>
       {open && (
         <div className="ai-draft-panel-body">
-          <button type="button" onClick={handleGenerate} disabled={loading}>
-            {loading ? 'Drafting…' : result ? 'Regenerate' : 'Generate draft'}
-          </button>
           {error && <p className="error">{error}</p>}
           {result && (
             <div className="ai-draft-result">

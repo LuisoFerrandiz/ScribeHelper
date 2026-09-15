@@ -492,16 +492,18 @@ export function CaseForm({ caseId }: Props) {
           onChange={setProceduralMatters}
           rows={4}
         />
-        <PhrasePicker
-          box="procedural_matters"
-          currentText={proceduralMatters}
-          onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-        <AIDraftPanel
-          caseId={caseId}
-          box="procedural_matters"
-          onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
+        <div className="box-tools">
+          <PhrasePicker
+            box="procedural_matters"
+            currentText={proceduralMatters}
+            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+          <AIDraftPanel
+            caseId={caseId}
+            box="procedural_matters"
+            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+        </div>
       </CopyBox>
         </div>
       )}
@@ -516,16 +518,18 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('facts_found')}
       >
         <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
-        <PhrasePicker
-          box="facts_found"
-          currentText={factsFound}
-          onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-        <AIDraftPanel
-          caseId={caseId}
-          box="facts_found"
-          onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
+        <div className="box-tools">
+          <PhrasePicker
+            box="facts_found"
+            currentText={factsFound}
+            onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+          <AIDraftPanel
+            caseId={caseId}
+            box="facts_found"
+            onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+        </div>
       </CopyBox>
         </div>
       )}
@@ -540,16 +544,18 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('conclusion')}
       >
         <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
-        <PhrasePicker
-          box="conclusion"
-          currentText={conclusion}
-          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-        <AIDraftPanel
-          caseId={caseId}
-          box="conclusion"
-          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
+        <div className="box-tools">
+          <PhrasePicker
+            box="conclusion"
+            currentText={conclusion}
+            onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+          <AIDraftPanel
+            caseId={caseId}
+            box="conclusion"
+            onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+        </div>
       </CopyBox>
 
       {/* 6. Rules Applicable */}
@@ -614,16 +620,18 @@ export function CaseForm({ caseId }: Props) {
         onCopied={() => markCopied('decision')}
       >
         <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
-        <PhrasePicker
-          box="decision"
-          currentText={decision}
-          onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-        <AIDraftPanel
-          caseId={caseId}
-          box="decision"
-          onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
+        <div className="box-tools">
+          <PhrasePicker
+            box="decision"
+            currentText={decision}
+            onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+          <AIDraftPanel
+            caseId={caseId}
+            box="decision"
+            onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+          />
+        </div>
       </CopyBox>
         </div>
       )}

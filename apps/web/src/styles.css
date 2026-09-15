@@ -15,7 +15,10 @@
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  /* One font, everywhere — chrome and writing boxes alike, so nothing
+     ever looks like it belongs to a different app. Self-hosted Inter
+     Variable (main.tsx), system stack as the fallback while it loads. */
+  font-family: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   color: var(--ink);
   background: #faf9f6;
@@ -32,9 +35,14 @@ h3 {
 }
 
 .app {
-  max-width: 780px;
+  /* Uses the full window width at any size — no artificial page cap —
+     while side padding scales with the viewport so content never sits
+     flush against the edge. Individual writing boxes still cap their
+     own line length at 70ch (see `textarea` below); this only affects
+     how much breathing room the rest of the layout gets. */
+  width: 100%;
   margin: 0 auto;
-  padding: 10px;
+  padding: 12px clamp(12px, 4vw, 56px);
 }
 
 .app-header {
@@ -229,10 +237,39 @@ h3 {
   border-color: #b6e0b6;
 }
 
+.box-collapsed {
+  padding-bottom: 10px;
+}
+
 .box-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.box-collapse-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.box-collapse-chevron {
+  display: inline-block;
+  font-size: 0.75em;
+  color: #999;
+  transition: transform 0.15s ease;
+}
+
+.box-collapsed .box-collapse-chevron {
+  transform: rotate(-90deg);
 }
 
 .box-header h2 {
@@ -244,6 +281,10 @@ h3 {
   color: #2e7d32;
   font-weight: normal;
   font-size: 0.85em;
+}
+
+.box-body {
+  margin-top: 6px;
 }
 
 /* This is a writing app — chrome (nav, labels, buttons) stays compact,
@@ -293,13 +334,24 @@ textarea:focus {
   background: #eef9ee;
 }
 
-.phrase-picker {
+/* Phrases + AI draft toggles sit on one row instead of stacking as two
+   separate full-width blocks; each one's dropdown panel still opens
+   below its own button, inside its own column. */
+.box-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 6px;
+}
+
+.box-tools > * {
+  flex: 1 1 220px;
 }
 
 .phrase-picker > button {
   font-size: 0.8em;
   padding: 3px 8px;
+  width: 100%;
 }
 
 .phrase-picker-panel {
@@ -328,13 +380,10 @@ textarea:focus {
   border-top: 1px dashed #ddd;
 }
 
-.ai-draft-panel {
-  margin-top: 6px;
-}
-
 .ai-draft-panel > button {
   font-size: 0.8em;
   padding: 3px 8px;
+  width: 100%;
 }
 
 .ai-draft-panel-body {
