@@ -41,9 +41,9 @@ const emptyParty: PartyEdit = { sailNumber: '', boatName: '', representedBy: '' 
 // reordered): Parties, Witness, Procedural Matters, Facts Found,
 // Conclusion, Rules Applicable, Decision, Jury Members. The on-screen
 // tab layout is a separate, editable concern (user's call, 2026-09-15):
-// Parties & Witness share one box (Witness edited first, Parties
-// second — only the editing order, Copy still outputs document order),
-// Jury Members gets its own tab, and one Save button on the General
+// Parties & Witness share one box, edited in document order (Parties,
+// then Witness), Jury Members gets its own tab, and one Save button on
+// the General
 // tab persists case meta + parties + witnesses + the four free-text
 // boxes together.
 export function CaseForm({ caseId }: Props) {
@@ -350,7 +350,7 @@ export function CaseForm({ caseId }: Props) {
       </div>
       {error && <p className="error">{error}</p>}
 
-      <nav className="tab-bar tab-bar-underline">
+      <nav className="tab-bar tab-bar-pill">
         <button
           type="button"
           className={caseTab === 'general' ? 'active' : undefined}
@@ -457,9 +457,9 @@ export function CaseForm({ caseId }: Props) {
             </button>
           </form>
 
-          {/* Parties & Witness — one box, Witness edited first (user's
-              call), but Copy still outputs the fixed document order
-              (Parties, then Witness — format.ts's formatFullDecision). */}
+          {/* Parties & Witness — one box, matching the fixed document
+              order (Parties, then Witness — format.ts's
+              formatFullDecision) both in the UI and in Copy. */}
           <CopyBox
             label="Parties & Witness"
             text={`${formatParties(liveCase)}\n\n${formatWitnesses(liveCase)}`}
@@ -469,31 +469,6 @@ export function CaseForm({ caseId }: Props) {
               markCopied('witness');
             }}
           >
-            <h3>Witness</h3>
-            <ul className="list">
-              {witnessDraft.map((w, i) => (
-                <li key={`${w.id ?? 'new'}-${i}`}>
-                  {w.fullName}
-                  {w.role ? ` — ${w.role}` : ''}{' '}
-                  <button type="button" onClick={() => handleUnstageWitness(i)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-              {witnessDraft.length === 0 && <li className="muted">No witnesses yet.</li>}
-            </ul>
-            <form onSubmit={handleStageWitness} className="inline-form">
-              <input
-                list="people-list"
-                placeholder="Full name"
-                value={witnessName}
-                onChange={(e) => setWitnessName(e.target.value)}
-                required
-              />
-              <input placeholder="Role" value={witnessRole} onChange={(e) => setWitnessRole(e.target.value)} />
-              <button type="submit">Add</button>
-            </form>
-
             <h3>Parties</h3>
             {(['initiator', 'respondent'] as PartyRole[]).map((role) => {
               const state = role === 'initiator' ? initiator : respondent;
@@ -522,6 +497,31 @@ export function CaseForm({ caseId }: Props) {
                 </div>
               );
             })}
+
+            <h3>Witness</h3>
+            <ul className="list">
+              {witnessDraft.map((w, i) => (
+                <li key={`${w.id ?? 'new'}-${i}`}>
+                  {w.fullName}
+                  {w.role ? ` — ${w.role}` : ''}{' '}
+                  <button type="button" onClick={() => handleUnstageWitness(i)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+              {witnessDraft.length === 0 && <li className="muted">No witnesses yet.</li>}
+            </ul>
+            <form onSubmit={handleStageWitness} className="inline-form">
+              <input
+                list="people-list"
+                placeholder="Full name"
+                value={witnessName}
+                onChange={(e) => setWitnessName(e.target.value)}
+                required
+              />
+              <input placeholder="Role" value={witnessRole} onChange={(e) => setWitnessRole(e.target.value)} />
+              <button type="submit">Add</button>
+            </form>
             <p className="muted">Parties and witnesses save with the Save button above.</p>
             <datalist id="boat-sail-numbers">
               {boats.map((b) => (

@@ -168,32 +168,6 @@ h3 {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-/* Underline style — sequential form sections (case tabs). Sits on its
-   own line, clearly separated from the utility nav above and the
-   writing surface below, so the eye reads it as a menu, not content. */
-.tab-bar-underline {
-  border-bottom: 1px solid #e2ddd0;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.tab-bar-underline button {
-  padding: 7px 10px 8px;
-  font-size: 0.85em;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-}
-
-.tab-bar-underline button:hover:not(.active):not(:disabled) {
-  color: #333;
-}
-
-.tab-bar-underline button.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
-}
-
 @keyframes tab-panel-in {
   from {
     opacity: 0;
