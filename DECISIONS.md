@@ -646,6 +646,20 @@ never guess from the bare number. The same loaded corpus is reused for
 the post-hoc citation check, so it is read from disk once per request,
 not twice.
 
+**Second follow-up (2026-09-15, real-usage report):** `generateDraft`
+read the box being drafted from `protest_case` in the database —
+whatever was last saved by the Save button — never the text currently
+sitting in the textarea. Typing in Procedural Matters and pressing
+"AI draft" without saving first drafted from stale (often empty) saved
+text, which looked like the model ignoring what was just written and
+inventing an unrelated decision. Fixed by sending the box's live,
+unsaved text with the request (`AIDraftPanel`'s new `currentText` prop →
+`POST /cases/:id/draft`'s `currentText` field → `generateDraft`'s new
+parameter, used in place of `caseRow[box]` in `buildPrompt`), and by
+telling the model explicitly: when the drafter's own current text is
+given, the job is to turn *that* into a polished section — same facts,
+same order — never to replace it with new content of its own invention.
+
 ---
 
 ## D-025 · 2026-09-15 · accepted

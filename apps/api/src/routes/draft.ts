@@ -9,13 +9,13 @@ const VALID_BOXES: DraftBox[] = ['procedural_matters', 'facts_found', 'conclusio
 export function registerDraftRoute(app: FastifyInstance) {
   app.post('/cases/:id/draft', async (req, reply) => {
     const { id } = req.params as { id: string };
-    const { box } = req.body as { box?: string };
+    const { box, currentText } = req.body as { box?: string; currentText?: string };
     if (!box || !VALID_BOXES.includes(box as DraftBox)) {
       return reply.code(400).send({ error: `box must be one of ${VALID_BOXES.join(', ')}` });
     }
 
     try {
-      const result = await generateDraft(Number(id), box as DraftBox);
+      const result = await generateDraft(Number(id), box as DraftBox, currentText ?? '');
       return result;
     } catch (e) {
       const message = (e as Error).message;

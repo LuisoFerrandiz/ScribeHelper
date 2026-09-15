@@ -137,7 +137,8 @@ export const api = {
   createPhrase: (data: { box: PhraseBox; label?: string; body: string }) => post<PhraseRow>('/phrases', data),
   deletePhrase: (id: number) => del(`/phrases/${id}`),
 
-  generateDraft: (caseId: number, box: PhraseBox) => post<DraftResult>(`/cases/${caseId}/draft`, { box }),
+  generateDraft: (caseId: number, box: PhraseBox, currentText: string) =>
+    post<DraftResult>(`/cases/${caseId}/draft`, { box, currentText }),
   completeInline: (caseId: number, box: PhraseBox, text: string) =>
     post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text }),
 

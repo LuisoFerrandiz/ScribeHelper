@@ -614,6 +614,7 @@ export function CaseForm({ caseId }: Props) {
           <AIDraftPanel
             caseId={caseId}
             box="procedural_matters"
+            currentText={proceduralMatters}
             onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
           />
         </div>
@@ -640,6 +641,7 @@ export function CaseForm({ caseId }: Props) {
           <AIDraftPanel
             caseId={caseId}
             box="facts_found"
+            currentText={factsFound}
             onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
           />
         </div>
@@ -720,6 +722,7 @@ export function CaseForm({ caseId }: Props) {
         <AIDraftPanel
           caseId={caseId}
           box="conclusion"
+          currentText={conclusion}
           onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </div>
@@ -745,6 +748,7 @@ export function CaseForm({ caseId }: Props) {
           <AIDraftPanel
             caseId={caseId}
             box="decision"
+            currentText={decision}
             onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
           />
         </div>

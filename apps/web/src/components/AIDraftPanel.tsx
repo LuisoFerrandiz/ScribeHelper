@@ -5,16 +5,19 @@ import type { DraftResult, PhraseBox } from '../types';
 interface Props {
   caseId: number;
   box: PhraseBox;
+  currentText: string;
   onInsert: (body: string) => void;
 }
 
 // Phase 4 (CONTEXT.md section 9): alternative draft, one box at a time,
-// grounded in this case's own saved data (apps/api/src/ai/draft.ts).
-// Every rule the model cites is checked against the accepted rule corpus
-// and flagged here — nothing is inserted automatically (RULES.md R-34:
-// AI suggestion comes last, the drafter always reviews before it lands
-// in the box).
-export function AIDraftPanel({ caseId, box, onInsert }: Props) {
+// grounded in this case's other saved data (apps/api/src/ai/draft.ts)
+// plus whatever is currently typed in this box (`currentText`) — sent on
+// every request rather than read from the last-saved row, so drafting
+// works on unsaved text instead of silently ignoring it. Every rule the
+// model cites is checked against the accepted rule corpus and flagged
+// here — nothing is inserted automatically (RULES.md R-34: AI suggestion
+// comes last, the drafter always reviews before it lands in the box).
+export function AIDraftPanel({ caseId, box, currentText, onInsert }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +35,7 @@ export function AIDraftPanel({ caseId, box, onInsert }: Props) {
     setLoading(true);
     setError(null);
     try {
-      setResult(await api.generateDraft(caseId, box));
+      setResult(await api.generateDraft(caseId, box, currentText));
     } catch (e) {
       setError((e as Error).message);
       setResult(null);

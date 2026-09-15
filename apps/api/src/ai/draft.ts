@@ -40,7 +40,7 @@ const BOX_LABEL: Record<DraftBox, string> = {
 // offline-capable phase). One box at a time, grounded only in this
 // case's own saved data and the rules the user has already cited —
 // the model is told not to invent facts or cite anything else.
-export async function generateDraft(caseId: number, box: DraftBox): Promise<DraftResult> {
+export async function generateDraft(caseId: number, box: DraftBox, currentBoxText: string): Promise<DraftResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured on the server');
 
@@ -73,7 +73,7 @@ export async function generateDraft(caseId: number, box: DraftBox): Promise<Draf
     excerpt: findExcerpt(corpus, r.rule_reference),
   }));
 
-  const prompt = buildPrompt(box, caseRow, parties, witnesses, ruleExcerpts);
+  const prompt = buildPrompt(box, caseRow, parties, witnesses, ruleExcerpts, currentBoxText);
 
   const anthropic = new Anthropic({ apiKey });
   const message = await anthropic.messages.create({
@@ -86,6 +86,11 @@ export async function generateDraft(caseId: number, box: DraftBox): Promise<Draf
       'appear in the "Rules already cited for this case" list, and only state what a ' +
       'rule requires when its text was given to you below — if a cited rule has no text ' +
       'attached, mention its number only, never guess its content. If none apply, cite none. ' +
+      'If the drafter\'s own current text for this section is given below, your job is to ' +
+      'turn THAT into a polished section — expand, formalize and correct it, in the same ' +
+      'order and covering the same points — never replace it with unrelated content of your ' +
+      'own invention, and never drop a fact it states. Only when no current text is given do ' +
+      'you draft the section from scratch, from the case data alone. ' +
       'Return only the drafted section text, no heading, no preamble.',
     messages: [{ role: 'user', content: prompt }],
   });
@@ -111,6 +116,7 @@ function buildPrompt(
   parties: { role: string; sail_number: string | null; boat_name: string | null }[],
   witnesses: { full_name: string; role: string | null }[],
   ruleExcerpts: RuleExcerpt[],
+  currentBoxText: string,
 ): string {
   const lines: string[] = [];
   lines.push(`Draft the "${BOX_LABEL[box]}" section of the decision.`);
@@ -168,10 +174,13 @@ function buildPrompt(
     lines.push('No rules have been cited for this case yet — cite none.');
   }
 
-  const currentText = caseRow[box].trim();
+  const currentText = currentBoxText.trim();
   if (currentText) {
     lines.push('');
-    lines.push(`Current draft of ${BOX_LABEL[box]} (revise/improve it, keep the same facts):`);
+    lines.push(
+      `The drafter's own current text for ${BOX_LABEL[box]} — draft this into a polished ` +
+        `section, do not replace it with something unrelated:`,
+    );
     lines.push(currentText);
   }
 
