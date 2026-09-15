@@ -8,7 +8,7 @@ import {
   formatRulesApplicable,
   formatWitnesses,
 } from '../format';
-import type { BoatRow, CaseFull, CaseRow, PartyRole, PersonRow } from '../types';
+import type { BoatRow, CaseFull, CaseRow, PartyRole, PersonRow, ResourceSearchHit } from '../types';
 
 interface PoolEntry {
   personId: number;
@@ -58,6 +58,9 @@ export function CaseForm({ caseId }: Props) {
   const [witnessRole, setWitnessRole] = useState('');
 
   const [ruleText, setRuleText] = useState('');
+  const [ruleQuery, setRuleQuery] = useState('');
+  const [ruleHits, setRuleHits] = useState<ResourceSearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
 
   const [linkCaseId, setLinkCaseId] = useState('');
 
@@ -124,6 +127,29 @@ export function CaseForm({ caseId }: Props) {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
+
+  // Rule picker (Phase 3): a debounced lookup against the loaded corpus
+  // (FTS5, accepted rule resources only, D-020) — surfaces where a rule
+  // number actually appears so a citation can be verified before typing
+  // it into the box below (D-004: nothing cited without a trace). Whole
+  // documents are indexed, not individual numbered rules, so this finds
+  // the right document/snippet; the exact reference is still typed by
+  // hand into ruleText.
+  useEffect(() => {
+    if (!ruleQuery.trim()) {
+      setRuleHits([]);
+      return;
+    }
+    setSearching(true);
+    const handle = setTimeout(() => {
+      api
+        .searchResources(ruleQuery.trim())
+        .then(setRuleHits)
+        .catch(() => setRuleHits([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [ruleQuery]);
 
   async function findOrCreateBoat(sailNumber: string, boatName: string | null): Promise<number> {
     const existing = boats.find(
@@ -473,9 +499,6 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.rules_applicable}
         onCopied={() => markCopied('rules_applicable')}
       >
-        <p className="muted">
-          Free text in Phase 1. Phase 3 validates each citation against the loaded rules corpus.
-        </p>
         <ul className="list">
           {caseFull.ruleCitations.map((r) => (
             <li key={r.id}>
@@ -496,6 +519,27 @@ export function CaseForm({ caseId }: Props) {
           />
           <button type="submit">Add</button>
         </form>
+
+        <div className="rule-picker">
+          <input
+            placeholder="Search the loaded rules corpus (e.g. propulsion)"
+            value={ruleQuery}
+            onChange={(e) => setRuleQuery(e.target.value)}
+          />
+          {searching && <p className="muted">Searching…</p>}
+          {!searching && ruleQuery.trim() !== '' && ruleHits.length === 0 && (
+            <p className="muted">No match in the loaded corpus. Upload it first (Upload rules, top nav).</p>
+          )}
+          <ul className="list">
+            {ruleHits.map((h) => (
+              <li key={h.id}>
+                <strong>{h.title}</strong> <span className="muted">({h.layer})</span>
+                <br />
+                <span className="muted">{h.snippet}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </CopyBox>
         </>
       )}
