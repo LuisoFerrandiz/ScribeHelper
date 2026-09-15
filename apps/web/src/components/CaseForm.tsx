@@ -649,77 +649,80 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'conclusion' && (
         <div className="tab-panel">
-      {/* 5. Conclusion */}
-      <CopyBox
-        label="Conclusion"
-        text={conclusion}
-        copied={!!copied.conclusion}
-        onCopied={() => markCopied('conclusion')}
-      >
-        <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
-        <div className="box-tools">
-          <PhrasePicker
-            box="conclusion"
-            currentText={conclusion}
-            onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
-          <AIDraftPanel
-            caseId={caseId}
-            box="conclusion"
-            onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
-        </div>
-      </CopyBox>
+      <div className="two-col">
+        {/* 5. Conclusion */}
+        <CopyBox
+          label="Conclusion"
+          text={conclusion}
+          copied={!!copied.conclusion}
+          onCopied={() => markCopied('conclusion')}
+        >
+          <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
+        </CopyBox>
 
-      {/* 6. Rules Applicable */}
-      <CopyBox
-        label="Rules Applicable"
-        text={formatRulesApplicable(liveCase)}
-        copied={!!copied.rules_applicable}
-        onCopied={() => markCopied('rules_applicable')}
-      >
-        <ul className="list">
-          {caseFull.ruleCitations.map((r) => (
-            <li key={r.id}>
-              {r.rule_reference}{' '}
-              <button type="button" onClick={() => handleRemoveRule(r.id)}>
-                Remove
-              </button>
-            </li>
-          ))}
-          {caseFull.ruleCitations.length === 0 && <li className="muted">No rules cited yet.</li>}
-        </ul>
-        <form onSubmit={handleAddRule} className="inline-form">
-          <input
-            placeholder="e.g. RRS 18.2(b)"
-            value={ruleText}
-            onChange={(e) => setRuleText(e.target.value)}
-            required
-          />
-          <button type="submit">Add</button>
-        </form>
-
-        <div className="rule-picker">
-          <input
-            placeholder="Search the loaded rules corpus (e.g. propulsion)"
-            value={ruleQuery}
-            onChange={(e) => setRuleQuery(e.target.value)}
-          />
-          {searching && <p className="muted">Searching…</p>}
-          {!searching && ruleQuery.trim() !== '' && ruleHits.length === 0 && (
-            <p className="muted">No match in the loaded corpus. Upload it first (Upload rules, top nav).</p>
-          )}
+        {/* 6. Rules Applicable */}
+        <CopyBox
+          label="Rules Applicable"
+          text={formatRulesApplicable(liveCase)}
+          copied={!!copied.rules_applicable}
+          onCopied={() => markCopied('rules_applicable')}
+        >
           <ul className="list">
-            {ruleHits.map((h) => (
-              <li key={h.id}>
-                <strong>{h.title}</strong> <span className="muted">({h.layer})</span>
-                <br />
-                <span className="muted">{h.snippet}</span>
+            {caseFull.ruleCitations.map((r) => (
+              <li key={r.id}>
+                {r.rule_reference}{' '}
+                <button type="button" onClick={() => handleRemoveRule(r.id)}>
+                  Remove
+                </button>
               </li>
             ))}
+            {caseFull.ruleCitations.length === 0 && <li className="muted">No rules cited yet.</li>}
           </ul>
-        </div>
-      </CopyBox>
+          <form onSubmit={handleAddRule} className="inline-form">
+            <input
+              placeholder="e.g. RRS 18.2(b)"
+              value={ruleText}
+              onChange={(e) => setRuleText(e.target.value)}
+              required
+            />
+            <button type="submit">Add</button>
+          </form>
+
+          <div className="rule-picker">
+            <input
+              placeholder="Search the loaded rules corpus (e.g. propulsion)"
+              value={ruleQuery}
+              onChange={(e) => setRuleQuery(e.target.value)}
+            />
+            {searching && <p className="muted">Searching…</p>}
+            {!searching && ruleQuery.trim() !== '' && ruleHits.length === 0 && (
+              <p className="muted">No match in the loaded corpus. Upload it first (Upload rules, top nav).</p>
+            )}
+            <ul className="list">
+              {ruleHits.map((h) => (
+                <li key={h.id}>
+                  <strong>{h.title}</strong> <span className="muted">({h.layer})</span>
+                  <br />
+                  <span className="muted">{h.snippet}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CopyBox>
+      </div>
+
+      <div className="box-tools">
+        <PhrasePicker
+          box="conclusion"
+          currentText={conclusion}
+          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
+        <AIDraftPanel
+          caseId={caseId}
+          box="conclusion"
+          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+        />
+      </div>
         </div>
       )}
 

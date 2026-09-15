@@ -406,6 +406,26 @@ textarea:focus {
   background: #eef9ee;
 }
 
+/* Conclusion + Rules Applicable side by side (Conclusion's writing tools
+   apply to the whole pair, so they sit below both columns, not nested
+   inside just one box). Stacks to one column on narrow screens. */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.two-col > * {
+  margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Phrases + AI draft toggles sit on one row instead of stacking as two
    separate full-width blocks; each one's dropdown panel still opens
    below its own button, inside its own column. */
