@@ -224,6 +224,43 @@ h3 {
   padding: 4px 6px;
 }
 
+.with-case-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.with-case-inline select {
+  padding: 4px 6px;
+  font-size: 0.9em;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eee;
+  border-radius: 999px;
+  padding: 2px 4px 2px 8px;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.chip button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  color: #666;
+}
+
+.chip button:hover {
+  color: #b00020;
+}
+
 .box {
   background: var(--paper);
   border: 1px solid #e7e2d8;
@@ -289,13 +326,14 @@ h3 {
 
 /* This is a writing app — chrome (nav, labels, buttons) stays compact,
    but the boxes people actually draft in get room and readable type:
-   1.1rem/1.7 line-height, a measure capped at 70ch (the range that
-   keeps long reading/writing sessions from tiring the eye), generous
-   padding, and a soft paper tone instead of stark white. Sized in rem,
-   not em, so it doesn't inherit the compact 13px chrome font-size. */
+   1.1rem/1.7 line-height, generous padding, a soft paper tone instead
+   of stark white, and full width of whatever space the box has (no
+   70ch cap — on a wide window that just left empty space instead of
+   more room to write). Sized in rem, not em, so it doesn't inherit the
+   compact 13px chrome font-size. */
 textarea {
   width: 100%;
-  max-width: 70ch;
+  min-height: 42vh;
   font-family: inherit;
   font-size: 1.1rem;
   line-height: 1.7;
@@ -305,6 +343,7 @@ textarea {
   background: var(--paper);
   border: 1px solid #e2ddd0;
   border-radius: 8px;
+  resize: vertical;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -409,7 +448,6 @@ textarea:focus {
 .ghost-textarea {
   position: relative;
   width: 100%;
-  max-width: 70ch;
 }
 
 .ghost-textarea textarea,

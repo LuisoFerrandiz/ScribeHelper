@@ -28,13 +28,24 @@ interface PartyEdit {
   representedBy: string;
 }
 
+interface WitnessDraft {
+  id: number | null; // null = not yet persisted, created on Save
+  fullName: string;
+  role: string;
+}
+
 const emptyParty: PartyEdit = { sailNumber: '', boatName: '', representedBy: '' };
 
-// The case form. Boxes in fixed form order (CONTEXT.md section 4):
-// Parties, Witness, Procedural Matters, Facts Found, Conclusion,
-// Rules Applicable, Decision, Jury Members. Every box copies to the
-// clipboard (DECISIONS.md D-005); the four free-text boxes plus a
-// Save button persist to the case row.
+// The case form. Boxes in fixed form order for the official document
+// (CONTEXT.md section 4, format.ts's formatFullDecision — never
+// reordered): Parties, Witness, Procedural Matters, Facts Found,
+// Conclusion, Rules Applicable, Decision, Jury Members. The on-screen
+// tab layout is a separate, editable concern (user's call, 2026-09-15):
+// Parties & Witness share one box (Witness edited first, Parties
+// second — only the editing order, Copy still outputs document order),
+// Jury Members gets its own tab, and one Save button on the General
+// tab persists case meta + parties + witnesses + the four free-text
+// boxes together.
 export function CaseForm({ caseId }: Props) {
   const [caseFull, setCaseFull] = useState<CaseFull | null>(null);
   const [boats, setBoats] = useState<BoatRow[]>([]);
@@ -57,6 +68,9 @@ export function CaseForm({ caseId }: Props) {
   const [initiator, setInitiator] = useState<PartyEdit>(emptyParty);
   const [respondent, setRespondent] = useState<PartyEdit>(emptyParty);
 
+  // Staged locally, reconciled against the server in one batch by the
+  // General tab's single Save button (no more per-witness Add call).
+  const [witnessDraft, setWitnessDraft] = useState<WitnessDraft[]>([]);
   const [witnessName, setWitnessName] = useState('');
   const [witnessRole, setWitnessRole] = useState('');
 
@@ -64,8 +78,6 @@ export function CaseForm({ caseId }: Props) {
   const [ruleQuery, setRuleQuery] = useState('');
   const [ruleHits, setRuleHits] = useState<ResourceSearchHit[]>([]);
   const [searching, setSearching] = useState(false);
-
-  const [linkCaseId, setLinkCaseId] = useState('');
 
   // Judge pool for this case's event (D-021) — who actually sits on THIS
   // case, and who chairs it, is picked here, not fixed for the event.
@@ -75,7 +87,7 @@ export function CaseForm({ caseId }: Props) {
 
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
-  type CaseTab = 'general' | 'procedural' | 'facts' | 'conclusion' | 'decision';
+  type CaseTab = 'general' | 'jury' | 'procedural' | 'facts' | 'conclusion' | 'decision';
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
 
   async function reload() {
@@ -119,6 +131,8 @@ export function CaseForm({ caseId }: Props) {
         boatName: r?.boat_name ?? '',
         representedBy: r?.represented_by ?? '',
       });
+
+      setWitnessDraft(full.witnesses.map((w) => ({ id: w.id, fullName: w.full_name, role: w.role ?? '' })));
 
       setError(null);
     } catch (e) {
@@ -178,29 +192,7 @@ export function CaseForm({ caseId }: Props) {
     setCopied((prev) => ({ ...prev, [key]: true }));
   }
 
-  async function handleSaveCase(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await api.updateCase(caseId, {
-        case_number: caseNumber.trim(),
-        day: day.trim() || null,
-        race: race.trim() || null,
-        informed_at: informedAt.trim() || null,
-        procedural_matters: proceduralMatters,
-        facts_found: factsFound,
-        conclusion,
-        decision,
-      });
-      await reload();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveParty(role: PartyRole) {
+  async function savePartyRole(role: PartyRole) {
     const state = role === 'initiator' ? initiator : respondent;
     const boatId = state.sailNumber.trim()
       ? await findOrCreateBoat(state.sailNumber.trim(), state.boatName.trim() || null)
@@ -215,22 +207,61 @@ export function CaseForm({ caseId }: Props) {
     } else {
       await api.createParty({ case_id: caseId, role, boat_id: boatId, represented_by_id: representedById });
     }
-    await reload();
   }
 
-  async function handleAddWitness(e: FormEvent) {
+  // The one Save button for the General tab (user's call, 2026-09-15):
+  // case meta, both parties, the witness list, and the four free-text
+  // boxes all persist together. Witnesses are reconciled against the
+  // last-loaded list — anything staged locally with no id yet is
+  // created, anything that was persisted but is no longer in the draft
+  // is deleted.
+  async function handleSaveGeneral(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.updateCase(caseId, {
+        case_number: caseNumber.trim(),
+        day: day.trim() || null,
+        race: race.trim() || null,
+        informed_at: informedAt.trim() || null,
+        procedural_matters: proceduralMatters,
+        facts_found: factsFound,
+        conclusion,
+        decision,
+      });
+
+      await savePartyRole('initiator');
+      await savePartyRole('respondent');
+
+      const keptIds = new Set(witnessDraft.filter((w) => w.id !== null).map((w) => w.id));
+      for (const w of caseFull?.witnesses ?? []) {
+        if (!keptIds.has(w.id)) await api.deleteWitness(w.id);
+      }
+      for (const w of witnessDraft) {
+        if (w.id === null && w.fullName.trim()) {
+          const personId = await findOrCreatePerson(w.fullName.trim());
+          await api.createWitness({ case_id: caseId, person_id: personId, role: w.role.trim() || null });
+        }
+      }
+
+      await reload();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleStageWitness(e: FormEvent) {
     e.preventDefault();
     if (!witnessName.trim()) return;
-    const personId = await findOrCreatePerson(witnessName.trim());
-    await api.createWitness({ case_id: caseId, person_id: personId, role: witnessRole.trim() || null });
+    setWitnessDraft((prev) => [...prev, { id: null, fullName: witnessName.trim(), role: witnessRole.trim() }]);
     setWitnessName('');
     setWitnessRole('');
-    await reload();
   }
 
-  async function handleRemoveWitness(id: number) {
-    await api.deleteWitness(id);
-    await reload();
+  function handleUnstageWitness(index: number) {
+    setWitnessDraft((prev) => prev.filter((_, i) => i !== index));
   }
 
   async function handleAddJury(e: FormEvent) {
@@ -269,11 +300,11 @@ export function CaseForm({ caseId }: Props) {
     await reload();
   }
 
-  async function handleAddLink(e: FormEvent) {
-    e.preventDefault();
-    if (!linkCaseId) return;
-    await api.createCaseLink({ case_id: caseId, linked_case_id: Number(linkCaseId) });
-    setLinkCaseId('');
+  // "With Case(s)" (top row, general tab): link/unlink is a discrete
+  // action of its own, not part of the batched Save — it takes effect
+  // as soon as you pick a case.
+  async function handleLinkCase(linkedCaseId: number) {
+    await api.createCaseLink({ case_id: caseId, linked_case_id: linkedCaseId });
     await reload();
   }
 
@@ -330,11 +361,19 @@ export function CaseForm({ caseId }: Props) {
         </button>
         <button
           type="button"
+          className={caseTab === 'jury' ? 'active' : undefined}
+          aria-current={caseTab === 'jury'}
+          onClick={() => setCaseTab('jury')}
+        >
+          2. Jury
+        </button>
+        <button
+          type="button"
           className={caseTab === 'procedural' ? 'active' : undefined}
           aria-current={caseTab === 'procedural'}
           onClick={() => setCaseTab('procedural')}
         >
-          2. Procedural Matters
+          3. Procedural Matters
         </button>
         <button
           type="button"
@@ -342,7 +381,7 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'facts'}
           onClick={() => setCaseTab('facts')}
         >
-          3. Facts Found
+          4. Facts Found
         </button>
         <button
           type="button"
@@ -350,7 +389,7 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'conclusion'}
           onClick={() => setCaseTab('conclusion')}
         >
-          4. Conclusion
+          5. Conclusion
         </button>
         <button
           type="button"
@@ -358,121 +397,195 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'decision'}
           onClick={() => setCaseTab('decision')}
         >
-          5. Decision
+          6. Decision
         </button>
       </nav>
 
       {caseTab === 'general' && (
         <div className="tab-panel">
-      <form onSubmit={handleSaveCase} className="case-meta">
-        <label>
-          Case number
-          <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
-        </label>
-        <label>
-          Day
-          <input value={day} onChange={(e) => setDay(e.target.value)} />
-        </label>
-        <label>
-          Race
-          <input value={race} onChange={(e) => setRace(e.target.value)} />
-        </label>
-        <label>
-          Informed at (event time)
-          <input
-            placeholder="e.g. 2026-09-11 18:30"
-            value={informedAt}
-            onChange={(e) => setInformedAt(e.target.value)}
-          />
-        </label>
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : 'Save case'}
-        </button>
-      </form>
+          <form onSubmit={handleSaveGeneral} className="case-meta">
+            <label>
+              Case number
+              <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
+            </label>
+            <label>
+              Day
+              <input value={day} onChange={(e) => setDay(e.target.value)} />
+            </label>
+            <label>
+              Race
+              <input value={race} onChange={(e) => setRace(e.target.value)} />
+            </label>
+            <label>
+              Informed at (event time)
+              <input
+                placeholder="e.g. 2026-09-11 18:30"
+                value={informedAt}
+                onChange={(e) => setInformedAt(e.target.value)}
+              />
+            </label>
+            <label>
+              With case(s)
+              <div className="with-case-inline">
+                {caseFull.linkedCases.map((lc) => (
+                  <span key={lc.id} className="chip">
+                    {lc.case_number}
+                    <button type="button" onClick={() => handleRemoveLink(lc.id)} aria-label={`Unlink case ${lc.case_number}`}>
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) handleLinkCase(Number(e.target.value));
+                  }}
+                >
+                  <option value="">+ Link case…</option>
+                  {otherCases
+                    .filter((c) => !caseFull.linkedCases.some((lc) => lc.id === c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        Case {c.case_number}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </label>
+            <button type="submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </form>
 
-      {/* 1. Parties */}
-      <CopyBox
-        label="Parties"
-        text={formatParties(liveCase)}
-        copied={!!copied.parties}
-        onCopied={() => markCopied('parties')}
-      >
-        {(['initiator', 'respondent'] as PartyRole[]).map((role) => {
-          const state = role === 'initiator' ? initiator : respondent;
-          const setState = role === 'initiator' ? setInitiator : setRespondent;
-          return (
-            <div key={role} className="party-row">
-              <strong>{role === 'initiator' ? 'Initiator' : 'Respondent'}</strong>
-              <input
-                list="boat-sail-numbers"
-                placeholder="Sail number"
-                value={state.sailNumber}
-                onChange={(e) => setState({ ...state, sailNumber: e.target.value })}
-              />
-              <input
-                list="boat-names"
-                placeholder="Boat name"
-                value={state.boatName}
-                onChange={(e) => setState({ ...state, boatName: e.target.value })}
-              />
+          {/* Parties & Witness — one box, Witness edited first (user's
+              call), but Copy still outputs the fixed document order
+              (Parties, then Witness — format.ts's formatFullDecision). */}
+          <CopyBox
+            label="Parties & Witness"
+            text={`${formatParties(liveCase)}\n\n${formatWitnesses(liveCase)}`}
+            copied={!!copied.parties && !!copied.witness}
+            onCopied={() => {
+              markCopied('parties');
+              markCopied('witness');
+            }}
+          >
+            <h3>Witness</h3>
+            <ul className="list">
+              {witnessDraft.map((w, i) => (
+                <li key={`${w.id ?? 'new'}-${i}`}>
+                  {w.fullName}
+                  {w.role ? ` — ${w.role}` : ''}{' '}
+                  <button type="button" onClick={() => handleUnstageWitness(i)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+              {witnessDraft.length === 0 && <li className="muted">No witnesses yet.</li>}
+            </ul>
+            <form onSubmit={handleStageWitness} className="inline-form">
               <input
                 list="people-list"
-                placeholder="Represented by"
-                value={state.representedBy}
-                onChange={(e) => setState({ ...state, representedBy: e.target.value })}
+                placeholder="Full name"
+                value={witnessName}
+                onChange={(e) => setWitnessName(e.target.value)}
+                required
               />
-              <button type="button" onClick={() => saveParty(role)}>
-                Save
-              </button>
-            </div>
-          );
-        })}
-        <datalist id="boat-sail-numbers">
-          {boats.map((b) => (
-            <option key={b.id} value={b.sail_number} />
-          ))}
-        </datalist>
-        <datalist id="boat-names">
-          {boats.map((b) => b.boat_name && <option key={b.id} value={b.boat_name} />)}
-        </datalist>
-        <datalist id="people-list">
-          {people.map((p) => (
-            <option key={p.id} value={p.full_name} />
-          ))}
-        </datalist>
-      </CopyBox>
+              <input placeholder="Role" value={witnessRole} onChange={(e) => setWitnessRole(e.target.value)} />
+              <button type="submit">Add</button>
+            </form>
 
-      {/* 2. Witness */}
-      <CopyBox
-        label="Witness"
-        text={formatWitnesses(liveCase)}
-        copied={!!copied.witness}
-        onCopied={() => markCopied('witness')}
-      >
-        <ul className="list">
-          {caseFull.witnesses.map((w) => (
-            <li key={w.id}>
-              {w.full_name}
-              {w.role ? ` — ${w.role}` : ''}{' '}
-              <button type="button" onClick={() => handleRemoveWitness(w.id)}>
-                Remove
-              </button>
-            </li>
-          ))}
-          {caseFull.witnesses.length === 0 && <li className="muted">No witnesses yet.</li>}
-        </ul>
-        <form onSubmit={handleAddWitness} className="inline-form">
-          <input
-            list="people-list"
-            placeholder="Full name"
-            value={witnessName}
-            onChange={(e) => setWitnessName(e.target.value)}
-            required
-          />
-          <input placeholder="Role" value={witnessRole} onChange={(e) => setWitnessRole(e.target.value)} />
-          <button type="submit">Add</button>
-        </form>
-      </CopyBox>
+            <h3>Parties</h3>
+            {(['initiator', 'respondent'] as PartyRole[]).map((role) => {
+              const state = role === 'initiator' ? initiator : respondent;
+              const setState = role === 'initiator' ? setInitiator : setRespondent;
+              return (
+                <div key={role} className="party-row">
+                  <strong>{role === 'initiator' ? 'Initiator' : 'Respondent'}</strong>
+                  <input
+                    list="boat-sail-numbers"
+                    placeholder="Sail number"
+                    value={state.sailNumber}
+                    onChange={(e) => setState({ ...state, sailNumber: e.target.value })}
+                  />
+                  <input
+                    list="boat-names"
+                    placeholder="Boat name"
+                    value={state.boatName}
+                    onChange={(e) => setState({ ...state, boatName: e.target.value })}
+                  />
+                  <input
+                    list="people-list"
+                    placeholder="Represented by"
+                    value={state.representedBy}
+                    onChange={(e) => setState({ ...state, representedBy: e.target.value })}
+                  />
+                </div>
+              );
+            })}
+            <p className="muted">Parties and witnesses save with the Save button above.</p>
+            <datalist id="boat-sail-numbers">
+              {boats.map((b) => (
+                <option key={b.id} value={b.sail_number} />
+              ))}
+            </datalist>
+            <datalist id="boat-names">
+              {boats.map((b) => b.boat_name && <option key={b.id} value={b.boat_name} />)}
+            </datalist>
+            <datalist id="people-list">
+              {people.map((p) => (
+                <option key={p.id} value={p.full_name} />
+              ))}
+            </datalist>
+          </CopyBox>
+        </div>
+      )}
+
+      {caseTab === 'jury' && (
+        <div className="tab-panel">
+          {/* Jury Members — the panel sitting on THIS case (D-021), picked
+              from the event's judge pool (Jury utility, top nav) */}
+          <CopyBox
+            label="Jury Members"
+            text={formatJuryMembers(liveCase)}
+            copied={!!copied.jury_members}
+            onCopied={() => markCopied('jury_members')}
+          >
+            <ul className="list">
+              {caseFull.jury.map((j) => (
+                <li key={j.id}>
+                  {j.full_name}
+                  {j.is_chairman ? ' (Chairman)' : ''}{' '}
+                  <button type="button" onClick={() => handleRemoveJury(j.id)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+              {caseFull.jury.length === 0 && <li className="muted">No jury members assigned to this case yet.</li>}
+            </ul>
+            {judgePool.length === 0 ? (
+              <p className="muted">No judges in this event's pool yet — add them from the Jury utility (top nav).</p>
+            ) : (
+              <form onSubmit={handleAddJury} className="inline-form">
+                <input
+                  list="judge-pool-list"
+                  placeholder="Judge name"
+                  value={juryPersonName}
+                  onChange={(e) => setJuryPersonName(e.target.value)}
+                  required
+                />
+                <label>
+                  <input type="checkbox" checked={juryIsChairman} onChange={(e) => setJuryIsChairman(e.target.checked)} />
+                  Chairman
+                </label>
+                <button type="submit">Add to this case</button>
+              </form>
+            )}
+            <datalist id="judge-pool-list">
+              {judgePool.map((p) => (
+                <option key={p.personId} value={p.fullName} />
+              ))}
+            </datalist>
+          </CopyBox>
         </div>
       )}
 
@@ -633,84 +746,6 @@ export function CaseForm({ caseId }: Props) {
           />
         </div>
       </CopyBox>
-        </div>
-      )}
-
-      {caseTab === 'general' && (
-        <div className="tab-panel">
-      {/* 8. Jury Members — the panel sitting on THIS case (D-021), picked
-          from the event's judge pool (Jury utility, top nav) */}
-      <CopyBox
-        label="Jury Members"
-        text={formatJuryMembers(liveCase)}
-        copied={!!copied.jury_members}
-        onCopied={() => markCopied('jury_members')}
-      >
-        <ul className="list">
-          {caseFull.jury.map((j) => (
-            <li key={j.id}>
-              {j.full_name}
-              {j.is_chairman ? ' (Chairman)' : ''}{' '}
-              <button type="button" onClick={() => handleRemoveJury(j.id)}>
-                Remove
-              </button>
-            </li>
-          ))}
-          {caseFull.jury.length === 0 && <li className="muted">No jury members assigned to this case yet.</li>}
-        </ul>
-        {judgePool.length === 0 ? (
-          <p className="muted">No judges in this event's pool yet — add them from the Jury utility (top nav).</p>
-        ) : (
-          <form onSubmit={handleAddJury} className="inline-form">
-            <input
-              list="judge-pool-list"
-              placeholder="Judge name"
-              value={juryPersonName}
-              onChange={(e) => setJuryPersonName(e.target.value)}
-              required
-            />
-            <label>
-              <input type="checkbox" checked={juryIsChairman} onChange={(e) => setJuryIsChairman(e.target.checked)} />
-              Chairman
-            </label>
-            <button type="submit">Add to this case</button>
-          </form>
-        )}
-        <datalist id="judge-pool-list">
-          {judgePool.map((p) => (
-            <option key={p.personId} value={p.fullName} />
-          ))}
-        </datalist>
-      </CopyBox>
-
-      {/* With Case(s) — not part of the fixed box list, but needed to reach it */}
-      <section className="box">
-        <h2>With Case(s)</h2>
-        <ul className="list">
-          {caseFull.linkedCases.map((lc) => (
-            <li key={lc.id}>
-              Case {lc.case_number}{' '}
-              <button type="button" onClick={() => handleRemoveLink(lc.id)}>
-                Unlink
-              </button>
-            </li>
-          ))}
-          {caseFull.linkedCases.length === 0 && <li className="muted">No linked cases.</li>}
-        </ul>
-        <form onSubmit={handleAddLink} className="inline-form">
-          <select value={linkCaseId} onChange={(e) => setLinkCaseId(e.target.value)} required>
-            <option value="">Select a case…</option>
-            {otherCases
-              .filter((c) => !caseFull.linkedCases.some((lc) => lc.id === c.id))
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  Case {c.case_number}
-                </option>
-              ))}
-          </select>
-          <button type="submit">Link</button>
-        </form>
-      </section>
         </div>
       )}
     </div>
