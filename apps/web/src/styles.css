@@ -48,7 +48,66 @@ h3 {
 .app-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 10px;
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85em;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #faf9f6;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  background: var(--paper);
+  border: 1px solid #e7e2d8;
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.login-form h2 {
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85em;
+}
+
+.login-form input {
+  padding: 8px 10px;
+  font-size: 1em;
+  border: 1px solid #e2ddd0;
+  border-radius: 6px;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.login-form button {
+  margin-top: 4px;
+  padding: 8px;
 }
 
 /* Tab systems — shared base, two visual variants below. Buttons stay

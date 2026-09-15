@@ -704,3 +704,59 @@ Not yet decided. Listed so they are not silently forgotten.
   without caching.
 - **Network exposure** of the deployed instance: local network only, or
   reachable from outside. Phase 5.5.
+
+## D-026 · 2026-09-15 · accepted
+### Phase 5.5: login, single admin, cookie sessions
+
+**Options**
+- Admin account creation: seed from `.env` vars vs a manual create-admin
+  script
+- Normal-user permissions: identical to admin except user management,
+  vs isolated to each user's own cases
+- Session mechanism: signed/sealed cookie vs JWT in localStorage
+
+**Decision** (user's explicit call, 2026-09-15)
+- `app_user` table: `username`, `password_hash` (scrypt via `node:crypto`,
+  `"<salt-hex>:<hash-hex>"` — no bcrypt/argon2 dependency), `role`
+  (`admin`/`user`).
+- The one admin account is seeded from `ADMIN_USERNAME`/`ADMIN_PASSWORD`
+  in `.env` (`apps/api/src/db/seedAdmin.ts`, idempotent — same pattern
+  as `ANTHROPIC_API_KEY`). There is no signup screen and no "first user
+  becomes admin" trick; only an admin can create further accounts
+  (`POST /users`, admin-only), and only an admin can create other
+  admins. Deleting the last remaining admin is refused.
+- One shared permission level beyond that: every logged-in user (admin
+  or not) can do everything in the app except manage users — cases,
+  resources, and phrases are not scoped per-user. Simpler data model,
+  matches the user's stated need.
+- Session: `@fastify/secure-session` — an encrypted, sealed cookie
+  (`scribe_session`, `httpOnly`, `sameSite: lax`, 30-day `maxAge`); no
+  server-side session store, the cookie *is* the session, so nothing
+  new to back up or expire server-side. The 32-byte key is derived by
+  hashing `SESSION_SECRET` (any string works, `apps/api/src/auth/
+  session.ts`) — a missing secret falls back to a random key generated
+  at process start (every session invalidated on restart) rather than
+  running with a known, empty key.
+  - `cookie.secure: false` because deployment is plain HTTP on the LAN
+    (`http://192.168.1.105:3000`, no TLS) — a `secure` cookie would
+    never be sent and login would silently not work. Revisit if this
+    ever sits behind HTTPS.
+- Global auth guard (`apps/api/src/auth/guard.ts`): an `onRequest` hook
+  applied to every route except `/health` and `/auth/login`, not a
+  per-route `preHandler` — a new route added later is protected by
+  default instead of by remembering to guard it. `requireAdmin` adds
+  the role check on top, only for `/users/*`.
+  - CORS switched to `credentials: true` (was `origin: true` alone) so
+    the cookie survives the web app and API being on different
+    origins/ports; the frontend's `fetch` calls now send
+    `credentials: 'include'`.
+- Self-service `POST /auth/change-password` (any logged-in user, own
+  account only) — the only way to change a password once
+  `ADMIN_USERNAME`/`ADMIN_PASSWORD` created an account; no admin-side
+  "reset a user's password" yet.
+
+**Consequence:** every route in the app now requires a session except
+`/health` and the login page itself — deploying without
+`ADMIN_USERNAME`/`ADMIN_PASSWORD`/`SESSION_SECRET` set locks everyone
+out (by design, fails closed). Losing/rotating `SESSION_SECRET` logs
+every user out; that's an accepted, documented consequence, not a bug.

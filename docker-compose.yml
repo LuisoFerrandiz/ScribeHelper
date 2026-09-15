@@ -8,6 +8,9 @@ services:
       DATA_DIR: /data
       TZ: ${TZ:-UTC} # RULES.md R-20: never inferred from the host
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
     volumes:
       - /DATA/Proyectos/Scribe_helper/data:/data # RULES.md R-13: all data, and the complete backup
     ports:

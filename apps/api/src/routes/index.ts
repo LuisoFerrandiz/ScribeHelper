@@ -6,8 +6,13 @@ import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
 import { registerCompleteRoute } from './complete.js';
+import { registerAuthRoutes } from './auth.js';
+import { registerUserRoutes } from './users.js';
 
 export function registerRoutes(app: FastifyInstance) {
+  registerAuthRoutes(app);
+  registerUserRoutes(app);
+
   registerCrud(app, 'people', { table: 'person', fields: ['full_name'] });
 
   registerCrud(app, 'events', {

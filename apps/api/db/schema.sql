@@ -211,3 +211,18 @@ CREATE VIRTUAL TABLE IF NOT EXISTS resource_fts USING fts5(
   resource_id UNINDEXED,
   tokenize = 'porter unicode61'
 );
+
+-- Phase 5.5 (CONTEXT.md section 9, D-026): a single admin (seeded from
+-- ADMIN_USERNAME/ADMIN_PASSWORD, apps/api/src/db/seedAdmin.ts) is the
+-- only account allowed to create other users. Every other permission
+-- is identical between roles — this app has one shared set of cases,
+-- not per-user data (user's explicit call: "el resto seran usuarios
+-- normales... unicamente yo sere admin y sere el unico que podra crear
+-- nuevo usuario").
+CREATE TABLE IF NOT EXISTS app_user (
+  id INTEGER PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL, -- scrypt, "<salt-hex>:<hash-hex>" (node:crypto, no extra dependency)
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

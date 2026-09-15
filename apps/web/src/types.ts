@@ -113,6 +113,23 @@ export interface InlineCompletion {
   suggestion: string;
 }
 
+// Phase 5.5: login (D-026). One admin, created from ADMIN_USERNAME/
+// ADMIN_PASSWORD — everyone else is 'user', created only by an admin.
+export type UserRole = 'admin' | 'user';
+
+export interface SessionUser {
+  id: number;
+  username: string;
+  role: UserRole;
+}
+
+export interface UserRow {
+  id: number;
+  username: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';

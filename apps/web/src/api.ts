@@ -18,6 +18,9 @@ import type {
   ResourceRow,
   ResourceSearchHit,
   RuleCitationRow,
+  SessionUser,
+  UserRole,
+  UserRow,
   WitnessRow,
 } from './types';
 
@@ -35,6 +38,15 @@ declare global {
 }
 const API_URL = window.__API_URL__ ?? import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
+// Thrown for any 401 from the API (D-026) — not logged in, or the
+// session expired mid-use. App.tsx catches this anywhere it surfaces
+// and falls back to the login screen instead of showing a raw error.
+export class AuthError extends Error {
+  constructor() {
+    super('not authenticated');
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   // Only set Content-Type when a body is actually going out — Fastify
   // rejects a request that declares 'application/json' with no body
@@ -43,8 +55,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers = options?.body ? { 'Content-Type': 'application/json' } : undefined;
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
+    // The web app and API are on different origins in deployment (D-026)
+    // — without this the session cookie from /auth/login never gets
+    // sent back on later requests.
+    credentials: 'include',
     headers: { ...headers, ...options?.headers },
   });
+  if (res.status === 401 && path !== '/auth/login') throw new AuthError();
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`${options?.method ?? 'GET'} ${path} failed: ${res.status} ${body}`);
@@ -100,7 +117,8 @@ export const api = {
     request<ResourceRow[]>(`/resources?kind=${kind}${status ? `&status=${status}` : ''}`),
   getResource: (id: number) => request<ResourceFull>(`/resources/${id}`),
   uploadResource: async (form: FormData): Promise<ResourceFull> => {
-    const res = await fetch(`${API_URL}/resources`, { method: 'POST', body: form });
+    const res = await fetch(`${API_URL}/resources`, { method: 'POST', body: form, credentials: 'include' });
+    if (res.status === 401) throw new AuthError();
     if (!res.ok) throw new Error(`upload failed: ${res.status} ${await res.text().catch(() => '')}`);
     return res.json();
   },
@@ -122,4 +140,14 @@ export const api = {
   generateDraft: (caseId: number, box: PhraseBox) => post<DraftResult>(`/cases/${caseId}/draft`, { box }),
   completeInline: (caseId: number, box: PhraseBox, text: string) =>
     post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text }),
+
+  login: (username: string, password: string) => post<SessionUser>('/auth/login', { username, password }),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
+  me: () => request<SessionUser | null>('/auth/me'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<void>('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
+
+  listUsers: () => request<UserRow[]>('/users'),
+  createUser: (data: { username: string; password: string; role?: UserRole }) => post<UserRow>('/users', data),
+  deleteUser: (id: number) => del(`/users/${id}`),
 };
