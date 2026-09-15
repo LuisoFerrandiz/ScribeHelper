@@ -402,6 +402,32 @@ annoying in practice.
 
 ---
 
+## D-019 · 2026-09-15 · accepted
+### Events list screen removed; Case screen is the app's entry point
+
+**Options**
+- Keep Events list as the landing screen, Case screen reached by
+  drilling down through it
+- Remove Events list; land directly on the Case screen (its
+  `CaseSelector` already finds-or-creates the regatta, per D-018)
+
+**Decision:** removed. `EventList.tsx` and `EventDetail.tsx` deleted.
+`App.tsx` now holds a flat tab bar (`Case` / `Jury` / `Upload examples` /
+`Upload rules`) instead of a drill-down view stack.
+
+**Why:** during a live regatta the judge works case-by-case; a landing
+list of regattas added a click with no value once the picker already
+covers lookup and creation.
+
+**Consequence:** Jury management (previously part of `EventDetail`) is
+now `JuryPanel.tsx`, a utility reached from the top nav, scoped to
+whichever regatta `CaseSelector` currently has selected (`currentEventId`
+in `App.tsx`). The nav also gets two upload utility buttons for Phase 3
+(`Upload examples`, `Upload rules`), currently `UploadPlaceholder.tsx`
+stubs pending the ingestion backend.
+
+---
+
 ## Open questions
 
 Not yet decided. Listed so they are not silently forgotten.

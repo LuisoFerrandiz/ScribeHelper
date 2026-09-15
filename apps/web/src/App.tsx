@@ -1,52 +1,66 @@
 import { useState } from 'react';
-import { EventList } from './components/EventList';
-import { EventDetail } from './components/EventDetail';
 import { CaseForm } from './components/CaseForm';
 import { CaseSelector } from './components/CaseSelector';
+import { JuryPanel } from './components/JuryPanel';
+import { UploadPlaceholder } from './components/UploadPlaceholder';
 
-type View =
-  | { name: 'events' }
-  | { name: 'event'; eventId: number }
-  | { name: 'case'; caseId: number; eventId: number };
+type Tab = 'case' | 'jury' | 'upload-examples' | 'upload-rules';
 
+// Case screen is the app's entry point (D-018): pick or create a regatta
+// and case from the top selector, no separate Events list. Jury and
+// resource uploads are utilities reached from the top nav, scoped to
+// whichever regatta is currently selected.
 export function App() {
-  const [view, setView] = useState<View>({ name: 'events' });
+  const [tab, setTab] = useState<Tab>('case');
+  const [currentEventId, setCurrentEventId] = useState<number | null>(null);
+  const [currentCaseId, setCurrentCaseId] = useState<number | null>(null);
 
   return (
     <div className="app">
       <header className="app-header">
         <h1>Scribe Helper</h1>
         <nav>
-          {view.name !== 'events' && (
-            <button type="button" onClick={() => setView({ name: 'events' })}>
-              ← Events
-            </button>
-          )}
-          {view.name === 'case' && (
-            <button type="button" onClick={() => setView({ name: 'event', eventId: view.eventId })}>
-              ← Cases
-            </button>
-          )}
+          <button type="button" onClick={() => setTab('case')} disabled={tab === 'case'}>
+            Case
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('jury')}
+            disabled={tab === 'jury' || currentEventId === null}
+          >
+            Jury
+          </button>
+          <button type="button" onClick={() => setTab('upload-examples')} disabled={tab === 'upload-examples'}>
+            Upload examples
+          </button>
+          <button type="button" onClick={() => setTab('upload-rules')} disabled={tab === 'upload-rules'}>
+            Upload rules
+          </button>
         </nav>
       </header>
 
-      {view.name === 'events' && <EventList onOpen={(eventId) => setView({ name: 'event', eventId })} />}
-      {view.name === 'event' && (
-        <EventDetail
-          eventId={view.eventId}
-          onOpenCase={(caseId) => setView({ name: 'case', caseId, eventId: view.eventId })}
-        />
-      )}
-      {view.name === 'case' && (
+      {tab === 'case' && (
         <>
           <CaseSelector
-            eventId={view.eventId}
-            caseId={view.caseId}
-            onSelect={(eventId, caseId) => setView({ name: 'case', caseId, eventId })}
+            eventId={currentEventId}
+            caseId={currentCaseId}
+            onSelect={(eventId, caseId) => {
+              setCurrentEventId(eventId);
+              setCurrentCaseId(caseId);
+            }}
           />
-          <CaseForm caseId={view.caseId} />
+          {currentCaseId !== null ? (
+            <CaseForm caseId={currentCaseId} />
+          ) : (
+            <p className="muted">Pick or create a regatta and case above.</p>
+          )}
         </>
       )}
+
+      {tab === 'jury' && currentEventId !== null && <JuryPanel eventId={currentEventId} />}
+
+      {tab === 'upload-examples' && <UploadPlaceholder title="Upload examples" />}
+      {tab === 'upload-rules' && <UploadPlaceholder title="Upload rules" />}
     </div>
   );
 }

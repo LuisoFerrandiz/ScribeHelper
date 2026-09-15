@@ -3,8 +3,8 @@ import { api } from '../api';
 import type { CaseRow, EventRow } from '../types';
 
 interface Props {
-  eventId: number;
-  caseId: number;
+  eventId: number | null;
+  caseId: number | null;
   onSelect: (eventId: number, caseId: number) => void;
 }
 

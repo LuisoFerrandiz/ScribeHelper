@@ -22,6 +22,12 @@ body {
   margin-bottom: 16px;
 }
 
+.app-header nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .page {
   display: flex;
   flex-direction: column;
