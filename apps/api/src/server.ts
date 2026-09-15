@@ -1,11 +1,10 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
-import secureSession from '@fastify/secure-session';
+import cookie from '@fastify/cookie';
 import { config } from './config.js';
 import { registerRoutes } from './routes/index.js';
 import { registerAuthGuard } from './auth/guard.js';
-import { getSessionKey } from './auth/session.js';
 
 const app = Fastify({ logger: true });
 
@@ -17,11 +16,14 @@ const app = Fastify({ logger: true });
 // ports/origins.
 await app.register(cors, { origin: true, credentials: true });
 
-await app.register(secureSession, {
-  key: getSessionKey(),
-  cookieName: 'scribe_session',
-  cookie: { path: '/', httpOnly: true, sameSite: 'lax', secure: false, maxAge: 60 * 60 * 24 * 30 },
-});
+// @fastify/cookie only parses/sets cookies — the session itself is a
+// signed value (apps/api/src/auth/session.ts), not a plugin-managed
+// store. @fastify/secure-session was tried first but pulls in
+// sodium-native, a native addon whose prebuilt binary doesn't match
+// this image's musl libc (node:24-alpine) and crash-looped the API
+// container in production (2026-09-15). @fastify/cookie has no native
+// dependency at all.
+await app.register(cookie);
 
 registerAuthGuard(app);
 

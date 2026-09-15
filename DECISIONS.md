@@ -760,3 +760,33 @@ Not yet decided. Listed so they are not silently forgotten.
 `ADMIN_USERNAME`/`ADMIN_PASSWORD`/`SESSION_SECRET` set locks everyone
 out (by design, fails closed). Losing/rotating `SESSION_SECRET` logs
 every user out; that's an accepted, documented consequence, not a bug.
+
+**Incident and fix (2026-09-15, same day):** the first version used
+`@fastify/secure-session`, which depends on `sodium-native` for its
+sealed-cookie encryption — a native addon shipped as prebuilt
+platform binaries. In production the API container crash-looped on
+every start:
+
+```
+Error: Cannot find addon '.' imported from
+'file:///app/node_modules/sodium-native/binding.js'
+```
+
+`sodium-native`'s prebuilds don't cover `linux-x64-musl`
+(`node:24-alpine`, this project's base image, D-016's same musl-vs-glibc
+class of gotcha as `better-sqlite3`). The container kept restarting,
+nginx kept serving the last built frontend, and the browser saw
+"Failed to fetch" — nothing pointed at the real cause except the
+container logs.
+
+Fixed by dropping `@fastify/secure-session` entirely for a signed (not
+encrypted) cookie built on `node:crypto` alone (`apps/api/src/auth/
+session.ts`): `"<base64url payload>.<hmac-sha256 hex>"`, verified with
+`timingSafeEqual`. `@fastify/cookie` (pure JS, `cookie` + `fastify-
+plugin` as its only deps) replaces `@fastify/secure-session` for
+parsing/setting the cookie itself. The session payload (`{id, username,
+role}`) has nothing secret in it, so signed-but-readable is an
+acceptable trade for "the client can't forge or alter it" — the same
+reasoning that keeps this project off native dependencies everywhere
+else (`node:sqlite` over `better-sqlite3`, D-016; `node:crypto` scrypt
+over `bcrypt`/`argon2` for passwords, this same D-026).

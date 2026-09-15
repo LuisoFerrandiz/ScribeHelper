@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/connection.js';
 import { hashPassword, verifyPassword } from '../auth/password.js';
-import type { SessionUser } from '../auth/session.js';
+import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, signSession, type SessionUser } from '../auth/session.js';
 
 interface UserRow {
   id: number;
@@ -10,9 +10,10 @@ interface UserRow {
   role: 'admin' | 'user';
 }
 
-// Login/logout/whoami (D-026). Cookie-based session (@fastify/secure-
-// session, registered in server.ts) — the browser sends it automatically
-// on every request, nothing for the frontend to attach by hand.
+// Login/logout/whoami (D-026). Cookie-based session (a signed, not
+// server-stored, cookie — apps/api/src/auth/session.ts) — the browser
+// sends it automatically on every request, nothing for the frontend to
+// attach by hand.
 export function registerAuthRoutes(app: FastifyInstance) {
   app.post('/auth/login', (req, reply) => {
     const { username, password } = req.body as { username?: string; password?: string };
@@ -24,12 +25,18 @@ export function registerAuthRoutes(app: FastifyInstance) {
     }
 
     const user: SessionUser = { id: row.id, username: row.username, role: row.role };
-    req.session.set('user', user);
+    reply.setCookie(SESSION_COOKIE, signSession(user), {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false, // plain HTTP on the LAN (D-026) — revisit if this ever sits behind HTTPS
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
     return user;
   });
 
-  app.post('/auth/logout', (req, reply) => {
-    req.session.delete();
+  app.post('/auth/logout', (_req, reply) => {
+    reply.clearCookie(SESSION_COOKIE, { path: '/' });
     reply.code(204).send();
   });
 

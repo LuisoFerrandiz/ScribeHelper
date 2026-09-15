@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { SessionUser } from './session.js';
+import { SESSION_COOKIE, verifySession, type SessionUser } from './session.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -22,7 +22,7 @@ export function registerAuthGuard(app: FastifyInstance) {
     const path = request.url.split('?')[0];
     if (PUBLIC_PATHS.has(path)) return;
 
-    const user = request.session.get('user');
+    const user = verifySession(request.cookies[SESSION_COOKIE]);
     if (!user) {
       reply.code(401).send({ error: 'not authenticated' });
       return;
