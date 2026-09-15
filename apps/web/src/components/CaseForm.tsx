@@ -319,26 +319,51 @@ export function CaseForm({ caseId }: Props) {
       </div>
       {error && <p className="error">{error}</p>}
 
-      <nav className="case-tabs">
-        <button type="button" onClick={() => setCaseTab('general')} disabled={caseTab === 'general'}>
+      <nav className="tab-bar tab-bar-underline">
+        <button
+          type="button"
+          className={caseTab === 'general' ? 'active' : undefined}
+          aria-current={caseTab === 'general'}
+          onClick={() => setCaseTab('general')}
+        >
           1. General &amp; Parties
         </button>
-        <button type="button" onClick={() => setCaseTab('procedural')} disabled={caseTab === 'procedural'}>
+        <button
+          type="button"
+          className={caseTab === 'procedural' ? 'active' : undefined}
+          aria-current={caseTab === 'procedural'}
+          onClick={() => setCaseTab('procedural')}
+        >
           2. Procedural Matters
         </button>
-        <button type="button" onClick={() => setCaseTab('facts')} disabled={caseTab === 'facts'}>
+        <button
+          type="button"
+          className={caseTab === 'facts' ? 'active' : undefined}
+          aria-current={caseTab === 'facts'}
+          onClick={() => setCaseTab('facts')}
+        >
           3. Facts Found
         </button>
-        <button type="button" onClick={() => setCaseTab('conclusion')} disabled={caseTab === 'conclusion'}>
+        <button
+          type="button"
+          className={caseTab === 'conclusion' ? 'active' : undefined}
+          aria-current={caseTab === 'conclusion'}
+          onClick={() => setCaseTab('conclusion')}
+        >
           4. Conclusion
         </button>
-        <button type="button" onClick={() => setCaseTab('decision')} disabled={caseTab === 'decision'}>
+        <button
+          type="button"
+          className={caseTab === 'decision' ? 'active' : undefined}
+          aria-current={caseTab === 'decision'}
+          onClick={() => setCaseTab('decision')}
+        >
           5. Decision
         </button>
       </nav>
 
       {caseTab === 'general' && (
-        <>
+        <div className="tab-panel">
       <form onSubmit={handleSaveCase} className="case-meta">
         <label>
           Case number
@@ -448,11 +473,11 @@ export function CaseForm({ caseId }: Props) {
           <button type="submit">Add</button>
         </form>
       </CopyBox>
-        </>
+        </div>
       )}
 
       {caseTab === 'procedural' && (
-        <>
+        <div className="tab-panel">
       {/* 3. Procedural Matters */}
       <CopyBox
         label="Procedural Matters"
@@ -478,11 +503,11 @@ export function CaseForm({ caseId }: Props) {
           onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </CopyBox>
-        </>
+        </div>
       )}
 
       {caseTab === 'facts' && (
-        <>
+        <div className="tab-panel">
       {/* 4. Facts Found */}
       <CopyBox
         label="Facts Found"
@@ -502,11 +527,11 @@ export function CaseForm({ caseId }: Props) {
           onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </CopyBox>
-        </>
+        </div>
       )}
 
       {caseTab === 'conclusion' && (
-        <>
+        <div className="tab-panel">
       {/* 5. Conclusion */}
       <CopyBox
         label="Conclusion"
@@ -576,11 +601,11 @@ export function CaseForm({ caseId }: Props) {
           </ul>
         </div>
       </CopyBox>
-        </>
+        </div>
       )}
 
       {caseTab === 'decision' && (
-        <>
+        <div className="tab-panel">
       {/* 7. Decision */}
       <CopyBox
         label="Decision"
@@ -600,11 +625,11 @@ export function CaseForm({ caseId }: Props) {
           onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
         />
       </CopyBox>
-        </>
+        </div>
       )}
 
       {caseTab === 'general' && (
-        <>
+        <div className="tab-panel">
       {/* 8. Jury Members — the panel sitting on THIS case (D-021), picked
           from the event's judge pool (Jury utility, top nav) */}
       <CopyBox
@@ -678,7 +703,7 @@ export function CaseForm({ caseId }: Props) {
           <button type="submit">Link</button>
         </form>
       </section>
-        </>
+        </div>
       )}
     </div>
   );

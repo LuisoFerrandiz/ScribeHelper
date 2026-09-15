@@ -18,21 +18,39 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <nav>
-          <button type="button" onClick={() => setTab('case')} disabled={tab === 'case'}>
+        <nav className="tab-bar tab-bar-pill">
+          <button
+            type="button"
+            className={tab === 'case' ? 'active' : undefined}
+            aria-current={tab === 'case'}
+            onClick={() => setTab('case')}
+          >
             Case
           </button>
           <button
             type="button"
+            className={tab === 'jury' ? 'active' : undefined}
+            aria-current={tab === 'jury'}
             onClick={() => setTab('jury')}
-            disabled={tab === 'jury' || currentEventId === null}
+            disabled={currentEventId === null}
+            title={currentEventId === null ? 'Pick a regatta on the Case tab first' : undefined}
           >
             Jury
           </button>
-          <button type="button" onClick={() => setTab('upload-examples')} disabled={tab === 'upload-examples'}>
+          <button
+            type="button"
+            className={tab === 'upload-examples' ? 'active' : undefined}
+            aria-current={tab === 'upload-examples'}
+            onClick={() => setTab('upload-examples')}
+          >
             Upload examples
           </button>
-          <button type="button" onClick={() => setTab('upload-rules')} disabled={tab === 'upload-rules'}>
+          <button
+            type="button"
+            className={tab === 'upload-rules' ? 'active' : undefined}
+            aria-current={tab === 'upload-rules'}
+            onClick={() => setTab('upload-rules')}
+          >
             Upload rules
           </button>
         </nav>

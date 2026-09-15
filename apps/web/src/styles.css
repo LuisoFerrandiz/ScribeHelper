@@ -32,15 +32,106 @@ h3 {
   margin-bottom: 10px;
 }
 
-.app-header nav {
+/* Tab systems — shared base, two visual variants below. Buttons stay
+   always clickable (no `disabled` on the active one: disabled reads as
+   "unavailable", not "you are here") and switch state via `.active`. */
+.tab-bar {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
-.app-header nav button {
-  padding: 4px 8px;
+.tab-bar button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tab-bar button:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+.tab-bar button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Pill / segmented-control style — the top utility nav. */
+.tab-bar-pill {
+  background: #e9e9e6;
+  padding: 3px;
+  border-radius: 8px;
+  display: inline-flex;
+}
+
+.tab-bar-pill button {
+  padding: 5px 12px;
   font-size: 0.85em;
+  border-radius: 6px;
+}
+
+.tab-bar-pill button:hover:not(.active):not(:disabled) {
+  color: #222;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.tab-bar-pill button.active {
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Underline style — sequential form sections (case tabs). */
+.tab-bar-underline {
+  border-bottom: 1px solid #ddd;
+  gap: 4px;
+}
+
+.tab-bar-underline button {
+  padding: 7px 10px 8px;
+  font-size: 0.85em;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-bar-underline button:hover:not(.active):not(:disabled) {
+  color: #333;
+}
+
+.tab-bar-underline button.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+@keyframes tab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-panel {
+  animation: tab-panel-in 0.16s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-bar button,
+  .tab-panel {
+    animation: none;
+    transition: none;
+  }
 }
 
 .page {
@@ -79,17 +170,6 @@ h3 {
 .inline-form select {
   padding: 4px 6px;
   font-size: 0.9em;
-}
-
-.case-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.case-tabs button {
-  padding: 4px 8px;
-  font-size: 0.85em;
 }
 
 .case-header {
