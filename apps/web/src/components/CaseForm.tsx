@@ -5,6 +5,7 @@ import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
 import { PhrasePicker } from './PhrasePicker';
 import {
+  buildDecisionFilename,
   formatFullDecision,
   formatJuryMembers,
   formatParties,
@@ -326,26 +327,26 @@ export function CaseForm({ caseId }: Props) {
     decision,
   };
 
-  async function handleCopyAll() {
-    await navigator.clipboard.writeText(formatFullDecision(liveCase));
-    setCopied({
-      parties: true,
-      witness: true,
-      procedural_matters: true,
-      facts_found: true,
-      conclusion: true,
-      rules_applicable: true,
-      decision: true,
-      jury_members: true,
-    });
+  // D-005 follow-up: single-click .md export of the full decision, in the
+  // same fixed section order as the per-box Copy buttons, built from the
+  // live (possibly unsaved) case data — replaces the old "Copy all" button.
+  function handleDownload() {
+    const text = formatFullDecision(liveCase);
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = buildDecisionFilename(liveCase);
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
     <div className="page">
       <div className="case-header">
         <h2>Case {caseFull.event.name} — {caseNumber || '(no number)'}</h2>
-        <button type="button" onClick={handleCopyAll}>
-          Copy all (form order)
+        <button type="button" className="btn-accent" onClick={handleDownload}>
+          Download decision (.md)
         </button>
       </div>
       {error && <p className="error">{error}</p>}

@@ -57,3 +57,18 @@ export function formatFullDecision(c: CaseFull): string {
   ];
   return sections.map(([label, text]) => `${label}\n${text}`).join('\n\n');
 }
+
+function slugify(s: string): string {
+  return s.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9-]/g, '');
+}
+
+// D-005 follow-up: filename for the downloadable .md export — regatta name,
+// case number zero-padded to 2 digits, today's date. case_number is free
+// text, so pull the first number out of it rather than assume its shape.
+export function buildDecisionFilename(c: CaseFull): string {
+  const eventSlug = slugify(c.event.name) || 'Event';
+  const numMatch = c.case_number.match(/\d+/);
+  const caseNum = numMatch ? numMatch[0].padStart(2, '0') : slugify(c.case_number);
+  const date = new Date().toISOString().slice(0, 10);
+  return `${eventSlug}-Case${caseNum}-${date}.md`;
+}

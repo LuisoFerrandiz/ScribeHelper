@@ -104,6 +104,18 @@ copy-all button.
 **Revisit when:** export is wanted. This is a deliberate deferral, not a
 rejection.
 
+**Follow-up (2026-09-16):** export was wanted — connected the wire this
+deferral anticipated. The "Copy all (form order)" button in `CaseForm.tsx`
+is replaced by a "Download decision (.md)" button: it builds
+`formatFullDecision(liveCase)` (same fixed section order, unchanged) into a
+`Blob` and triggers a browser download, no server round-trip. Plain
+Markdown, not .docx — no new dependency, no library-licensing question,
+matching this decision's own reasoning for not doing the harder export.
+Filename convention (`format.ts`'s `buildDecisionFilename`): `<event
+name>-Case<NN>-<date>.md`, e.g. `OG-Case01-2026-09-16.md` — regatta name
+slugified, case number's first digit run zero-padded to 2 digits, today's
+date. Per-box Copy buttons are unchanged.
+
 ---
 
 ## D-006 · 2026-09-11 · accepted
