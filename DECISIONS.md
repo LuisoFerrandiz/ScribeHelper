@@ -116,6 +116,23 @@ name>-Case<NN>-<date>.md`, e.g. `OG-Case01-2026-09-16.md` — regatta name
 slugified, case number's first digit run zero-padded to 2 digits, today's
 date. Per-box Copy buttons are unchanged.
 
+**Follow-up (2026-09-16, second):** switched the export from plain `.md`
+to a single self-contained `.html` file (`formatFullDecisionHtml` in
+`format.ts`), for richer formatting than markdown — bold labels, tables,
+line breaks — closer to the source Word template
+(`Template_Jurydecision.docx`). Still no new dependency, still built and
+downloaded entirely client-side (inline `<style>`, no JS, no external
+assets); opens in any browser and prints to PDF via the browser's own
+Print dialog. Layout follows the template's header table (Case/Day/With
+Case(s)/Race), Parties/Witness tables, and boxed free-text sections, but
+keeps the app's own canonical labels/order over the template's wording
+(Initiator/Respondent not Protestor/Protestee, Facts Found not Fact
+Founds, Conclusion and Rules Applicable kept as two sections) — same
+principle as this decision's original text. Fields present in some
+template variants but absent from the data model (Validity, Case Summary,
+Class/Group, signatures, Scribe role) are not included. Filename extension
+changed from `.md` to `.html`; the naming convention itself is unchanged.
+
 ---
 
 ## D-006 · 2026-09-11 · accepted

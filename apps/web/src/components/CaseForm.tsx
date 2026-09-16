@@ -6,7 +6,7 @@ import { GhostTextarea } from './GhostTextarea';
 import { PhrasePicker } from './PhrasePicker';
 import {
   buildDecisionFilename,
-  formatFullDecision,
+  formatFullDecisionHtml,
   formatJuryMembers,
   formatParties,
   formatRulesApplicable,
@@ -327,12 +327,12 @@ export function CaseForm({ caseId }: Props) {
     decision,
   };
 
-  // D-005 follow-up: single-click .md export of the full decision, in the
-  // same fixed section order as the per-box Copy buttons, built from the
-  // live (possibly unsaved) case data — replaces the old "Copy all" button.
+  // D-005 follow-up: single-click .html export of the full decision,
+  // matching the source Word template's layout, built from the live
+  // (possibly unsaved) case data — replaces the old "Copy all" button.
   function handleDownload() {
-    const text = formatFullDecision(liveCase);
-    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const html = formatFullDecisionHtml(liveCase);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -400,7 +400,7 @@ export function CaseForm({ caseId }: Props) {
         </button>
       </nav>
         <button type="button" className="btn-accent" onClick={handleDownload}>
-          Download decision (.md)
+          Download decision (.html)
         </button>
       </div>
 
