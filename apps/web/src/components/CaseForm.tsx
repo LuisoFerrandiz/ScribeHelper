@@ -348,7 +348,8 @@ export function CaseForm({ caseId }: Props) {
       </div>
       {error && <p className="error">{error}</p>}
 
-      <nav className="tab-bar tab-bar-pill">
+      <div className="tab-bar-row">
+        <nav className="tab-bar tab-bar-pill">
         <button
           type="button"
           className={caseTab === 'general' ? 'active' : undefined}
@@ -398,6 +399,10 @@ export function CaseForm({ caseId }: Props) {
           6. Decision
         </button>
       </nav>
+        <button type="button" className="btn-accent" onClick={handleDownload}>
+          Download decision (.md)
+        </button>
+      </div>
 
       {caseTab === 'general' && (
         <div className="tab-panel">
@@ -735,11 +740,6 @@ export function CaseForm({ caseId }: Props) {
         text={decision}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
-        actions={
-          <button type="button" className="btn-accent" onClick={handleDownload}>
-            Download decision (.md)
-          </button>
-        }
       >
         <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
         <div className="box-tools">

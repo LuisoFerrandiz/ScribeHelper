@@ -119,6 +119,14 @@ h3 {
   flex-wrap: wrap;
 }
 
+.tab-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .tab-bar button {
   appearance: none;
   border: none;
@@ -363,12 +371,6 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-}
-
-.box-header-actions {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
