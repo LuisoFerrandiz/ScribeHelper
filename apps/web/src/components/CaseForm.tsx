@@ -345,9 +345,6 @@ export function CaseForm({ caseId }: Props) {
     <div className="page">
       <div className="case-header">
         <h2>Case {caseFull.event.name} — {caseNumber || '(no number)'}</h2>
-        <button type="button" className="btn-accent" onClick={handleDownload}>
-          Download decision (.md)
-        </button>
       </div>
       {error && <p className="error">{error}</p>}
 
@@ -738,6 +735,11 @@ export function CaseForm({ caseId }: Props) {
         text={decision}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
+        actions={
+          <button type="button" className="btn-accent" onClick={handleDownload}>
+            Download decision (.md)
+          </button>
+        }
       >
         <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
         <div className="box-tools">

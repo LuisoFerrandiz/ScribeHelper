@@ -366,6 +366,12 @@ h3 {
   gap: 8px;
 }
 
+.box-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .box-collapse-toggle {
   appearance: none;
   border: none;
@@ -651,4 +657,44 @@ textarea:focus {
 .case-selector input[placeholder='Case #'] {
   flex: 1;
   min-width: 80px;
+}
+
+/* Browsable regatta/case tree below the quick selector — click a case to
+   open it directly, no need to retype its name/number. */
+.case-browser {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.case-browser > li > strong {
+  font-size: 0.9em;
+}
+
+.case-browser ul {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+}
+
+.case-browser button {
+  appearance: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  padding: 4px 10px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.case-browser button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.case-browser button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }

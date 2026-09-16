@@ -69,35 +69,62 @@ export function CaseSelector({ eventId, caseId, onSelect }: Props) {
   }
 
   return (
-    <div className="case-selector">
-      <input
-        list="selector-events"
-        placeholder="Regatta"
-        value={eventName}
-        onChange={(e) => setEventName(e.target.value)}
-      />
-      <datalist id="selector-events">
-        {events.map((e) => (
-          <option key={e.id} value={e.name} />
-        ))}
-      </datalist>
+    <>
+      <div className="case-selector">
+        <input
+          list="selector-events"
+          placeholder="Regatta"
+          value={eventName}
+          onChange={(e) => setEventName(e.target.value)}
+        />
+        <datalist id="selector-events">
+          {events.map((e) => (
+            <option key={e.id} value={e.name} />
+          ))}
+        </datalist>
 
-      <input
-        list="selector-cases"
-        placeholder="Case #"
-        value={caseNumber}
-        onChange={(e) => setCaseNumber(e.target.value)}
-      />
-      <datalist id="selector-cases">
-        {casesForEvent.map((c) => (
-          <option key={c.id} value={c.case_number} />
-        ))}
-      </datalist>
+        <input
+          list="selector-cases"
+          placeholder="Case #"
+          value={caseNumber}
+          onChange={(e) => setCaseNumber(e.target.value)}
+        />
+        <datalist id="selector-cases">
+          {casesForEvent.map((c) => (
+            <option key={c.id} value={c.case_number} />
+          ))}
+        </datalist>
 
-      <button type="button" onClick={handleGo} disabled={busy}>
-        Go
-      </button>
-      {error && <span className="error">{error}</span>}
-    </div>
+        <button type="button" onClick={handleGo} disabled={busy}>
+          Go
+        </button>
+        {error && <span className="error">{error}</span>}
+      </div>
+
+      {events.length > 0 && (
+        <ul className="list case-browser">
+          {events.map((e) => (
+            <li key={e.id}>
+              <strong>{e.name}</strong>
+              <ul className="list">
+                {allCases
+                  .filter((c) => c.event_id === e.id)
+                  .map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        className={c.id === caseId ? 'active' : undefined}
+                        onClick={() => onSelect(e.id, c.id)}
+                      >
+                        Case {c.case_number}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

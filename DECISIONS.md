@@ -412,6 +412,15 @@ before. No backend changes: purely client-side find-or-create against
 or a case's event assignment after auto-creation. Revisit if this proves
 annoying in practice.
 
+**Follow-up (2026-09-16):** typing into the datalist fields wasn't enough —
+the user wanted to see and click every regatta/case, not just recall one by
+typed name. Added a plain browsable tree under the picker in
+`CaseSelector.tsx`: events as headers, their cases as click-to-open buttons
+(active one highlighted). No new screen, no route — this stays inside
+`CaseSelector`, consistent with D-019's removal of a separate Events list
+screen; it only makes the picker's own data (already fetched via
+`api.listEvents`/`api.listCases`) visible instead of typed-only.
+
 ---
 
 ## D-019 · 2026-09-15 · accepted

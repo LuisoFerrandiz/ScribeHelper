@@ -6,6 +6,7 @@ interface CopyBoxProps {
   copied: boolean;
   onCopied: () => void;
   children: ReactNode;
+  actions?: ReactNode;
 }
 
 // One section of the decision form (RULES.md R-29: labels and order are
@@ -14,7 +15,7 @@ interface CopyBoxProps {
 // so a wide screen with several boxes open at once can be tidied down
 // to just the titles — collapsing never hides the Copy button, so a
 // box can still be copied without opening it.
-export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProps) {
+export function CopyBox({ label, text, copied, onCopied, children, actions }: CopyBoxProps) {
   const [failed, setFailed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -44,9 +45,12 @@ export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProp
             {copied && <span className="copied-badge"> ✓ Copied</span>}
           </h2>
         </button>
-        <button type="button" onClick={handleCopy}>
-          Copy
-        </button>
+        <div className="box-header-actions">
+          <button type="button" onClick={handleCopy}>
+            Copy
+          </button>
+          {actions}
+        </div>
       </div>
       <div className="box-body" hidden={collapsed}>
         {children}
