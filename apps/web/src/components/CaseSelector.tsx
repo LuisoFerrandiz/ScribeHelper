@@ -20,10 +20,12 @@ export function CaseSelector({ eventId, caseId, onSelect }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api.listEvents(), api.listCases()]).then(([evs, cs]) => {
-      setEvents(evs);
-      setAllCases(cs);
-    });
+    Promise.all([api.listEvents(), api.listCases()])
+      .then(([evs, cs]) => {
+        setEvents(evs);
+        setAllCases(cs);
+      })
+      .catch((e) => setError((e as Error).message));
   }, []);
 
   useEffect(() => {

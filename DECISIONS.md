@@ -860,3 +860,29 @@ verify the running container's actual port binding (`docker inspect`,
 or just try reaching the port) — a partial Portainer stack update can
 rebuild the image while silently leaving the old container's network
 config in place.
+
+**Follow-up (2026-09-17): cross-origin cookie broke on any access path
+other than the LAN IP.** `cookie.secure: false` was already documented
+above as LAN-only; the same fixed LAN IP baked into the *frontend's* API
+address (`docker-compose.yml`'s `API_URL`, written into `config.js` by
+`apps/web/docker-entrypoint.d/40-scribe-config.sh`, read by
+`apps/web/src/api.ts`) turned out to have a second, worse consequence:
+`sameSite: 'lax'` cookies are dropped by the browser on cross-*site*
+fetches (same IP-different port still counts as same-site; a different
+IP, e.g. reaching the app over Tailscale, does not). So login "worked"
+(`Login.tsx` sets the user straight from the response body) while every
+later authenticated call 401'd invisibly — `CaseSelector.tsx`'s
+`Promise.all([...]).then(...)` had no `.catch`, so cases/examples just
+showed up empty with no error.
+
+**Fix:** stopped configuring a separate API host at all. `apps/web/
+nginx.conf` (new) now reverse-proxies `/api/` to the `api` container
+(Compose service-name DNS), and the frontend calls that relative path by
+default. The browser only ever talks to the one origin it already used
+to load the page, so the session cookie is always same-site regardless
+of LAN/Tailscale/whatever address reaches the box — no more per-network
+`API_URL` to remember to change. `API_URL` still exists as an explicit
+override (R-16) but defaults to `/api` instead of a hardcoded LAN IP.
+Also added the missing `.catch` in `CaseSelector.tsx` so an auth/network
+failure surfaces a visible error next time, instead of a silent empty
+list.
