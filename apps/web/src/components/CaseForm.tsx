@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
-import { AIDraftPanel } from './AIDraftPanel';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
-import { PhrasePicker } from './PhrasePicker';
+import { SuggestionsPanel } from './SuggestionsPanel';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
@@ -753,54 +752,30 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
       >
-        <GhostTextarea
-          caseId={caseId}
-          box="procedural_matters"
-          value={proceduralMatters}
-          onChange={setProceduralMatters}
-          rows={4}
-        />
-        <div className="box-tools">
-          {autoProceduralLines.length > 0 && (
-            <div className="party-witness-lines">
-              {autoProceduralLines.map((line, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() =>
-                    setProceduralMatters((prev) => (prev ? `${prev}\n\n${line}` : line))
-                  }
-                >
-                  + {line}
-                </button>
-              ))}
-            </div>
-          )}
-          {!!extraction?.procedural_matters_candidate && (
-            <button
-              type="button"
-              onClick={() =>
-                setProceduralMatters((prev) =>
-                  prev
-                    ? `${prev}\n\n${extraction.procedural_matters_candidate}`
-                    : extraction.procedural_matters_candidate,
-                )
-              }
-            >
-              + From protest form
-            </button>
-          )}
-          <PhrasePicker
-            box="procedural_matters"
-            currentText={proceduralMatters}
-            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
-          <AIDraftPanel
-            caseId={caseId}
-            box="procedural_matters"
-            currentText={proceduralMatters}
-            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
+        <div className="box-body-split">
+          <div className="textarea-col">
+            <GhostTextarea
+              caseId={caseId}
+              box="procedural_matters"
+              value={proceduralMatters}
+              onChange={setProceduralMatters}
+              rows={4}
+            />
+          </div>
+          <div className="suggestions-col">
+            <SuggestionsPanel
+              caseId={caseId}
+              box="procedural_matters"
+              currentText={proceduralMatters}
+              onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              protestForm={{
+                lines: autoProceduralLines,
+                paragraph: extraction?.procedural_matters_candidate
+                  ? { label: 'From protest form', text: extraction.procedural_matters_candidate }
+                  : undefined,
+              }}
+            />
+          </div>
         </div>
       </CopyBox>
         </div>
@@ -815,32 +790,19 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.facts_found}
         onCopied={() => markCopied('facts_found')}
       >
-        <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
-        <div className="box-tools">
-          {extraction && extraction.facts_found_candidates.length > 0 && (
-            <div className="party-witness-lines">
-              {extraction.facts_found_candidates.map((fact, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setFactsFound((prev) => (prev ? `${prev}\n\n${fact}` : fact))}
-                >
-                  + {fact}
-                </button>
-              ))}
-            </div>
-          )}
-          <PhrasePicker
-            box="facts_found"
-            currentText={factsFound}
-            onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
-          <AIDraftPanel
-            caseId={caseId}
-            box="facts_found"
-            currentText={factsFound}
-            onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
+        <div className="box-body-split">
+          <div className="textarea-col">
+            <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
+          </div>
+          <div className="suggestions-col">
+            <SuggestionsPanel
+              caseId={caseId}
+              box="facts_found"
+              currentText={factsFound}
+              onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              protestForm={{ lines: extraction?.facts_found_candidates }}
+            />
+          </div>
         </div>
       </CopyBox>
         </div>
@@ -856,7 +818,19 @@ export function CaseForm({ caseId }: Props) {
           copied={!!copied.conclusion}
           onCopied={() => markCopied('conclusion')}
         >
-          <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
+          <div className="box-body-split">
+            <div className="textarea-col">
+              <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
+            </div>
+            <div className="suggestions-col">
+              <SuggestionsPanel
+                caseId={caseId}
+                box="conclusion"
+                currentText={conclusion}
+                onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              />
+            </div>
+          </div>
         </CopyBox>
 
         {/* 6. Rules Applicable */}
@@ -909,20 +883,6 @@ export function CaseForm({ caseId }: Props) {
           </div>
         </CopyBox>
       </div>
-
-      <div className="box-tools">
-        <PhrasePicker
-          box="conclusion"
-          currentText={conclusion}
-          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-        <AIDraftPanel
-          caseId={caseId}
-          box="conclusion"
-          currentText={conclusion}
-          onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-        />
-      </div>
         </div>
       )}
 
@@ -935,19 +895,18 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
       >
-        <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
-        <div className="box-tools">
-          <PhrasePicker
-            box="decision"
-            currentText={decision}
-            onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
-          <AIDraftPanel
-            caseId={caseId}
-            box="decision"
-            currentText={decision}
-            onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-          />
+        <div className="box-body-split">
+          <div className="textarea-col">
+            <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
+          </div>
+          <div className="suggestions-col">
+            <SuggestionsPanel
+              caseId={caseId}
+              box="decision"
+              currentText={decision}
+              onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+            />
+          </div>
         </div>
       </CopyBox>
         </div>

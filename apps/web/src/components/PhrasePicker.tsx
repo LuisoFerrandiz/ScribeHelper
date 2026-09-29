@@ -10,18 +10,19 @@ interface Props {
 
 // Phase 2 phrase library (CONTEXT.md section 6, D-022): browse/search
 // reusable wording for this box, insert it, or save the box's current
-// text as a new phrase of your own. Deterministic — no AI.
+// text as a new phrase of your own. Deterministic — no AI. Mounted only
+// while its SuggestionsPanel section is expanded, so the browse list
+// loads on mount rather than behind its own open/close toggle.
 export function PhrasePicker({ box, currentText, onInsert }: Props) {
   const [query, setQuery] = useState('');
   const [browse, setBrowse] = useState<PhraseRow[]>([]);
   const [hits, setHits] = useState<PhraseSearchHit[]>([]);
-  const [open, setOpen] = useState(false);
   const [label, setLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) api.listPhrases(box).then(setBrowse);
-  }, [box, open]);
+    api.listPhrases(box).then(setBrowse);
+  }, [box]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -40,7 +41,7 @@ export function PhrasePicker({ box, currentText, onInsert }: Props) {
     try {
       await api.createPhrase({ box, label: label.trim(), body: currentText.trim() });
       setLabel('');
-      if (open) setBrowse(await api.listPhrases(box));
+      setBrowse(await api.listPhrases(box));
     } finally {
       setSaving(false);
     }
@@ -49,40 +50,25 @@ export function PhrasePicker({ box, currentText, onInsert }: Props) {
   const shown = query.trim() ? hits : browse;
 
   return (
-    <div className="phrase-picker">
-      <button type="button" onClick={() => setOpen((o) => !o)}>
-        {open ? 'Hide phrases' : 'Phrases'}
-      </button>
-      {open && (
-        <div className="phrase-picker-panel">
-          <input
-            placeholder="Search phrases…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <ul className="list">
-            {shown.map((p) => (
-              <li key={p.id}>
-                <button type="button" onClick={() => onInsert(p.body)}>
-                  {p.label || p.body.slice(0, 40)}
-                </button>
-                {p.origin === 'own' && <span className="muted"> (own)</span>}
-              </li>
-            ))}
-            {shown.length === 0 && <li className="muted">No phrases for this box yet.</li>}
-          </ul>
-          <div className="inline-form">
-            <input
-              placeholder="Label (optional)"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-            <button type="button" onClick={handleSave} disabled={saving || !currentText.trim()}>
-              Save current text as phrase
+    <div className="phrase-picker-panel">
+      <input placeholder="Search phrases…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <ul className="list">
+        {shown.map((p) => (
+          <li key={p.id}>
+            <button type="button" onClick={() => onInsert(p.body)}>
+              {p.label || p.body.slice(0, 40)}
             </button>
-          </div>
-        </div>
-      )}
+            {p.origin === 'own' && <span className="muted"> (own)</span>}
+          </li>
+        ))}
+        {shown.length === 0 && <li className="muted">No phrases for this box yet.</li>}
+      </ul>
+      <div className="inline-form">
+        <input placeholder="Label (optional)" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <button type="button" onClick={handleSave} disabled={saving || !currentText.trim()}>
+          Save current text as phrase
+        </button>
+      </div>
     </div>
   );
 }

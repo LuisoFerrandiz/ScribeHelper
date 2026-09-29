@@ -489,26 +489,72 @@ textarea:focus {
   .two-col {
     grid-template-columns: 1fr;
   }
+
+  .box-body-split {
+    flex-direction: column;
+  }
+
+  .suggestions-col {
+    flex: 1 1 auto;
+    width: 100%;
+  }
 }
 
-/* Phrases + AI draft toggles sit on one row instead of stacking as two
-   separate full-width blocks; each one's dropdown panel still opens
-   below its own button, inside its own column. */
-.box-tools {
+/* Textarea + suggestions sidebar, side by side on wide screens (stacks
+   on narrow ones — see the @media block above). */
+.box-body-split {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.box-tools > * {
-  flex: 1 1 220px;
+.textarea-col {
+  flex: 1 1 60%;
+  min-width: 0;
 }
 
-.phrase-picker > button {
-  font-size: 0.8em;
-  padding: 3px 8px;
+.suggestions-col {
+  flex: 0 0 280px;
+}
+
+/* Protest form / Phrases / AI draft — three independently collapsible
+   sources of insertable text in the sidebar. */
+.suggestions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.suggestions-section-toggle {
+  appearance: none;
+  background: none;
+  border: 1px solid #e7e2d8;
+  border-radius: 4px;
   width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
+.suggestions-section-chevron {
+  display: inline-block;
+  width: 1em;
+}
+
+.suggestions-section-body {
+  margin-top: 4px;
+}
+
+.suggestions-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggestions-lines > button {
+  text-align: left;
+  font-size: 0.85em;
 }
 
 .phrase-picker-panel {
@@ -535,12 +581,6 @@ textarea:focus {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px dashed #ddd;
-}
-
-.ai-draft-panel > button {
-  font-size: 0.8em;
-  padding: 3px 8px;
-  width: 100%;
 }
 
 .ai-draft-panel-body {
