@@ -886,3 +886,67 @@ override (R-16) but defaults to `/api` instead of a hardcoded LAN IP.
 Also added the missing `.catch` in `CaseSelector.tsx` so an auth/network
 failure surfaces a visible error next time, instead of a silent empty
 list.
+
+---
+
+## D-027 · 2026-09-29 · accepted
+### Case attachments: protest form uploads, own pipeline (not resources.ts)
+
+**Options**
+- Reuse the `resource` table/pipeline (`kind`, upload → convert → review
+  → accept/reject, FTS indexing)
+- A separate, simpler `case_attachment` table: upload → convert → store,
+  no review gate, no indexing
+- Store the file only, no conversion (defer Markdown conversion to when
+  extraction is actually built)
+- One attachment per case vs. several
+
+**Decision** (user's explicit call, 2026-09-29)
+- New `case_attachment` table (`apps/api/db/schema.sql`), separate from
+  `resource`. Case attachments are not one of the three material stores
+  (CONTEXT.md §6, D-007): not citable authority, not a style sample, not
+  reusable wording — they belong to one case only. Merging them into
+  `resource` would blur that distinction for no benefit; `resource`'s
+  `kind`/`layer`/`scope` branching and `resource_fts` indexing don't
+  apply here at all.
+- No review/accept-reject gate, unlike `resource`. A bad conversion of a
+  case attachment doesn't cause a wrong citation the way a bad rules
+  conversion would (CONTEXT.md §7: "Review matters most in `rules/`"),
+  so the extra step buys nothing here.
+- **Converted to Markdown on upload anyway**, reusing
+  `apps/api/src/resources/convert.ts`'s `convertToMarkdown` unchanged
+  (same PDF/`.docx`/`.xlsx`/`.md` support, same "no OCR" rule, D-010) —
+  the user's stated reason: smaller footprint than keeping only the
+  original, and readable text ready for whenever extraction-to-
+  suggestions gets built (not this phase). For a file type the function
+  doesn't support (e.g. an image), conversion is skipped instead of
+  failing the upload — `markdown_path` stays `NULL`, original still
+  stored. The `conversion_empty` flag (`resource`'s "looks like a
+  scanned PDF" signal) carries over so the UI can still warn.
+- **Several attachments per case**, not one — matches real cases heard
+  together with more than one protest form (e.g. the Snipe example in
+  `data/examples/own`, Request No. 01 and 02 under one hearing).
+- New own tab in the case form, **"0. Protest Form(s)"**, before
+  "1. General & Parties" — not a box inside that tab (user's explicit
+  call). Upload is immediate on file selection, no queue, no format
+  restriction on the `<input>` (any file type accepted, per the user:
+  "cualquier formato").
+- Table named `case_attachment`, not `protest_form` — leaves room for a
+  second attachment kind later (e.g. damage photos) without a schema
+  rewrite, same forward-compatible-column pattern as `case_type` ahead
+  of redress (D-001). Nothing currently distinguishes attachment kinds;
+  every row is a protest form in practice for now.
+
+**Consequence:** `GET /cases/:id/full` now also returns `attachments`
+(id, filename, `conversion_empty`, upload date) — one more join, same
+shape as `parties`/`witnesses`/etc. New routes:
+`POST /cases/:caseId/attachments`, `GET /attachments/:id/file`
+(download, original bytes), `DELETE /attachments/:id`. Storage lives at
+`data/case_attachments/originals/` (original) and
+`data/case_attachments/` (converted `.md`), own directory, not mixed
+into `data/rules/` or `data/examples/`.
+
+**Not built yet, by design:** nothing reads the stored Markdown for
+suggestions. That's the reason for converting now — so a later phase
+can read cheap text instead of re-parsing PDFs — but this phase only
+stores and serves the file.

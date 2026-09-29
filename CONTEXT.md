@@ -4,7 +4,7 @@
 > is deliberately left out. For *why* things were decided the way they were,
 > see `DECISIONS.md`. For the non-negotiable working rules, see `RULES.md`.
 
-Last updated: 2026-09-11
+Last updated: 2026-09-29
 
 ---
 
@@ -168,6 +168,22 @@ itself.
 
 **A phrase is never presented as a rule.** Three stores, three treatments.
 
+### Case attachments — a fourth, separate concept
+
+Protest form(s) uploaded per case, on their own tab ("0. Protest
+Form(s)", before "1. General & Parties"). Several per case (a hearing
+can cover more than one request). Converted to Markdown on upload for a
+smaller footprint and to be readable later (DECISIONS.md D-027), but
+**not** a fourth material store: not citable, not a style sample, not
+reusable wording, not indexed for search. It belongs to one case only.
+No review/accept-reject gate, unlike `rules/`/`examples/` — a bad
+conversion here doesn't risk a wrong citation the way one in `rules/`
+would.
+
+Not yet read by anything. Storing it as Markdown now is preparation for
+a later phase that reads it to help suggest wording in the four
+human-written boxes — not built yet.
+
 ## 7. Ingestion
 
 Files enter as **PDF, Excel, Word, or Markdown**. They are **always stored
@@ -238,6 +254,8 @@ scribe_helper/
       base/             # ships with the project
       own/              # uploaded by the user
     phrases/
+    case_attachments/   # protest forms, per-case, not a material store
+      originals/
     originals/          # source files kept alongside their .md
     db/                 # excluded from file sync
 ```

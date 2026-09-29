@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
 import { AIDraftPanel } from './AIDraftPanel';
 import { CopyBox } from './CopyBox';
@@ -10,7 +10,6 @@ import {
   formatFullDecisionHtml,
   formatJuryMembers,
   formatParties,
-  formatProceduralMatters,
   formatRulesApplicable,
   formatWitnesses,
 } from '../format';
@@ -77,6 +76,9 @@ export function CaseForm({ caseId }: Props) {
   const [witnessName, setWitnessName] = useState('');
   const [witnessRole, setWitnessRole] = useState('');
 
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
   const [ruleText, setRuleText] = useState('');
   const [ruleQuery, setRuleQuery] = useState('');
   const [ruleHits, setRuleHits] = useState<ResourceSearchHit[]>([]);
@@ -90,7 +92,7 @@ export function CaseForm({ caseId }: Props) {
 
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
-  type CaseTab = 'general' | 'jury' | 'procedural' | 'facts' | 'conclusion' | 'decision';
+  type CaseTab = 'attachments' | 'general' | 'jury' | 'procedural' | 'facts' | 'conclusion' | 'decision';
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
 
   async function reload() {
@@ -316,6 +318,30 @@ export function CaseForm({ caseId }: Props) {
     await reload();
   }
 
+  // Tab 0: protest form(s) for this case (DECISIONS.md D-027). Any
+  // format, uploaded immediately on selection — no queue/review, unlike
+  // the resource (rules/examples) upload flow.
+  async function handleUploadAttachment(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingAttachment(true);
+    try {
+      await api.uploadCaseAttachment(caseId, file);
+      await reload();
+      setError(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setUploadingAttachment(false);
+    }
+  }
+
+  async function handleRemoveAttachment(id: number) {
+    await api.deleteCaseAttachment(id);
+    await reload();
+  }
+
   if (!caseFull) return <p>Loading…</p>;
 
   // Live view: saved structured data plus whatever is currently typed in
@@ -353,6 +379,14 @@ export function CaseForm({ caseId }: Props) {
 
       <div className="tab-bar-row">
         <nav className="tab-bar tab-bar-pill">
+        <button
+          type="button"
+          className={caseTab === 'attachments' ? 'active' : undefined}
+          aria-current={caseTab === 'attachments'}
+          onClick={() => setCaseTab('attachments')}
+        >
+          0. Protest Form(s)
+        </button>
         <button
           type="button"
           className={caseTab === 'general' ? 'active' : undefined}
@@ -406,6 +440,49 @@ export function CaseForm({ caseId }: Props) {
           Download decision (.html)
         </button>
       </div>
+
+      {caseTab === 'attachments' && (
+        <div className="tab-panel">
+          <section className="box">
+            <h2>Protest Form(s)</h2>
+            <p className="muted">
+              Any file format — scan, photo, PDF. Converted to Markdown when possible for later
+              use; the original is always kept.
+            </p>
+            <ul className="list">
+              {caseFull.attachments.map((a) => (
+                <li key={a.id}>
+                  <a href={api.attachmentFileUrl(a.id)} download>
+                    {a.original_filename}
+                  </a>{' '}
+                  <span className="muted">{new Date(a.uploaded_at).toLocaleString()}</span>
+                  {!!a.conversion_empty && (
+                    <span className="error"> — empty conversion, check original</span>
+                  )}{' '}
+                  <button type="button" onClick={() => handleRemoveAttachment(a.id)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+              {caseFull.attachments.length === 0 && <li className="muted">No files uploaded yet.</li>}
+            </ul>
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              onChange={handleUploadAttachment}
+              disabled={uploadingAttachment}
+              hidden
+            />
+            <button
+              type="button"
+              onClick={() => attachmentInputRef.current?.click()}
+              disabled={uploadingAttachment}
+            >
+              {uploadingAttachment ? 'Uploading…' : 'Upload file'}
+            </button>
+          </section>
+        </div>
+      )}
 
       {caseTab === 'general' && (
         <div className="tab-panel">
@@ -600,17 +677,10 @@ export function CaseForm({ caseId }: Props) {
       {/* 3. Procedural Matters */}
       <CopyBox
         label="Procedural Matters"
-        text={formatProceduralMatters(liveCase)}
+        text={proceduralMatters}
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
       >
-        {autoProceduralLines.length > 0 && (
-          <ol className="auto-procedural-lines">
-            {autoProceduralLines.map((line, i) => (
-              <li key={i}>{line}</li>
-            ))}
-          </ol>
-        )}
         <GhostTextarea
           caseId={caseId}
           box="procedural_matters"
@@ -619,6 +689,21 @@ export function CaseForm({ caseId }: Props) {
           rows={4}
         />
         <div className="box-tools">
+          {autoProceduralLines.length > 0 && (
+            <div className="party-witness-lines">
+              {autoProceduralLines.map((line, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() =>
+                    setProceduralMatters((prev) => (prev ? `${prev}\n\n${line}` : line))
+                  }
+                >
+                  + {line}
+                </button>
+              ))}
+            </div>
+          )}
           <PhrasePicker
             box="procedural_matters"
             currentText={proceduralMatters}

@@ -1,5 +1,6 @@
 import type {
   BoatRow,
+  CaseAttachmentRow,
   CaseFull,
   CaseLinkRow,
   CaseRow,
@@ -112,6 +113,21 @@ export const api = {
 
   createCaseLink: (data: CaseLinkRow) => post<CaseLinkRow>('/case-links', data),
   deleteCaseLink: (data: CaseLinkRow) => del('/case-links', data),
+
+  uploadCaseAttachment: async (caseId: number, file: File): Promise<CaseAttachmentRow> => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_URL}/cases/${caseId}/attachments`, {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+    });
+    if (res.status === 401) throw new AuthError();
+    if (!res.ok) throw new Error(`upload failed: ${res.status} ${await res.text().catch(() => '')}`);
+    return res.json();
+  },
+  deleteCaseAttachment: (id: number) => del(`/attachments/${id}`),
+  attachmentFileUrl: (id: number) => `${API_URL}/attachments/${id}/file`,
 
   listResources: (kind: ResourceKind, status?: string) =>
     request<ResourceRow[]>(`/resources?kind=${kind}${status ? `&status=${status}` : ''}`),

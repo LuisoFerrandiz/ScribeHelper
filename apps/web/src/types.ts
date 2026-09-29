@@ -81,6 +81,15 @@ export interface CaseLinkRow {
   linked_case_id: number;
 }
 
+// Files uploaded against one case (protest forms, for now — DECISIONS.md
+// D-027). Not one of the three material stores (CONTEXT.md section 6).
+export interface CaseAttachmentRow {
+  id: number;
+  original_filename: string;
+  conversion_empty: 0 | 1;
+  uploaded_at: string;
+}
+
 export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
 
 export interface PhraseRow {
@@ -174,4 +183,5 @@ export interface CaseFull extends CaseRow {
   witnesses: { id: number; role: string | null; full_name: string }[];
   ruleCitations: { id: number; rule_reference: string; position: number }[];
   linkedCases: { id: number; case_number: string }[];
+  attachments: CaseAttachmentRow[];
 }

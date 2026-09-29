@@ -55,6 +55,13 @@ export function registerCaseDetailRoute(app: FastifyInstance) {
       )
       .all(id);
 
-    return { ...caseRow, event, jury, parties, witnesses, ruleCitations, linkedCases };
+    const attachments = db
+      .prepare(
+        `SELECT id, original_filename, conversion_empty, uploaded_at
+         FROM case_attachment WHERE case_id = ? ORDER BY uploaded_at`,
+      )
+      .all(id);
+
+    return { ...caseRow, event, jury, parties, witnesses, ruleCitations, linkedCases, attachments };
   });
 }

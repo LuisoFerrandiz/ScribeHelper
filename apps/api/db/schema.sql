@@ -126,6 +126,27 @@ CREATE INDEX IF NOT EXISTS idx_party_case ON party(case_id);
 CREATE INDEX IF NOT EXISTS idx_witness_case ON witness(case_id);
 CREATE INDEX IF NOT EXISTS idx_case_rule_citation_case ON case_rule_citation(case_id);
 
+-- Files uploaded against one case (protest forms, for now) — not one of
+-- the three material stores (CONTEXT.md section 6): not citable
+-- authority, not a style sample, not reusable wording, belongs to one
+-- case only. Converted to Markdown on upload (reuses
+-- apps/api/src/resources/convert.ts, same as rules/examples) so it can
+-- be read cheaply later; kept for reference now, future phases may read
+-- it for suggestions. Named generically so a second attachment kind
+-- later (e.g. damage photos) needs no schema change (same pattern as
+-- case_type ahead of redress, D-001).
+CREATE TABLE IF NOT EXISTS case_attachment (
+  id INTEGER PRIMARY KEY,
+  case_id INTEGER NOT NULL REFERENCES protest_case(id) ON DELETE CASCADE,
+  original_filename TEXT NOT NULL,
+  original_path TEXT NOT NULL, -- data/case_attachments/originals/<basename>-<uuid>.<ext>, always kept
+  markdown_path TEXT, -- data/case_attachments/<basename>-<uuid>.md; NULL when the file type has no converter
+  conversion_empty INTEGER NOT NULL DEFAULT 0 CHECK (conversion_empty IN (0, 1)),
+  uploaded_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_case_attachment_case ON case_attachment(case_id);
+
 -- Phase 2: reusable wording fragments (CONTEXT.md section 6, `phrases/`).
 -- Tagged by which of the 4 human-written boxes they belong to. Never
 -- presented as a rule (D-007) — even when the wording cites a rule number,
