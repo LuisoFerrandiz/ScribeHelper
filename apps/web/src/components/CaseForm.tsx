@@ -13,7 +13,15 @@ import {
   formatRulesApplicable,
   formatWitnesses,
 } from '../format';
-import type { BoatRow, CaseFull, CaseRow, PartyRole, PersonRow, ResourceSearchHit } from '../types';
+import type {
+  AttachmentExtraction,
+  BoatRow,
+  CaseFull,
+  CaseRow,
+  PartyRole,
+  PersonRow,
+  ResourceSearchHit,
+} from '../types';
 
 interface PoolEntry {
   personId: number;
@@ -78,6 +86,8 @@ export function CaseForm({ caseId }: Props) {
 
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const [extraction, setExtraction] = useState<AttachmentExtraction | null>(null);
+  const [extracting, setExtracting] = useState(false);
 
   const [ruleText, setRuleText] = useState('');
   const [ruleQuery, setRuleQuery] = useState('');
@@ -342,6 +352,37 @@ export function CaseForm({ caseId }: Props) {
     await reload();
   }
 
+  // Manual "Process" (D-027 follow-up) — reads the uploaded protest
+  // form(s) and returns candidate suggestions for other boxes. Never
+  // writes anything itself; the drafter inserts what's useful.
+  async function handleProcessAttachments() {
+    setExtracting(true);
+    setError(null);
+    try {
+      setExtraction(await api.extractAttachments(caseId));
+    } catch (err) {
+      setError((err as Error).message);
+      setExtraction(null);
+    } finally {
+      setExtracting(false);
+    }
+  }
+
+  function useSuggestedParty(role: PartyRole) {
+    const suggested = extraction?.parties[role];
+    if (!suggested) return;
+    const setState = role === 'initiator' ? setInitiator : setRespondent;
+    setState({
+      sailNumber: suggested.sail_number ?? '',
+      boatName: suggested.boat_name ?? '',
+      representedBy: suggested.represented_by ?? '',
+    });
+  }
+
+  function addSuggestedWitness(w: { full_name: string; role?: string }) {
+    setWitnessDraft((prev) => [...prev, { id: null, fullName: w.full_name, role: w.role ?? '' }]);
+  }
+
   if (!caseFull) return <p>Loading…</p>;
 
   // Live view: saved structured data plus whatever is currently typed in
@@ -479,7 +520,20 @@ export function CaseForm({ caseId }: Props) {
               disabled={uploadingAttachment}
             >
               {uploadingAttachment ? 'Uploading…' : 'Upload file'}
+            </button>{' '}
+            <button
+              type="button"
+              onClick={handleProcessAttachments}
+              disabled={extracting || caseFull.attachments.length === 0}
+            >
+              {extracting ? 'Processing…' : 'Process'}
             </button>
+            {extraction && (
+              <p className="muted">
+                Processed. Suggestions from it are offered on the General &amp; Parties and
+                Procedural Matters tabs — nothing was inserted automatically.
+              </p>
+            )}
           </section>
         </div>
       )}
@@ -577,6 +631,11 @@ export function CaseForm({ caseId }: Props) {
                     value={state.representedBy}
                     onChange={(e) => setState({ ...state, representedBy: e.target.value })}
                   />
+                  {extraction?.parties[role] && (
+                    <button type="button" onClick={() => useSuggestedParty(role)}>
+                      Use suggested
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -594,6 +653,19 @@ export function CaseForm({ caseId }: Props) {
               ))}
               {witnessDraft.length === 0 && <li className="muted">No witnesses yet.</li>}
             </ul>
+            {extraction && extraction.witnesses.length > 0 && (
+              <ul className="list">
+                {extraction.witnesses.map((w, i) => (
+                  <li key={i}>
+                    Suggested: {w.full_name}
+                    {w.role ? ` — ${w.role}` : ''}{' '}
+                    <button type="button" onClick={() => addSuggestedWitness(w)}>
+                      Add
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <form onSubmit={handleStageWitness} className="inline-form">
               <input
                 list="people-list"
@@ -703,6 +775,20 @@ export function CaseForm({ caseId }: Props) {
                 </button>
               ))}
             </div>
+          )}
+          {!!extraction?.procedural_matters_candidate && (
+            <button
+              type="button"
+              onClick={() =>
+                setProceduralMatters((prev) =>
+                  prev
+                    ? `${prev}\n\n${extraction.procedural_matters_candidate}`
+                    : extraction.procedural_matters_candidate,
+                )
+              }
+            >
+              + From protest form
+            </button>
           )}
           <PhrasePicker
             box="procedural_matters"

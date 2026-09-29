@@ -1,4 +1,5 @@
 import type {
+  AttachmentExtraction,
   BoatRow,
   CaseAttachmentRow,
   CaseFull,
@@ -128,6 +129,8 @@ export const api = {
   },
   deleteCaseAttachment: (id: number) => del(`/attachments/${id}`),
   attachmentFileUrl: (id: number) => `${API_URL}/attachments/${id}/file`,
+  extractAttachments: (caseId: number) =>
+    post<AttachmentExtraction>(`/cases/${caseId}/extract-attachments`, {}),
 
   listResources: (kind: ResourceKind, status?: string) =>
     request<ResourceRow[]>(`/resources?kind=${kind}${status ? `&status=${status}` : ''}`),

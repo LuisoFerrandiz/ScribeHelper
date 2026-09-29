@@ -90,6 +90,23 @@ export interface CaseAttachmentRow {
   uploaded_at: string;
 }
 
+// "Process" result (DECISIONS.md D-027 follow-up) — candidate
+// suggestions pulled from the case's uploaded protest form(s). Never
+// written to the case automatically; the drafter inserts what's useful
+// box by box.
+export interface AttachmentExtraction {
+  parties: {
+    initiator?: { sail_number?: string; boat_name?: string; represented_by?: string };
+    respondent?: { sail_number?: string; boat_name?: string; represented_by?: string };
+  };
+  witnesses: { full_name: string; role?: string }[];
+  procedural_matters_candidate: string;
+  facts_found_candidate: string;
+  conclusion_candidate: string;
+  decision_candidate: string;
+  rule_citations_candidate: string[];
+}
+
 export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
 
 export interface PhraseRow {

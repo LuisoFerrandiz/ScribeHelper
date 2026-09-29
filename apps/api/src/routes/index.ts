@@ -3,6 +3,7 @@ import { registerCrud } from './crud.js';
 import { registerCaseLinkRoutes } from './caseLinks.js';
 import { registerCaseDetailRoute } from './caseDetail.js';
 import { registerCaseAttachmentRoutes } from './caseAttachments.js';
+import { registerExtractAttachmentsRoute } from './extractAttachments.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
@@ -71,6 +72,7 @@ export function registerRoutes(app: FastifyInstance) {
   registerCaseLinkRoutes(app);
   registerCaseDetailRoute(app);
   registerCaseAttachmentRoutes(app);
+  registerExtractAttachmentsRoute(app);
   registerResourceRoutes(app);
   registerPhraseRoutes(app);
   registerDraftRoute(app);
