@@ -97,9 +97,38 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
     .join('\n')
     .trim();
 
+  return parseExtraction(text);
+}
+
+// The model is told to return JSON only, but sometimes wraps it in a
+// ```json fence or adds a stray sentence anyway — strip a fence if
+// present, then fall back to the first {...} block before giving up.
+function parseExtraction(text: string): AttachmentExtraction {
+  const unfenced = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  let parsed: Partial<AttachmentExtraction>;
   try {
-    return JSON.parse(text) as AttachmentExtraction;
+    parsed = JSON.parse(unfenced);
   } catch {
-    throw new Error('extraction did not return valid JSON');
+    const start = unfenced.indexOf('{');
+    const end = unfenced.lastIndexOf('}');
+    if (start === -1 || end <= start) throw new Error('extraction did not return valid JSON');
+    try {
+      parsed = JSON.parse(unfenced.slice(start, end + 1));
+    } catch {
+      throw new Error('extraction did not return valid JSON');
+    }
   }
+
+  // The model is also told to omit fields it found nothing for — normalize
+  // to a guaranteed shape here so the frontend never has to guard against
+  // an absent array/object.
+  return {
+    parties: parsed.parties ?? {},
+    witnesses: parsed.witnesses ?? [],
+    procedural_matters_candidate: parsed.procedural_matters_candidate ?? '',
+    facts_found_candidate: parsed.facts_found_candidate ?? '',
+    conclusion_candidate: parsed.conclusion_candidate ?? '',
+    decision_candidate: parsed.decision_candidate ?? '',
+    rule_citations_candidate: parsed.rule_citations_candidate ?? [],
+  };
 }
