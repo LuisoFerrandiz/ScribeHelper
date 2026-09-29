@@ -56,8 +56,8 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
     JSON.stringify(
       {
         parties: {
-          initiator: { sail_number: 'string', boat_name: 'string', represented_by: 'string' },
-          respondent: { sail_number: 'string', boat_name: 'string', represented_by: 'string' },
+          initiator: { sail_number: 'e.g. "ITA 32004", country + number', boat_name: 'string', represented_by: 'string' },
+          respondent: { sail_number: 'e.g. "ITA 32004", country + number', boat_name: 'string', represented_by: 'string' },
         },
         witnesses: [{ full_name: 'string', role: 'string' }],
         procedural_matters_candidate: 'string',
@@ -79,7 +79,10 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
     system:
       'You extract information from race protest forms for a protest committee scribe. ' +
       'Use only what the form(s) actually state — never invent a boat, person, rule, or ' +
-      'fact. Which party is "initiator" (the one filing the protest) and which is ' +
+      'fact. A sail number ALWAYS includes its country/national letters, e.g. "ITA 32004", ' +
+      'never the bare number "32004" alone — everywhere a sail number appears (parties, ' +
+      'witnesses, facts, procedural matters), write it with its country prefix, exactly as ' +
+      'the form gives it. Which party is "initiator" (the one filing the protest) and which is ' +
       '"respondent" (protested against) must be clear from the form; if it is not clear, ' +
       'omit the parties field entirely rather than guessing. ' +
       'facts_found_candidate is the account reported BY THE PARTY who filed the form — it ' +
