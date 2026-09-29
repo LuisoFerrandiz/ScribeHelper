@@ -85,6 +85,12 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
       'the form gives it. Which party is "initiator" (the one filing the protest) and which is ' +
       '"respondent" (protested against) must be clear from the form; if it is not clear, ' +
       'omit the parties field entirely rather than guessing. ' +
+      'boat_name is only an actual vessel name — a PERSON\'S NAME IS NEVER a boat_name. ' +
+      'Forms often list a party as "<class> - <sail number> - <person name>", e.g. ' +
+      '"Boys\' Dinghy ILCA4 - JPN 228221 - MORI Ikuto": here "MORI Ikuto" is a person and ' +
+      'goes in represented_by (sail_number: "JPN 228221"), never in boat_name. Only put a ' +
+      'name in boat_name if the form explicitly labels it as the boat\'s name, not a ' +
+      'person filing or sailing it. ' +
       'facts_found_candidate is the account reported BY THE PARTY who filed the form — it ' +
       'is not a verified finding; a protest committee\'s actual Facts Found are decided ' +
       'after a hearing, not copied from one party\'s account. Word it accordingly (e.g. ' +
