@@ -102,6 +102,7 @@ export interface AttachmentExtraction {
   witnesses: { full_name: string; role?: string }[];
   procedural_matters_candidate: string;
   facts_found_candidate: string;
+  facts_found_candidates: string[];
   conclusion_candidate: string;
   decision_candidate: string;
   rule_citations_candidate: string[];

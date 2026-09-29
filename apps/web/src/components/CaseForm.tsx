@@ -817,6 +817,19 @@ export function CaseForm({ caseId }: Props) {
       >
         <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
         <div className="box-tools">
+          {extraction && extraction.facts_found_candidates.length > 0 && (
+            <div className="party-witness-lines">
+              {extraction.facts_found_candidates.map((fact, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setFactsFound((prev) => (prev ? `${prev}\n\n${fact}` : fact))}
+                >
+                  + {fact}
+                </button>
+              ))}
+            </div>
+          )}
           <PhrasePicker
             box="facts_found"
             currentText={factsFound}

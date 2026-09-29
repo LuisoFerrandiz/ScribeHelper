@@ -10,6 +10,7 @@ export interface AttachmentExtraction {
   witnesses: { full_name: string; role?: string }[];
   procedural_matters_candidate: string;
   facts_found_candidate: string;
+  facts_found_candidates: string[]; // discrete, one-per-entry, click-to-insert facts
   conclusion_candidate: string;
   decision_candidate: string;
   rule_citations_candidate: string[];
@@ -61,6 +62,7 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
         witnesses: [{ full_name: 'string', role: 'string' }],
         procedural_matters_candidate: 'string',
         facts_found_candidate: 'string',
+        facts_found_candidates: ['string'],
         conclusion_candidate: 'string',
         decision_candidate: 'string',
         rule_citations_candidate: ['string'],
@@ -84,6 +86,17 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
       'is not a verified finding; a protest committee\'s actual Facts Found are decided ' +
       'after a hearing, not copied from one party\'s account. Word it accordingly (e.g. ' +
       '"According to the protestor, ..."), never as an established fact. ' +
+      'facts_found_candidates is a separate breakdown of the SAME material into individual ' +
+      'discrete facts — read the entire form, not just one field of it (description of ' +
+      'incident, damage, remarks, anywhere a fact appears). One clause or event per entry, ' +
+      'short and objective, e.g. "32004 and 31929 were OCS in race 1.", "There was a ' +
+      'collision between 32004 and 31929.", "32004 retired from races 1 and 2." — never ' +
+      'combine more than one fact into a single entry. Keep sail numbers, boat names, rule ' +
+      'references, and numbers exactly as given; translate only the surrounding prose. ' +
+      'ALWAYS write every entry in English, even when the form itself is in another ' +
+      'language. Order entries roughly as the form reports them, not reordered by ' +
+      'importance. Same grounding rule as everywhere else: never invent a fact not in the ' +
+      'form. ' +
       'conclusion_candidate and decision_candidate are almost always empty, since a protest ' +
       'form is filed before the hearing, not after — only fill them if the form itself ' +
       'already documents a conclusion or decision (e.g. a re-submitted or annotated form). ' +
@@ -127,6 +140,7 @@ function parseExtraction(text: string): AttachmentExtraction {
     witnesses: parsed.witnesses ?? [],
     procedural_matters_candidate: parsed.procedural_matters_candidate ?? '',
     facts_found_candidate: parsed.facts_found_candidate ?? '',
+    facts_found_candidates: parsed.facts_found_candidates ?? [],
     conclusion_candidate: parsed.conclusion_candidate ?? '',
     decision_candidate: parsed.decision_candidate ?? '',
     rule_citations_candidate: parsed.rule_citations_candidate ?? [],
