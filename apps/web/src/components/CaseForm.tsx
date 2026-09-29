@@ -6,9 +6,11 @@ import { GhostTextarea } from './GhostTextarea';
 import { PhrasePicker } from './PhrasePicker';
 import {
   buildDecisionFilename,
+  formatAutoProceduralLines,
   formatFullDecisionHtml,
   formatJuryMembers,
   formatParties,
+  formatProceduralMatters,
   formatRulesApplicable,
   formatWitnesses,
 } from '../format';
@@ -326,6 +328,7 @@ export function CaseForm({ caseId }: Props) {
     conclusion,
     decision,
   };
+  const autoProceduralLines = formatAutoProceduralLines(liveCase);
 
   // D-005 follow-up: single-click .html export of the full decision,
   // matching the source Word template's layout, built from the live
@@ -597,10 +600,17 @@ export function CaseForm({ caseId }: Props) {
       {/* 3. Procedural Matters */}
       <CopyBox
         label="Procedural Matters"
-        text={proceduralMatters}
+        text={formatProceduralMatters(liveCase)}
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
       >
+        {autoProceduralLines.length > 0 && (
+          <ol className="auto-procedural-lines">
+            {autoProceduralLines.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ol>
+        )}
         <GhostTextarea
           caseId={caseId}
           box="procedural_matters"

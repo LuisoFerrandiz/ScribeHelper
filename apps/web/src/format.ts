@@ -27,6 +27,32 @@ export function formatWitnesses(c: CaseFull): string {
   return c.witnesses.map((w) => `${w.full_name}${w.role ? ` — ${w.role}` : ''}`).join('\n');
 }
 
+// Procedural Matters auto-lines: one per represented party and one per
+// witness, generated from structured data so the scribe never types them
+// by hand. Generic on purpose (no role, no "on behalf of") — the scribe
+// adds that detail as free text below, per their own instruction.
+export function formatAutoProceduralLines(c: CaseFull): string[] {
+  const roles: Array<'initiator' | 'respondent'> = ['initiator', 'respondent'];
+  const partyLines = roles.flatMap((role) => {
+    const p = c.parties.find((x) => x.role === role);
+    if (!p || !p.represented_by) return [];
+    const boat = [p.sail_number, p.boat_name].filter(Boolean).join(' ') || capitalize(role);
+    return [`${boat} was represented by ${p.represented_by}.`];
+  });
+  const witnessLines = c.witnesses.map((w) => `${w.full_name} gave evidence as a witness.`);
+  return [...partyLines, ...witnessLines];
+}
+
+// Procedural Matters box content: auto-lines (numbered, live from parties/
+// witnesses) followed by whatever the scribe typed in the free-text box.
+export function formatProceduralMatters(c: CaseFull): string {
+  const autoLines = formatAutoProceduralLines(c);
+  const autoBlock = autoLines.map((line, i) => `${i + 1}. ${line}`).join('\n');
+  const manual = c.procedural_matters.trim();
+  if (autoBlock && manual) return `${autoBlock}\n\n${manual}`;
+  return autoBlock || manual || '—';
+}
+
 export function formatRulesApplicable(c: CaseFull): string {
   if (c.ruleCitations.length === 0) return '—';
   return [...c.ruleCitations]
@@ -48,7 +74,7 @@ export function formatFullDecision(c: CaseFull): string {
   const sections: Array<[string, string]> = [
     ['Parties', formatParties(c)],
     ['Witness', formatWitnesses(c)],
-    ['Procedural Matters', c.procedural_matters || '—'],
+    ['Procedural Matters', formatProceduralMatters(c)],
     ['Facts Found', c.facts_found || '—'],
     ['Conclusion', c.conclusion || '—'],
     ['Rules Applicable', formatRulesApplicable(c)],
@@ -176,7 +202,7 @@ export function formatFullDecisionHtml(c: CaseFull): string {
   ${witnessRows}
 </table>
 
-${box('Procedural Matters:', c.procedural_matters)}
+${box('Procedural Matters:', formatProceduralMatters(c))}
 ${box('Facts Found:', c.facts_found)}
 ${box('Conclusion:', c.conclusion)}
 ${box('Rules applicable:', formatRulesApplicable(c))}
