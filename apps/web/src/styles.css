@@ -612,6 +612,25 @@ textarea:focus {
   gap: 6px;
 }
 
+/* SPEC-006 RF-006 — always visible, not a collapsible section like the
+   rest of the panel; just highlights as the drafter types. */
+.party-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid #e7e2d8;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.party-reference-row.highlight {
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin: -1px -4px;
+}
+
 .suggestions-section-toggle {
   appearance: none;
   background: none;

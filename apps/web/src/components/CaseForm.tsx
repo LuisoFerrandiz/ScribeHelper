@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
@@ -87,6 +87,17 @@ export function CaseForm({ caseId }: Props) {
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [extraction, setExtraction] = useState<AttachmentExtraction | null>(null);
   const [extracting, setExtracting] = useState(false);
+
+  // Stable identity across renders — GhostTextarea's useEffect depends on
+  // this array, and a fresh one every render would re-run it (clearing
+  // any visible ghost-text) on every keystroke elsewhere in the form.
+  const sailNumberRoles = useMemo(
+    () => [
+      ...(initiator.sailNumber ? [{ sailNumber: initiator.sailNumber, role: 'initiator' as const }] : []),
+      ...(respondent.sailNumber ? [{ sailNumber: respondent.sailNumber, role: 'respondent' as const }] : []),
+    ],
+    [initiator.sailNumber, respondent.sailNumber],
+  );
 
   const [ruleText, setRuleText] = useState('');
   const [ruleQuery, setRuleQuery] = useState('');
@@ -792,7 +803,14 @@ export function CaseForm({ caseId }: Props) {
       >
         <div className="box-body-split">
           <div className="textarea-col">
-            <GhostTextarea caseId={caseId} box="facts_found" value={factsFound} onChange={setFactsFound} rows={6} />
+            <GhostTextarea
+              caseId={caseId}
+              box="facts_found"
+              value={factsFound}
+              onChange={setFactsFound}
+              rows={6}
+              sailNumberRoles={sailNumberRoles}
+            />
           </div>
           <div className="suggestions-col">
             <SuggestionsPanel
@@ -801,6 +819,10 @@ export function CaseForm({ caseId }: Props) {
               currentText={factsFound}
               onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
               protestForm={{ lines: extraction?.facts_found_candidates }}
+              partyReference={{
+                initiator: { sailNumber: initiator.sailNumber, boatName: initiator.boatName },
+                respondent: { sailNumber: respondent.sailNumber, boatName: respondent.boatName },
+              }}
             />
           </div>
         </div>
