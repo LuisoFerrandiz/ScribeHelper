@@ -56,6 +56,14 @@ propone, rellena, busca y formatea.
 - **La aplicación no asume que el usuario es el dueño.** Si hace falta
   autenticación es cuestión de configuración, no de reescribir la
   aplicación. (`DECISIONS.md` D-003, D-012)
+- **Separar UX de lógica de programación — en el código y en el orden
+  de trabajo.** Los componentes (`apps/web/src/components/*.tsx`) solo
+  presentan y disparan acciones; cálculo, formato y lógica de negocio
+  viven en helpers aparte (`format.ts` es el patrón ya existente). Al
+  construir una pantalla nueva, la experiencia de usuario (flujo,
+  textos, qué ve el usuario) se define primero, como parte de la spec,
+  antes de comprometerse a un modelo de datos o un endpoint.
+  (`DECISIONS.md` D-028)
 
 ## Límites no negociables
 

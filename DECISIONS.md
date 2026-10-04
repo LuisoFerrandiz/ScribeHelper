@@ -955,3 +955,36 @@ into `data/rules/` or `data/examples/`.
 suggestions. That's the reason for converting now — so a later phase
 can read cheap text instead of re-parsing PDFs — but this phase only
 stores and serves the file.
+
+## D-028 · 2026-10-04 · accepted
+### Separate UX from programming logic — both as code architecture and as work order
+
+**Options**
+- Code architecture only: components stay presentation-only, business
+  logic/formatting lives in separate helpers/services (e.g. `format.ts`)
+- Work-order only: design the user experience (flow, screens, copy)
+  before deciding the implementation, never the reverse
+- Both
+
+**Decision** (user's explicit call, 2026-10-04)
+- **Both.** Components (`apps/web/src/components/*.tsx`) must not embed
+  business logic, calculations, or data formatting — that belongs in a
+  separate helper/service (`format.ts` is the existing pattern: pure
+  functions like `formatParties`/`formatWitnesses`/`formatJuryMembers`,
+  called by components, never duplicated inline). A component's job is
+  to render state and dispatch actions; it reads formatted output, it
+  doesn't produce it.
+- When building a new screen or feature, the UX (what the user sees,
+  the flow, the copy) is defined first, as part of the spec
+  (`specs/SPEC-NNN-*.md`'s Requisitos/Intención), before any
+  implementation plan commits to a data model or endpoint shape. This
+  was already the de facto order for SPEC-001/002 (requirements →
+  plan → tasks); this decision makes it an explicit, named principle
+  instead of an unstated habit.
+- Applies going forward, not retroactively: existing components with
+  inline formatting (if any slipped through before `format.ts`
+  existed) are not an automatic refactor target — flagged only if
+  touched for another reason.
+
+**Consequence:** added to `constitution.md` → Principios, as a rule
+future specs and code reviews can cite by name.
