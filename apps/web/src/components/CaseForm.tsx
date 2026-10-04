@@ -850,6 +850,11 @@ export function CaseForm({ caseId }: Props) {
                 box="conclusion"
                 currentText={conclusion}
                 onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+                protestForm={
+                  extraction?.conclusion_candidate
+                    ? { paragraph: { label: 'From protest form', text: extraction.conclusion_candidate } }
+                    : undefined
+                }
               />
             </div>
           </div>

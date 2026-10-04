@@ -2,11 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/connection.js';
 import { readMarkdown } from '../resources/storage.js';
 
-export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found';
+export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found' | 'conclusion';
 
 const BOX_SECTION_HINT: Record<ExampleSuggestionBox, string> = {
   procedural_matters: 'Procedural Matters',
   facts_found: 'Facts Found',
+  conclusion: 'Conclusion',
 };
 
 interface ExampleRow {

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { suggestPhrasesFromExamples, type ExampleSuggestionBox } from '../ai/exampleSuggestions.js';
 
-const VALID_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found'];
+const VALID_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found', 'conclusion'];
 
 // SPEC-005/SPEC-006 — not case-scoped, reads the examples/ corpus as a
 // whole, same "no network outside this app" exception as draft.ts/

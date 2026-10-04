@@ -9,7 +9,7 @@ import type { ExampleSuggestionBox, PhraseBox } from '../types';
 // procedural_matters (SPEC-005), facts_found (SPEC-006, shipped
 // alongside its own RF-005/RF-006: sail number autocomplete and the
 // live party reference, both in CaseForm.tsx/below).
-const EXAMPLE_SUGGESTION_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found'];
+const EXAMPLE_SUGGESTION_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found', 'conclusion'];
 
 function isExampleSuggestionBox(box: PhraseBox): box is ExampleSuggestionBox {
   return (EXAMPLE_SUGGESTION_BOXES as PhraseBox[]).includes(box);

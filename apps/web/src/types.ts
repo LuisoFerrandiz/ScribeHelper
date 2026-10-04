@@ -142,7 +142,7 @@ export interface InlineCompletion {
 
 // SPEC-005/SPEC-006: phrases mined from examples/, generalized, for one
 // of the two boxes this source supports so far.
-export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found';
+export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found' | 'conclusion';
 
 export interface ExampleSuggestions {
   phrases: string[];
