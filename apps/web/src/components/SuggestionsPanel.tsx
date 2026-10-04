@@ -9,7 +9,7 @@ import type { ExampleSuggestionBox, PhraseBox } from '../types';
 // procedural_matters (SPEC-005), facts_found (SPEC-006, shipped
 // alongside its own RF-005/RF-006: sail number autocomplete and the
 // live party reference, both in CaseForm.tsx/below).
-const EXAMPLE_SUGGESTION_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found', 'conclusion'];
+const EXAMPLE_SUGGESTION_BOXES: ExampleSuggestionBox[] = ['procedural_matters', 'facts_found', 'conclusion', 'decision'];
 
 function isExampleSuggestionBox(box: PhraseBox): box is ExampleSuggestionBox {
   return (EXAMPLE_SUGGESTION_BOXES as PhraseBox[]).includes(box);
@@ -23,6 +23,7 @@ interface ProtestFormSuggestion {
 interface PartyReferenceData {
   initiator: { sailNumber: string; boatName: string };
   respondent: { sailNumber: string; boatName: string };
+  race?: string;
 }
 
 interface Props {
@@ -67,6 +68,7 @@ export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestFo
         <PartyReference
           initiator={partyReference.initiator}
           respondent={partyReference.respondent}
+          race={partyReference.race}
           currentText={currentText}
         />
       )}

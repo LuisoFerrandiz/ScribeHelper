@@ -932,6 +932,11 @@ export function CaseForm({ caseId }: Props) {
               box="decision"
               currentText={decision}
               onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              partyReference={{
+                initiator: { sailNumber: initiator.sailNumber, boatName: initiator.boatName },
+                respondent: { sailNumber: respondent.sailNumber, boatName: respondent.boatName },
+                race,
+              }}
             />
           </div>
         </div>

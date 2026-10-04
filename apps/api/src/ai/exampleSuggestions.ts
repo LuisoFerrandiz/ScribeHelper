@@ -2,25 +2,24 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/connection.js';
 import { readMarkdown } from '../resources/storage.js';
 
-export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found' | 'conclusion';
+export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
 
 const BOX_SECTION_HINT: Record<ExampleSuggestionBox, string> = {
   procedural_matters: 'Procedural Matters',
   facts_found: 'Facts Found',
   conclusion: 'Conclusion',
+  decision: 'Decision',
 };
 
 interface ExampleRow {
   markdown_path: string;
 }
 
-// SPEC-005 RF-004 (reused by SPEC-006 for facts_found, D-028-style
-// generic design from the start): mines accepted examples/ (base + own)
-// for phrases a drafter could reuse in a NEW case — generalized, never
-// the specific sail numbers/boat names/dates of the example they came
-// from. Replaces "AI draft" for the boxes this function supports; the
-// other two boxes (conclusion/decision) keep the single-draft panel
-// until their own specs.
+// SPEC-005 RF-004 (reused by SPEC-006/007/008 for facts_found/
+// conclusion/decision, generic design from the start): mines accepted
+// examples/ (base + own) for phrases a drafter could reuse in a NEW
+// case — generalized, never the specific sail numbers/boat names/dates
+// of the example they came from. Replaces "AI draft" for every box.
 export async function suggestPhrasesFromExamples(box: ExampleSuggestionBox): Promise<string[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured on the server');
