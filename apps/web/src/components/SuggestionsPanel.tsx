@@ -1,7 +1,20 @@
 import { useState, type ReactNode } from 'react';
 import { AIDraftPanel } from './AIDraftPanel';
+import { ExamplePhraseSuggestions } from './ExamplePhraseSuggestions';
 import { PhrasePicker } from './PhrasePicker';
-import type { PhraseBox } from '../types';
+import type { ExampleSuggestionBox, PhraseBox } from '../types';
+
+// Boxes with the "mine examples/" source instead of "AI draft".
+// Deliberately only procedural_matters (SPEC-005) — the backend
+// function/route are already generic for 'facts_found' too, but that
+// box stays on AIDraftPanel until SPEC-006 actually ships, since its
+// own RF-005/RF-006 (sail number autocomplete, live party reference)
+// are meant to land alongside this source switch, not before it.
+const EXAMPLE_SUGGESTION_BOXES: ExampleSuggestionBox[] = ['procedural_matters'];
+
+function isExampleSuggestionBox(box: PhraseBox): box is ExampleSuggestionBox {
+  return (EXAMPLE_SUGGESTION_BOXES as PhraseBox[]).includes(box);
+}
 
 interface ProtestFormSuggestion {
   lines?: string[];
@@ -62,9 +75,15 @@ export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestFo
       <CollapsibleSection title="Phrases">
         <PhrasePicker box={box} currentText={currentText} onInsert={onInsert} />
       </CollapsibleSection>
-      <CollapsibleSection title="AI draft">
-        <AIDraftPanel caseId={caseId} box={box} currentText={currentText} onInsert={onInsert} />
-      </CollapsibleSection>
+      {isExampleSuggestionBox(box) ? (
+        <CollapsibleSection title="AI suggestions">
+          <ExamplePhraseSuggestions box={box} onInsert={onInsert} />
+        </CollapsibleSection>
+      ) : (
+        <CollapsibleSection title="AI draft">
+          <AIDraftPanel caseId={caseId} box={box} currentText={currentText} onInsert={onInsert} />
+        </CollapsibleSection>
+      )}
     </div>
   );
 }

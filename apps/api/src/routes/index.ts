@@ -8,6 +8,7 @@ import { registerExtractAttachmentsRoute } from './extractAttachments.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
+import { registerExampleSuggestionsRoute } from './exampleSuggestions.js';
 import { registerCompleteRoute } from './complete.js';
 import { registerAuthRoutes } from './auth.js';
 import { registerUserRoutes } from './users.js';
@@ -78,5 +79,6 @@ export function registerRoutes(app: FastifyInstance) {
   registerResourceRoutes(app);
   registerPhraseRoutes(app);
   registerDraftRoute(app);
+  registerExampleSuggestionsRoute(app);
   registerCompleteRoute(app);
 }

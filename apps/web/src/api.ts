@@ -9,6 +9,8 @@ import type {
   CaseJuryMemberRow,
   DraftResult,
   EventRow,
+  ExampleSuggestionBox,
+  ExampleSuggestions,
   InlineCompletion,
   JuryMemberRow,
   PartyRow,
@@ -160,6 +162,8 @@ export const api = {
 
   generateDraft: (caseId: number, box: PhraseBox, currentText: string) =>
     post<DraftResult>(`/cases/${caseId}/draft`, { box, currentText }),
+  suggestPhrasesFromExamples: (box: ExampleSuggestionBox) =>
+    request<ExampleSuggestions>(`/ai/example-suggestions/${box}`),
   completeInline: (caseId: number, box: PhraseBox, text: string) =>
     post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text }),
 

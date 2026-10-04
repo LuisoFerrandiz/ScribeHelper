@@ -26,7 +26,7 @@ pero ambas deben terminar antes de la tarea 8 (verificación conjunta).
   0 diferencias contra el pipeline anterior (comparación ad hoc,
   recuento por caja idéntico); migrate completo contra una DB nueva
   también seedea 333 filas.
-- [ ] **4. Backend — `exampleSuggestions.ts`.** Nueva función
+- [x] **4. Backend — `exampleSuggestions.ts`.** Nueva función
   `suggestPhrasesFromExamples(box: 'procedural_matters' | 'facts_found')`
   — firma genérica desde ya (`SPEC-006-facts-found.md` reutiliza esta
   misma función para `facts_found`, evita duplicarla): lee examples
@@ -34,23 +34,36 @@ pero ambas deben terminar antes de la tarea 8 (verificación conjunta).
   `scope`), pide a la IA una lista de frases generalizadas (sin datos
   específicos de caso) para la sección correspondiente a `box`,
   devuelve `{ phrases: string[] }`, vacío si no hay examples o no hay
-  contenido de esa sección en ninguno. Esta tarea solo activa la rama
-  `procedural_matters` en el frontend (tarea 7); la rama
-  `facts_found` queda escrita pero sin usar hasta SPEC-006.
-- [ ] **5. Ruta — `GET /ai/example-suggestions/:box`.** Registrada
+  contenido de esa sección en ninguno.
+- [x] **5. Ruta — `GET /ai/example-suggestions/:box`.** Registrada
   junto a las demás rutas de IA, `box` restringido a
   `'procedural_matters' | 'facts_found'`.
-- [ ] **6. Frontend — tipos/api.** `ExampleSuggestions` en `types.ts`;
+- [x] **6. Frontend — tipos/api.** `ExampleSuggestions` en `types.ts`;
   `suggestPhrasesFromExamples(box)` en `api.ts`.
-- [ ] **7. Frontend — `ExamplePhraseSuggestions.tsx`.** Componente
+- [x] **7. Frontend — `ExamplePhraseSuggestions.tsx`.** Componente
   nuevo, recibe `box` como prop, carga al montar (mismo patrón que
   `AIDraftPanel.tsx`), lista de frases click-to-insert.
-  `SuggestionsPanel.tsx`: bifurca por `box` — `procedural_matters` usa
-  este componente ("AI suggestions"); `facts_found`, `conclusion` y
+  `SuggestionsPanel.tsx`: bifurca por `box` — **solo `procedural_matters`**
+  usa este componente ("AI suggestions"); `facts_found`, `conclusion` y
   `decision` siguen con `AIDraftPanel` ("AI draft") hasta sus propias
-  specs, sin cambios en ellas.
-- [ ] **8. Verificar** (ver `SPEC-005-plan.md` → Verificación), luego
-  commit + push, avisar para redeploy.
+  specs. **Corregido tras revisión del `reviewer`**: la primera versión
+  de `EXAMPLE_SUGGESTION_BOXES` incluía `'facts_found'` además de
+  `procedural_matters` — como `facts_found` también pasa por
+  `SuggestionsPanel`, eso activaba "AI suggestions" en el tab Facts
+  Found ya mismo, sin sus piezas complementarias (RF-005/RF-006 de
+  SPEC-006, autocompletado sail number→rol y lista de referencia de
+  partes), contradiciendo esta misma tarea y el alcance de
+  `SPEC-005-procedural-matters.md`. El backend (`exampleSuggestions.ts`,
+  la ruta) se queda genérico tal cual — solo se restringió el array del
+  frontend que decide qué se activa visualmente.
+- [x] **8. Verificar.** `npm run typecheck`/`npm run build` limpios;
+  endpoint probado por `curl` autenticado: `procedural_matters`
+  devuelve frases generalizadas (placeholders, sin datos de ningún
+  example real); `facts_found` devuelve vacío sin inventar; `conclusion`
+  (box inválido) devuelve 400. Revisión con el agente `reviewer`:
+  primer pase CAMBIOS NECESARIOS (el hallazgo de `facts_found`
+  activado antes de tiempo, arriba), corregido. Pendiente: commit +
+  push, avisar para redeploy.
 
 ## Fuera de esta tanda de tareas
 

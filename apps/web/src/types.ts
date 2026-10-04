@@ -140,6 +140,14 @@ export interface InlineCompletion {
   suggestion: string;
 }
 
+// SPEC-005/SPEC-006: phrases mined from examples/, generalized, for one
+// of the two boxes this source supports so far.
+export type ExampleSuggestionBox = 'procedural_matters' | 'facts_found';
+
+export interface ExampleSuggestions {
+  phrases: string[];
+}
+
 // Phase 5.5: login (D-026). One admin, created from ADMIN_USERNAME/
 // ADMIN_PASSWORD — everyone else is 'user', created only by an admin.
 export type UserRole = 'admin' | 'user';
