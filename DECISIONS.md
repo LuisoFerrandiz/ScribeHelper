@@ -8,6 +8,11 @@
 > **Append only.** To change a decision, add a new entry that supersedes
 > the old one. Do not edit history.
 
+Related: `CLAUDE.md` (project overview, architecture, commands) and
+`constitution.md` (principles, non-negotiable limits, who decides) —
+both reference entries here by `D-NNN`; this log is never duplicated
+into either of them.
+
 Format: `D-NNN` · date · status (`accepted`, `superseded by D-NNN`, `revisited`)
 
 ---
