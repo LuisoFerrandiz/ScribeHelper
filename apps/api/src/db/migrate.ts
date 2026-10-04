@@ -10,5 +10,5 @@ const schema = readFileSync(schemaPath, 'utf-8');
 db.exec(schema);
 console.log('Schema applied:', schemaPath);
 
-seedBasePhrases();
+await seedBasePhrases();
 seedAdminUser();
