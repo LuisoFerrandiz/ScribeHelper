@@ -67,8 +67,12 @@ para no reconvertir innecesariamente si alguna vez se borra la tabla
 ### Backend
 
 Nuevo archivo `apps/api/src/ai/exampleSuggestions.ts`, función
-`suggestProceduralMattersPhrases(): Promise<string[]>` — no depende de
-ningún caso concreto, es sobre el corpus de `examples/` completo:
+`suggestPhrasesFromExamples(box: 'procedural_matters' | 'facts_found'): Promise<string[]>`
+— firma genérica desde el inicio (aunque esta spec solo use
+`'procedural_matters'`) porque `SPEC-006-facts-found.md` necesita el
+mismo patrón para `facts_found`; generalizarla ahora evita duplicar
+este archivo cuando se implemente esa spec. No depende de ningún caso
+concreto, es sobre el corpus de `examples/` completo:
 
 1. `SELECT markdown_path FROM resource WHERE kind = 'example' AND
    status = 'accepted' AND markdown_path IS NOT NULL` (sin filtrar por
@@ -81,11 +85,14 @@ ningún caso concreto, es sobre el corpus de `examples/` completo:
    sí; pedirle al modelo que localice su propia sección "Procedural
    Matters" es el mismo enfoque que ya usa `extract.ts`, más robusto
    que asumir un encabezado fijo).
-4. El prompt pide una lista de frases candidatas para la caja
-   Procedural Matters de **un caso nuevo**, instruyendo explícitamente:
-   - Usar solo frases presentes o adaptadas de las secciones
-     "Procedural Matters" (o equivalente) de los examples dados —
-     nunca inventar contenido sin respaldo en ellos.
+4. El prompt pide una lista de frases candidatas para la caja indicada
+   (`box`) de **un caso nuevo**, con una etiqueta de sección por caja
+   (`BOX_SECTION_HINT: Record<'procedural_matters' | 'facts_found',
+   string> = { procedural_matters: 'Procedural Matters', facts_found:
+   'Facts Found' }`), instruyendo explícitamente:
+   - Usar solo frases presentes o adaptadas de la sección de ese
+     nombre (o equivalente) en los examples dados — nunca inventar
+     contenido sin respaldo en ellos.
    - **Generalizar cualquier dato específico del caso de origen** —
      números de vela, nombres de barco, fechas, nombres de personas —
      al adaptar una frase; una frase candidata debe ser reutilizable en
@@ -93,34 +100,37 @@ ningún caso concreto, es sobre el corpus de `examples/` completo:
    - Nunca repetir contenido ya cubierto por el otro candidato (sin
      duplicados casi idénticos en la misma lista).
    - Devolver JSON: `{ "phrases": string[] }`.
-5. Si no hay ningún example aceptado con contenido de Procedural
-   Matters, devolver `{ phrases: [] }` sin error — una lista vacía es
-   mejor que una sugerencia inventada (`constitution.md` → Límites no
+5. Si no hay ningún example aceptado con contenido de esa sección,
+   devolver `{ phrases: [] }` sin error — una lista vacía es mejor que
+   una sugerencia inventada (`constitution.md` → Límites no
    negociables).
 
-Ruta nueva: `GET /ai/procedural-matters-suggestions` (sin `caseId` en
-la URL — no depende del caso, mismo patrón "stateless" que
-`loadAcceptedRuleCorpus` en `draft.ts`, leído de disco en cada
+Ruta nueva: `GET /ai/example-suggestions/:box` (`box` restringido a
+`'procedural_matters' | 'facts_found'` por esta y la siguiente spec;
+sin `caseId` en la URL — no depende del caso, mismo patrón "stateless"
+que `loadAcceptedRuleCorpus` en `draft.ts`, leído de disco en cada
 petición, aceptable al volumen actual de examples).
 
 ### Frontend
 
 - `apps/web/src/types.ts`: no se necesita tipo `DraftBox`-like nuevo,
   basta un tipo `ExampleSuggestions = { phrases: string[] }`.
-- `apps/web/src/api.ts`: `suggestProceduralMattersPhrases(): Promise<ExampleSuggestions>`.
+- `apps/web/src/api.ts`: `suggestPhrasesFromExamples(box: 'procedural_matters' | 'facts_found'): Promise<ExampleSuggestions>`.
 - Nuevo componente `apps/web/src/components/ExamplePhraseSuggestions.tsx`
-  — mismo patrón de montar-al-expandir que `AIDraftPanel.tsx` (carga en
+  — recibe `box` como prop (no hardcodeado a `procedural_matters`),
+  mismo patrón de montar-al-expandir que `AIDraftPanel.tsx` (carga en
   `useEffect` al montar, se desmonta al colapsar la sección), pero
   renderiza una lista de botones "+ frase" (click-to-insert), igual
   forma que `SuggestionsPanel.tsx`'s sección "Protest form" ya pinta
   `protestForm.lines`.
 - `SuggestionsPanel.tsx`: la sección "AI draft" se bifurca por `box` —
   si `box === 'procedural_matters'`, renderiza
-  `<ExamplePhraseSuggestions onInsert={onInsert} />`; para las otras 3
-  cajas, sigue renderizando `<AIDraftPanel ... />` sin cambios. Título
-  de la sección pasa a "AI suggestions" solo para `procedural_matters`
-  (sigue "AI draft" para las demás, coherente con que siguen siendo un
-  borrador completo, no frases sueltas).
+  `<ExamplePhraseSuggestions box={box} onInsert={onInsert} />`; para
+  `facts_found` sigue siendo "AI draft" (`AIDraftPanel`) hasta que
+  `SPEC-006-facts-found.md` se implemente y active la misma rama para
+  ese `box`; para `conclusion`/`decision` sigue renderizando
+  `<AIDraftPanel ... />` sin cambios. Título de la sección pasa a "AI
+  suggestions" solo para los `box` que usan `ExamplePhraseSuggestions`.
 
 ## Verificación
 

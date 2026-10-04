@@ -109,16 +109,18 @@ en inglés (`constitution.md` → Principios).
 
 - Reutiliza `api.createEvent`/`api.createCase` tal cual existen hoy
   (`apps/web/src/api.ts`) — ningún endpoint nuevo necesario para crear.
-- La validación de duplicado (RF-005) puede hacerse en frontend
-  (contra la lista de casos ya cargada por `GET /cases/summary`,
-  SPEC-001) sin ida y vuelta al servidor — a confirmar al implementar
-  si el backend necesita su propia comprobación además (carrera entre
-  dos pestañas abiertas a la vez es un caso límite aceptado, un único
-  usuario en la práctica).
-- El popup es un componente nuevo (ej. `NewCaseDialog.tsx`); no hay
-  ningún patrón de modal/popup existente en el proyecto hoy que
-  reutilizar — se construye desde cero (`<dialog>` nativo o un overlay
-  propio, a decidir en el plan de implementación).
+- **Validación de duplicado (RF-005): backend-enforced, no solo
+  frontend.** Índice `UNIQUE` real en `protest_case(event_id,
+  case_number)` (`apps/api/db/schema.sql`) — dos pestañas abiertas a
+  la vez podrían saltarse una comprobación solo-frontend. El frontend
+  además pre-comprueba contra `GET /cases/summary` (SPEC-001) para dar
+  feedback instantáneo, pero el backend es la autoridad. Decidido en
+  `SPEC-002-plan.md` (sin pregunta abierta).
+- **Mecanismo del popup: `<dialog>` nativo** (`showModal()`/`close()`)
+  — da gratis Escape-para-cerrar, click-en-backdrop-para-cerrar y
+  atrapar el foco; no hay ningún patrón de modal/overlay propio en el
+  proyecto hoy que reutilizar, así que no hace falta construir uno a
+  mano. Decidido en `SPEC-002-plan.md` (sin pregunta abierta).
 
 ## Tareas
 
@@ -130,13 +132,3 @@ Al pasar esta spec a plan/build, incluir también:
   ("`CaseList.tsx`") ya no mueve el formulario inline de
   `CaseSelector.tsx` — ese formulario se descarta, `CaseList.tsx` solo
   lista y navega, el botón "New case" vive ahí pero abre este popup.
-
-## [POR DEFINIR]
-
-- Mecanismo exacto del popup: `<dialog>` nativo del navegador vs.
-  overlay propio en React — a decidir en el plan de implementación, no
-  cambia ningún requisito de esta spec.
-- Validación de duplicado: ¿solo frontend, o también el backend
-  rechaza un `case_number` repetido dentro del mismo `event_id`? Hoy
-  no hay constraint de unicidad en el esquema (`schema.sql`) — a
-  confirmar si se añade.
