@@ -25,9 +25,10 @@ Orden de ejecución — cada tarea asume terminadas las anteriores.
 - [x] **6. `CaseList.tsx`.** Componente nuevo: fetch, agrupar por
   evento, pintar filas, botón "New case" (abre el popup de
   `SPEC-002-nuevo-caso.md`, sin formulario propio en este componente),
-  click en fila → mismo callback `onSelect`. El botón existe; su
-  handler en `App.tsx` es un placeholder hasta que SPEC-002 (fase
-  siguiente) lo conecte — intencional, documentado en el código.
+  click en fila → mismo callback `onSelect`. Conectado en SPEC-002: el
+  diálogo quedó encapsulado dentro de `CaseList.tsx` (estado
+  `dialogOpen` propio), no vía un prop `onNewCase` en `App.tsx` como se
+  describía originalmente — ver `SPEC-002-plan.md` → Follow-up.
 - [x] **7. `App.tsx`.** Sustituir `CaseSelector` por `CaseList`; guard
   admin-only en Upload examples/rules; botón de usuario + dropdown en
   vez del texto+botón plano actual.

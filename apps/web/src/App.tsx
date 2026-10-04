@@ -39,13 +39,6 @@ export function App() {
     setUser(null);
   }
 
-  // SPEC-002 (next phase) wires this to the real "New case" popup —
-  // CaseList.tsx (SPEC-001) only lists and navigates, it has no form of
-  // its own, so there is nothing to open yet.
-  function handleNewCase() {
-    // placeholder until SPEC-002's NewCaseDialog lands
-  }
-
   if (!authChecked) return null;
   if (!user) return <Login onLogin={setUser} />;
 
@@ -130,7 +123,6 @@ export function App() {
               setCurrentEventId(eventId);
               setCurrentCaseId(caseId);
             }}
-            onNewCase={handleNewCase}
           />
           {currentCaseId !== null ? (
             <CaseForm caseId={currentCaseId} />

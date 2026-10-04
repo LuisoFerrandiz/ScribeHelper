@@ -31,7 +31,20 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
 
     const placeholders = cols.map(() => '?').join(', ');
     const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`);
-    const result = stmt.run(...cols.map((c) => body[c] as never));
+
+    let result;
+    try {
+      result = stmt.run(...cols.map((c) => body[c] as never));
+    } catch (e) {
+      // SPEC-002 RF-005: a duplicate case_number within the same event_id
+      // (protest_case's UNIQUE(event_id, case_number)) is the first real
+      // UNIQUE violation this generic handler can hit — caught here so it
+      // protects every entity using registerCrud, not just cases.
+      if ((e as Error).message.includes('UNIQUE constraint failed')) {
+        return reply.code(409).send({ error: 'duplicate' });
+      }
+      throw e;
+    }
 
     const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid);
     reply.code(201).send(row);

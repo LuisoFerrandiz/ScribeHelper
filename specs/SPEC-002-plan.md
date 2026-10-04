@@ -99,6 +99,16 @@ interface Props {
   los dos por `onClose` — RF-007 lo cubre el navegador, no código
   propio.
 
+**Follow-up (al implementar, 2026-10-04):** la conexión final no pasa
+`onNewCase` por `App.tsx` como se describía originalmente abajo —
+`CaseList.tsx` encapsula el diálogo entero (`dialogOpen` es su propio
+estado, monta `NewCaseDialog` directamente). Mejor encapsulación,
+coherente con D-028 (UX/lógica separadas, el componente que posee la
+UI posee su estado); ningún RF exige la forma concreta de paso de
+props. `SPEC-001-tasks.md` tarea 6 quedó con una referencia desfasada
+a este diseño original — no se considera un defecto, solo una
+imprecisión de redacción.
+
 ### Frontend — conexión con `CaseList.tsx` (SPEC-001)
 
 `CaseList.tsx` (sin construir todavía — el plan/tareas de SPEC-001 ya

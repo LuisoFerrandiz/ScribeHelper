@@ -399,6 +399,61 @@ h3 {
   transition: background 0.2s;
 }
 
+/* "New case" popup (SPEC-002) — native <dialog>, unstyled by default. */
+.new-case-dialog {
+  background: var(--paper);
+  border: 1px solid #e7e2d8;
+  border-radius: 10px;
+  padding: 20px 24px;
+  max-width: 360px;
+  width: 90vw;
+  font: inherit;
+  color: inherit;
+}
+
+.new-case-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.new-case-dialog h2 {
+  margin: 0 0 14px;
+}
+
+.new-case-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.new-case-dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85em;
+}
+
+.new-case-dialog input,
+.new-case-dialog select {
+  padding: 8px 10px;
+  font-size: 1em;
+  border: 1px solid #e2ddd0;
+  border-radius: 6px;
+}
+
+.new-case-dialog input:focus,
+.new-case-dialog select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.new-case-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .box-copied {
   background: #eef9ee;
   border-color: #b6e0b6;
