@@ -9,13 +9,21 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Sail number + boat name, the way every party display shows a boat —
+// used by formatParties() below and by CaseList.tsx's Initiator/
+// Respondent columns (SPEC-001), instead of duplicating the expression.
+export function formatBoat(p: { sail_number: string | null; boat_name: string | null } | null): string {
+  if (!p) return '—';
+  return [p.sail_number, p.boat_name].filter(Boolean).join(' ') || '—';
+}
+
 export function formatParties(c: CaseFull): string {
   const roles: Array<'initiator' | 'respondent'> = ['initiator', 'respondent'];
   return roles
     .map((role) => {
       const p = c.parties.find((x) => x.role === role);
       if (!p) return `${capitalize(role)}: —`;
-      const boat = [p.sail_number, p.boat_name].filter(Boolean).join(' ') || '—';
+      const boat = formatBoat(p);
       const rep = p.represented_by ? `, represented by ${p.represented_by}` : '';
       return `${capitalize(role)}: ${boat}${rep}`;
     })

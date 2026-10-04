@@ -120,22 +120,18 @@ está enteramente en inglés").
 - `CaseSelector.tsx` se reemplaza por el nuevo componente de listado;
   `EventList.tsx`/`EventDetail.tsx` ya no existen (D-019), no hay nada
   que coordinar con ellos.
-- Fuente de datos del listado: sin decidir todavía si se amplía
-  `GET /cases` para traer parties/decision inline, o si el frontend
-  llama `GET /cases/:id/full` por cada fila — ver `[POR DEFINIR]`.
+- Fuente de datos del listado: nuevo endpoint `GET /cases/summary`
+  — el join (parties + decision) se hace en servidor en una sola
+  llamada, en vez de que el frontend llame `GET /cases/:id/full` una
+  vez por caso.
+- Initiator/Respondent en el listado: número de vela + nombre de
+  barco, mismo formato que ya produce `formatParties()`
+  (`apps/web/src/format.ts`).
+- Filas agrupadas por regata, igual que el árbol visual que ya tiene
+  `CaseSelector.tsx` (regata como cabecera, casos debajo).
+- Sin buscador/filtro ni paginación — fuera de alcance por ahora.
 
 ## Tareas
 
-`[POR DEFINIR]` — se listan al pasar esta spec a build, no antes.
-
-## [POR DEFINIR]
-
-- ¿El listado se ordena por algo (fecha, regata, número de caso), o
-  en el orden que devuelva la base de datos?
-- ¿Hace falta buscar/filtrar dentro del listado, o basta con scroll?
-  (Importa si la cantidad de casos por regata crece mucho.)
-- ¿Paginación si hay muchos casos, o se carga todo de una vez?
-- Endpoint exacto para traer Initiator/Respondent/Decision por caso en
-  una sola llamada — hoy `GET /cases` no trae `parties`, solo
-  `GET /cases/:id/full` (uno por caso) los tiene. ¿Se amplía el
-  backend antes de construir esto, o se acepta N llamadas?
+Ver `SPEC-001-tasks.md` (desglose ejecutable) y `SPEC-001-plan.md`
+(diseño detallado de cada tarea).

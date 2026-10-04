@@ -54,10 +54,42 @@ h3 {
 }
 
 .app-header-user {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.85em;
+}
+
+/* Dropdown under the user button (SPEC-001 RF-006) — no modal/overlay
+   pattern to reuse in the project yet, so this one is self-contained. */
+.user-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  z-index: 10;
+}
+
+.user-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9em;
+  border-radius: 4px;
+}
+
+.user-menu button:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .login-screen {
@@ -685,67 +717,52 @@ textarea:focus {
   font-size: 0.9em;
 }
 
-.case-selector {
+/* Entry screen (SPEC-001) — tabular case listing, replaces the old
+   CaseSelector.tsx text+datalist picker and button tree (both removed). */
+.case-list-toolbar {
   display: flex;
-  gap: 6px;
   align-items: center;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 6px 8px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.case-selector input {
-  padding: 4px 6px;
+.case-list-event {
+  margin-bottom: 14px;
+}
+
+.case-list-event > strong {
   font-size: 0.9em;
 }
 
-.case-selector input[placeholder='Regatta'] {
-  flex: 2;
-  min-width: 140px;
-}
-
-.case-selector input[placeholder='Case #'] {
-  flex: 1;
-  min-width: 80px;
-}
-
-/* Browsable regatta/case tree below the quick selector — click a case to
-   open it directly, no need to retype its name/number. */
-.case-browser {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.case-browser > li > strong {
+.case-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
   font-size: 0.9em;
 }
 
-.case-browser ul {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 4px 0 0;
-}
-
-.case-browser button {
-  appearance: none;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fff;
-  padding: 4px 10px;
+.case-list-table th {
+  text-align: left;
+  color: #777;
+  font-weight: 600;
   font-size: 0.85em;
+  padding: 4px 8px;
+  border-bottom: 1px solid #e2ddd0;
+}
+
+.case-list-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.case-list-table tbody tr {
   cursor: pointer;
 }
 
-.case-browser button:hover {
-  background: rgba(0, 0, 0, 0.05);
+.case-list-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
 }
 
-.case-browser button.active {
-  border-color: var(--accent);
+.case-list-table tbody tr.active {
   background: var(--accent-soft);
-  color: var(--accent);
 }

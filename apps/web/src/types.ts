@@ -188,6 +188,18 @@ export interface ResourceSearchHit {
   snippet: string;
 }
 
+// Entry screen (SPEC-001): one row per case, enough to render without a
+// second request per row — batched backend join, apps/api/src/routes/caseSummary.ts.
+export interface CaseSummaryRow {
+  id: number;
+  case_number: string;
+  event_id: number;
+  event_name: string;
+  decided: boolean;
+  initiator: { sail_number: string | null; boat_name: string | null } | null;
+  respondent: { sail_number: string | null; boat_name: string | null } | null;
+}
+
 export interface CaseFull extends CaseRow {
   event: EventRow;
   jury: { id: number; is_chairman: 0 | 1; full_name: string }[];

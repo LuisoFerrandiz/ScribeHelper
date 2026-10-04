@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AuthError, api } from './api';
 import { CaseForm } from './components/CaseForm';
-import { CaseSelector } from './components/CaseSelector';
+import { CaseList } from './components/CaseList';
 import { JuryPanel } from './components/JuryPanel';
 import { Login } from './components/Login';
 import { ResourceUpload } from './components/ResourceUpload';
@@ -21,6 +21,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>('case');
   const [currentEventId, setCurrentEventId] = useState<number | null>(null);
   const [currentCaseId, setCurrentCaseId] = useState<number | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -36,6 +37,13 @@ export function App() {
   async function handleLogout() {
     await api.logout();
     setUser(null);
+  }
+
+  // SPEC-002 (next phase) wires this to the real "New case" popup —
+  // CaseList.tsx (SPEC-001) only lists and navigates, it has no form of
+  // its own, so there is nothing to open yet.
+  function handleNewCase() {
+    // placeholder until SPEC-002's NewCaseDialog lands
   }
 
   if (!authChecked) return null;
@@ -63,22 +71,26 @@ export function App() {
           >
             Jury
           </button>
-          <button
-            type="button"
-            className={tab === 'upload-examples' ? 'active' : undefined}
-            aria-current={tab === 'upload-examples'}
-            onClick={() => setTab('upload-examples')}
-          >
-            Upload examples
-          </button>
-          <button
-            type="button"
-            className={tab === 'upload-rules' ? 'active' : undefined}
-            aria-current={tab === 'upload-rules'}
-            onClick={() => setTab('upload-rules')}
-          >
-            Upload rules
-          </button>
+          {user.role === 'admin' && (
+            <button
+              type="button"
+              className={tab === 'upload-examples' ? 'active' : undefined}
+              aria-current={tab === 'upload-examples'}
+              onClick={() => setTab('upload-examples')}
+            >
+              Upload examples
+            </button>
+          )}
+          {user.role === 'admin' && (
+            <button
+              type="button"
+              className={tab === 'upload-rules' ? 'active' : undefined}
+              aria-current={tab === 'upload-rules'}
+              onClick={() => setTab('upload-rules')}
+            >
+              Upload rules
+            </button>
+          )}
           {user.role === 'admin' && (
             <button
               type="button"
@@ -91,27 +103,39 @@ export function App() {
           )}
         </nav>
         <div className="app-header-user">
-          <span className="muted">{user.username}</span>
-          <button type="button" onClick={handleLogout}>
-            Log out
+          <button type="button" onClick={() => setUserMenuOpen((o) => !o)}>
+            {user.username}
           </button>
+          {userMenuOpen && (
+            <div className="user-menu">
+              <button
+                type="button"
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  handleLogout();
+                }}
+              >
+                Log out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
       {tab === 'case' && (
         <>
-          <CaseSelector
-            eventId={currentEventId}
+          <CaseList
             caseId={currentCaseId}
             onSelect={(eventId, caseId) => {
               setCurrentEventId(eventId);
               setCurrentCaseId(caseId);
             }}
+            onNewCase={handleNewCase}
           />
           {currentCaseId !== null ? (
             <CaseForm caseId={currentCaseId} />
           ) : (
-            <p className="muted">Pick or create a regatta and case above.</p>
+            <p className="muted">Pick a case above, or create a new one.</p>
           )}
         </>
       )}

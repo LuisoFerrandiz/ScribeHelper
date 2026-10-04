@@ -5,6 +5,7 @@ import type {
   CaseFull,
   CaseLinkRow,
   CaseRow,
+  CaseSummaryRow,
   CaseJuryMemberRow,
   DraftResult,
   EventRow,
@@ -99,6 +100,7 @@ export const api = {
   deleteCaseJuryMember: (id: number) => del(`/case-jury-members/${id}`),
 
   listCases: () => request<CaseRow[]>('/cases'),
+  listCaseSummaries: () => request<CaseSummaryRow[]>('/cases/summary'),
   createCase: (data: Partial<CaseRow>) => post<CaseRow>('/cases', data),
   updateCase: (id: number, data: Partial<CaseRow>) => put<CaseRow>(`/cases/${id}`, data),
   getCaseFull: (id: number) => request<CaseFull>(`/cases/${id}/full`),

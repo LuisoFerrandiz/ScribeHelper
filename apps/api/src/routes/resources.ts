@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { requireAdmin } from '../auth/guard.js';
 import { db } from '../db/connection.js';
 import { convertToMarkdown } from '../resources/convert.js';
 import { deleteStoredFiles, moveMarkdown, readMarkdown, storeUpload } from '../resources/storage.js';
@@ -49,7 +50,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     return { ...row, markdown };
   });
 
-  app.post('/resources', async (req, reply) => {
+  app.post('/resources', { preHandler: requireAdmin }, async (req, reply) => {
     if (!req.isMultipart()) return reply.code(400).send({ error: 'expected multipart/form-data' });
 
     const parts = req.parts();
@@ -115,7 +116,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     reply.code(201).send({ ...row, markdown: conversion.markdown });
   });
 
-  app.post('/resources/:id/accept', async (req, reply) => {
+  app.post('/resources/:id/accept', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
     if (!row) return reply.code(404).send({ error: 'not found' });
@@ -139,7 +140,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post('/resources/:id/reject', async (req, reply) => {
+  app.post('/resources/:id/reject', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
     if (!row) return reply.code(404).send({ error: 'not found' });
@@ -151,7 +152,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
 
   // Delete an already-accepted resource (own examples, event-layer rules
   // at the end of a regatta, etc.) — same cleanup as reject.
-  app.delete('/resources/:id', async (req, reply) => {
+  app.delete('/resources/:id', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
     if (!row) return reply.code(404).send({ error: 'not found' });
@@ -168,7 +169,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
   // Fixes a wrong kind/layer/scope pick at upload time (moves the file,
   // updates the row, re-syncs resource_fts — only kind = 'rule' rows are
   // indexed, D-020) without having to re-upload and re-convert.
-  app.post('/resources/:id/reclassify', async (req, reply) => {
+  app.post('/resources/:id/reclassify', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
     if (!row) return reply.code(404).send({ error: 'not found' });
