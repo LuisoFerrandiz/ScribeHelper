@@ -8,6 +8,8 @@ export interface AttachmentExtraction {
     respondent?: { sail_number?: string; boat_name?: string; represented_by?: string };
   };
   witnesses: { full_name: string; role?: string }[];
+  day_candidate: string;
+  race_candidate: string;
   procedural_matters_candidate: string;
   facts_found_candidate: string;
   facts_found_candidates: string[]; // discrete, one-per-entry, click-to-insert facts
@@ -60,6 +62,8 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
           respondent: { sail_number: 'e.g. "ITA 32004", country + number', boat_name: 'string', represented_by: 'string' },
         },
         witnesses: [{ full_name: 'string', role: 'string' }],
+        day_candidate: 'the calendar date of the day the incident/protest happened, exactly as the form writes it',
+        race_candidate: 'the race number or label exactly as the form gives it, e.g. "1", "Race 3", "R3"',
         procedural_matters_candidate: 'string',
         facts_found_candidate: 'string',
         facts_found_candidates: ['string'],
@@ -91,6 +95,14 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
       'goes in represented_by (sail_number: "JPN 228221"), never in boat_name. Only put a ' +
       'name in boat_name if the form explicitly labels it as the boat\'s name, not a ' +
       'person filing or sailing it. ' +
+      'day_candidate is the calendar date of the day the incident/protest happened — the ' +
+      'day being protested, not the day the form was filled in or submitted, if the form ' +
+      'shows both and they differ. Keep the date exactly as the form writes it; do not ' +
+      'reformat it into a different date style and do not invent one. race_candidate is ' +
+      'the race number or label exactly as the form gives it (e.g. "1", "Race 3", "R3") — ' +
+      'keep letters and numbers exactly as given, same as everywhere else. Omit ' +
+      'day_candidate/race_candidate entirely if the form does not state them — never ' +
+      'guess or invent. ' +
       'facts_found_candidate is the account reported BY THE PARTY who filed the form — it ' +
       'is not a verified finding; a protest committee\'s actual Facts Found are decided ' +
       'after a hearing, not copied from one party\'s account. Word it accordingly (e.g. ' +
@@ -147,6 +159,8 @@ function parseExtraction(text: string): AttachmentExtraction {
   return {
     parties: parsed.parties ?? {},
     witnesses: parsed.witnesses ?? [],
+    day_candidate: parsed.day_candidate ?? '',
+    race_candidate: parsed.race_candidate ?? '',
     procedural_matters_candidate: parsed.procedural_matters_candidate ?? '',
     facts_found_candidate: parsed.facts_found_candidate ?? '',
     facts_found_candidates: parsed.facts_found_candidates ?? [],

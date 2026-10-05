@@ -100,6 +100,8 @@ export interface AttachmentExtraction {
     respondent?: { sail_number?: string; boat_name?: string; represented_by?: string };
   };
   witnesses: { full_name: string; role?: string }[];
+  day_candidate: string;
+  race_candidate: string;
   procedural_matters_candidate: string;
   facts_found_candidate: string;
   facts_found_candidates: string[];

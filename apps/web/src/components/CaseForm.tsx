@@ -364,6 +364,14 @@ export function CaseForm({ caseId }: Props) {
     });
   }
 
+  function useSuggestedDay() {
+    if (extraction?.day_candidate) setDay(extraction.day_candidate);
+  }
+
+  function useSuggestedRace() {
+    if (extraction?.race_candidate) setRace(extraction.race_candidate);
+  }
+
   function addSuggestedWitness(w: { full_name: string; role?: string }) {
     setWitnessDraft((prev) => [...prev, { id: null, fullName: w.full_name, role: w.role ?? '' }]);
   }
@@ -525,59 +533,64 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'general' && (
         <div className="tab-panel">
-          <form onSubmit={handleSaveGeneral} className="case-meta">
-            <label>
-              Case number
-              <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
-            </label>
-            <label>
-              Day
-              <input value={day} onChange={(e) => setDay(e.target.value)} />
-            </label>
-            <label>
-              Race
-              <input value={race} onChange={(e) => setRace(e.target.value)} />
-            </label>
-            <label>
-              Informed at (event time)
-              <input
-                placeholder="e.g. 2026-09-11 18:30"
-                value={informedAt}
-                onChange={(e) => setInformedAt(e.target.value)}
-              />
-            </label>
-            <label>
-              With case(s)
-              <div className="with-case-inline">
-                {caseFull.linkedCases.map((lc) => (
-                  <span key={lc.id} className="chip">
-                    {lc.case_number}
-                    <button type="button" onClick={() => handleRemoveLink(lc.id)} aria-label={`Unlink case ${lc.case_number}`}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleLinkCase(Number(e.target.value));
-                  }}
-                >
-                  <option value="">+ Link case…</option>
-                  {otherCases
-                    .filter((c) => !caseFull.linkedCases.some((lc) => lc.id === c.id))
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        Case {c.case_number}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </label>
-            <button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </form>
+          <section className="box general-box">
+            <h2>General</h2>
+            <form onSubmit={handleSaveGeneral} className="general-fields-row">
+              <label>
+                Case number
+                <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
+              </label>
+              <label>
+                Day
+                <input value={day} onChange={(e) => setDay(e.target.value)} />
+              </label>
+              {extraction?.day_candidate && (
+                <button type="button" onClick={useSuggestedDay}>
+                  Use suggested
+                </button>
+              )}
+              <label>
+                Race
+                <input value={race} onChange={(e) => setRace(e.target.value)} />
+              </label>
+              {extraction?.race_candidate && (
+                <button type="button" onClick={useSuggestedRace}>
+                  Use suggested
+                </button>
+              )}
+              <label>
+                With case(s)
+                <div className="with-case-inline">
+                  {caseFull.linkedCases.map((lc) => (
+                    <span key={lc.id} className="chip">
+                      {lc.case_number}
+                      <button type="button" onClick={() => handleRemoveLink(lc.id)} aria-label={`Unlink case ${lc.case_number}`}>
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) handleLinkCase(Number(e.target.value));
+                    }}
+                  >
+                    <option value="">+ Link case…</option>
+                    {otherCases
+                      .filter((c) => !caseFull.linkedCases.some((lc) => lc.id === c.id))
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          Case {c.case_number}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </label>
+              <button type="submit" disabled={saving}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </form>
+          </section>
 
           {/* Parties & Witness — one box, matching the fixed document
               order (Parties, then Witness — format.ts's
