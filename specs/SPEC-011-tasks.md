@@ -1,10 +1,14 @@
 # SPEC-011 — Tareas
 
-Estado: implementado, verificado en localhost, reviewer APROBADO tras
-fix. Pendiente verificación en vivo contra
-`http://192.168.1.105:8086/` (entorno desplegado, no solo localhost —
-exigido por `CLAUDE.md` → "Definición de terminado"), commit + push
-(push solo cuando el usuario lo pida) y redeploy en Portainer.
+Estado: terminado. Implementado, verificado en vivo contra
+`http://192.168.1.105:8086/` (entorno desplegado, no solo localhost),
+commit `0155993` pusheado a `master`, redeploy confirmado en Portainer,
+reviewer **APROBADO** en segundo pase contra el servidor desplegado
+(RF-005/RF-007 reconfirmados ahí, texto corregido del hint de
+extracción verificado literal, 8 pestañas numeradas correctas,
+coherencia D-029 — "1. General" sin Copy, "2. Parties & Witness" con
+Save+Copy juntos — confirmada). Cumple "Definición de terminado" de
+`CLAUDE.md` en los 4 puntos.
 
 Relacionado: `SPEC-011-general-parties-split.md` (requisitos),
 `SPEC-011-plan.md` (diseño detallado de cada tarea).
