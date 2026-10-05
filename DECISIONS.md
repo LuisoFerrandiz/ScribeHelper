@@ -988,3 +988,55 @@ stores and serves the file.
 
 **Consequence:** added to `constitution.md` → Principios, as a rule
 future specs and code reviews can cite by name.
+
+## D-029 · 2026-10-05 · accepted
+### Internal coherence: presentation mode and suggestion sources stay uniform within a tab
+
+**Options**
+- No explicit rule — let each tab's presentation and suggestion
+  sources be decided case by case, as specs have done so far
+- Name two coherence rules explicitly, as a principle future specs
+  must satisfy or consciously override
+
+**Decision** (user's explicit call, 2026-10-05)
+
+**Both.** Two coherence rules, named so a spec/review can cite them
+instead of re-deriving the reasoning each time:
+
+1. **One presentation mode per tab.** If a tab presents its
+   information as a form (labeled inputs the user fills in), every
+   field on that tab is a form field — not a mix of form inputs and
+   free-text/document-style boxes within the same tab. Named because
+   the owner flagged it applies to "1. General & Parties": the
+   "General" section (Case number/Day/Race/With case(s), SPEC-010) is
+   a plain form, while "Parties & Witness" renders inside a `CopyBox`
+   (the same wrapper used for the four free-text document boxes) even
+   though its content is also form inputs, not free text. Whether
+   that is actually an inconsistency to fix, or a legitimate
+   difference (Parties & Witness is one of the eight fixed document
+   boxes and genuinely needs its own "Copy" button; "General" is case
+   metadata, not a document box, and has none) is left for the spec
+   that addresses this to work out — this decision only establishes
+   the rule, not the fix.
+2. **Suggestion sources available on one writing-box tab are
+   available on all of them.** If a writing-box tab's suggestions
+   panel can offer a given *kind* of source (Phrases, AI suggestions
+   from examples, a protest-form candidate paragraph/lines), that kind
+   of source should be offered — even if empty — on Procedural
+   Matters, Facts Found, Conclusion, and Decision alike, not present
+   on three and silently absent on the fourth. Concrete known gap:
+   Decision has no protest-form candidate source at all (SPEC-008
+   scoped it out explicitly: "casi siempre vacío... no se conecta
+   aquí"), while Procedural Matters/Facts Found/Conclusion all have
+   one. This rule does **not** cover the always-visible read-only
+   reference lists (`PartyReference.tsx` — initiator/respondent/race
+   highlighting in Facts Found and Decision, SPEC-006/SPEC-008): those
+   are explicitly not suggestions (never insert, never click-to-apply,
+   D-004/SPEC-008 RF-004) and sit outside this rule by design.
+
+**Consequence:** added to `constitution.md` → Principios, as a rule
+future specs and code reviews can cite by name. Applies going forward
+— like D-028, not a mandate to retrofit every existing tab in this
+same change; a spec that touches "1. General & Parties" or any of the
+four writing-box tabs should check against these two rules and either
+satisfy them or note explicitly why not.

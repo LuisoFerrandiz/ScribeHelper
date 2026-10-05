@@ -64,6 +64,18 @@ propone, rellena, busca y formatea.
   textos, qué ve el usuario) se define primero, como parte de la spec,
   antes de comprometerse a un modelo de datos o un endpoint.
   (`DECISIONS.md` D-028)
+- **Coherencia interna dentro de una pestaña.** (1) Si una pestaña
+  presenta su información como formulario, toda la información de esa
+  pestaña es formulario — nunca una mezcla de campos de formulario y
+  cajas de texto libre/documento dentro de la misma pestaña. (2) Si
+  una pestaña de redacción permite insertar sugerencias de una fuente
+  dada (Phrases, AI suggestions, párrafo/líneas candidatas del protest
+  form), esa misma fuente debe ofrecerse — aunque esté vacía — en las
+  cuatro pestañas de redacción (Procedural Matters, Facts Found,
+  Conclusion, Decision), nunca presente en tres y ausente en la
+  cuarta. No aplica a las listas de referencia de solo lectura
+  (`PartyReference.tsx`) — esas nunca insertan por diseño, no son
+  sugerencias. (`DECISIONS.md` D-029)
 
 ## Límites no negociables
 
