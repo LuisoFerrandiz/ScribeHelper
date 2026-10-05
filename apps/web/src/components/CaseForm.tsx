@@ -59,11 +59,9 @@ export function CaseForm({ caseId }: Props) {
   const [people, setPeople] = useState<PersonRow[]>([]);
   const [otherCases, setOtherCases] = useState<CaseRow[]>([]);
   const [error, setError] = useState<string | null>(null);
-  // SPEC-011: one Save per tab, each scoped to just its own data — a
-  // save in progress on one tab never disables/labels "Saving…" the
-  // button on another. Keys: general, parties, procedural, facts,
-  // conclusion, decision, review.
-  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  // SPEC-014: one Save for the whole case, next to Download decision —
+  // replaces SPEC-011's per-tab Save buttons at the user's request.
+  const [savingAll, setSavingAll] = useState(false);
   const [copied, setCopied] = useState<Record<string, boolean>>({});
 
   // Scalar fields, edited locally and saved together (Save button).
@@ -174,6 +172,26 @@ export function CaseForm({ caseId }: Props) {
     setCaseFull((prev) => (prev ? { ...prev, jury: full.jury } : full));
   }
 
+  // SPEC-013: refreshes ONLY caseFull.linkedCases — same criterion as
+  // reloadJury/refreshParties above, never the four free-text useState
+  // nor the General fields.
+  async function refreshLinkedCases() {
+    const full = await api.getCaseFull(caseId);
+    setCaseFull((prev) => (prev ? { ...prev, linkedCases: full.linkedCases } : full));
+  }
+
+  // SPEC-013: refreshes ONLY caseFull.attachments.
+  async function refreshAttachments() {
+    const full = await api.getCaseFull(caseId);
+    setCaseFull((prev) => (prev ? { ...prev, attachments: full.attachments } : full));
+  }
+
+  // SPEC-013: refreshes ONLY caseFull.ruleCitations.
+  async function refreshRuleCitations() {
+    const full = await api.getCaseFull(caseId);
+    setCaseFull((prev) => (prev ? { ...prev, ruleCitations: full.ruleCitations } : full));
+  }
+
   // SPEC-011: refreshes ONLY parties/witnesses (and what's derived
   // from them: initiator/respondent/witnessDraft) — never
   // caseNumber/day/race/informedAt nor the four free-text useState
@@ -269,43 +287,25 @@ export function CaseForm({ caseId }: Props) {
     }
   }
 
-  // SPEC-011: one Save per tab, each scoped to just its own data.
-  // Generic one-PATCH save with its own `saving` key — never touches
-  // `caseFull` or any other useState: for the fields it's used for
-  // (General, the four free-text boxes), local state is already the
-  // source of truth that liveCase/Copy/the .html export read. A save
-  // that ever needs a refresh writes its own scoped one (see
-  // refreshParties above), never the blanket reload().
-  async function saveField(key: string, patch: Partial<CaseRow>) {
-    setSaving((prev) => ({ ...prev, [key]: true }));
+  // SPEC-014: one Save for the whole case — General + Parties &
+  // Witness (incl. witness reconciliation) + the four free-text boxes,
+  // all in one action. Replaces SPEC-011's per-tab saves. Rules
+  // Applicable/With case(s)/attachments/jury keep acting instantly,
+  // unchanged, never part of this save.
+  async function handleSaveAll() {
+    setSavingAll(true);
     try {
-      await api.updateCase(caseId, patch);
-      setError(null);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSaving((prev) => ({ ...prev, [key]: false }));
-    }
-  }
+      await api.updateCase(caseId, {
+        case_number: caseNumber.trim(),
+        day: day.trim() || null,
+        race: race.trim() || null,
+        informed_at: informedAt.trim() || null,
+        procedural_matters: proceduralMatters,
+        facts_found: factsFound,
+        conclusion,
+        decision,
+      });
 
-  // "1. General" — informed_at still has no input (SPEC-010) but
-  // travels unchanged in the payload.
-  function handleSaveGeneral(e: FormEvent) {
-    e.preventDefault();
-    saveField('general', {
-      case_number: caseNumber.trim(),
-      day: day.trim() || null,
-      race: race.trim() || null,
-      informed_at: informedAt.trim() || null,
-    });
-  }
-
-  // "2. Parties & Witness" — the one save that needs a refresh after
-  // (refreshParties), so it doesn't use saveField. Witness
-  // reconciliation unchanged from before SPEC-011.
-  async function handleSaveParties() {
-    setSaving((prev) => ({ ...prev, parties: true }));
-    try {
       await savePartyRole('initiator');
       await savePartyRole('respondent');
 
@@ -325,37 +325,8 @@ export function CaseForm({ caseId }: Props) {
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setSaving((prev) => ({ ...prev, parties: false }));
+      setSavingAll(false);
     }
-  }
-
-  function handleSaveProcedural() {
-    saveField('procedural', { procedural_matters: proceduralMatters });
-  }
-
-  function handleSaveFacts() {
-    saveField('facts', { facts_found: factsFound });
-  }
-
-  // Rules Applicable keeps saving instantly via handleAddRule/
-  // handleRemoveRule, unchanged — never part of this save.
-  function handleSaveConclusion() {
-    saveField('conclusion', { conclusion });
-  }
-
-  function handleSaveDecision() {
-    saveField('decision', { decision });
-  }
-
-  // "7. Review" — all four boxes together in one PATCH, since that's
-  // "all of this tab's information".
-  function handleSaveReview() {
-    saveField('review', {
-      procedural_matters: proceduralMatters,
-      facts_found: factsFound,
-      conclusion,
-      decision,
-    });
   }
 
   function handleStageWitness(e: FormEvent) {
@@ -379,12 +350,12 @@ export function CaseForm({ caseId }: Props) {
       position: caseFull.ruleCitations.length,
     });
     setRuleText('');
-    await reload();
+    await refreshRuleCitations();
   }
 
   async function handleRemoveRule(id: number) {
     await api.deleteRuleCitation(id);
-    await reload();
+    await refreshRuleCitations();
   }
 
   // "With Case(s)" (top row, general tab): link/unlink is a discrete
@@ -392,12 +363,12 @@ export function CaseForm({ caseId }: Props) {
   // as soon as you pick a case.
   async function handleLinkCase(linkedCaseId: number) {
     await api.createCaseLink({ case_id: caseId, linked_case_id: linkedCaseId });
-    await reload();
+    await refreshLinkedCases();
   }
 
   async function handleRemoveLink(linkedCaseId: number) {
     await api.deleteCaseLink({ case_id: caseId, linked_case_id: linkedCaseId });
-    await reload();
+    await refreshLinkedCases();
   }
 
   // Tab 0: protest form(s) for this case (DECISIONS.md D-027). Any
@@ -410,7 +381,7 @@ export function CaseForm({ caseId }: Props) {
     setUploadingAttachment(true);
     try {
       await api.uploadCaseAttachment(caseId, file);
-      await reload();
+      await refreshAttachments();
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -421,7 +392,7 @@ export function CaseForm({ caseId }: Props) {
 
   async function handleRemoveAttachment(id: number) {
     await api.deleteCaseAttachment(id);
-    await reload();
+    await refreshAttachments();
   }
 
   // Manual "Process" (D-027 follow-up) — reads the uploaded protest
@@ -568,6 +539,9 @@ export function CaseForm({ caseId }: Props) {
         <button type="button" className="btn-accent" onClick={handleDownload}>
           Download decision (.html)
         </button>
+        <button type="button" className="btn-accent" onClick={handleSaveAll} disabled={savingAll}>
+          {savingAll ? 'Saving…' : 'Save'}
+        </button>
       </div>
 
       {caseTab === 'attachments' && (
@@ -631,7 +605,7 @@ export function CaseForm({ caseId }: Props) {
         <div className="tab-panel">
           <section className="box general-box">
             <h2>General</h2>
-            <form onSubmit={handleSaveGeneral} className="general-fields-row">
+            <div className="general-fields-row">
               <label>
                 Case number
                 <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
@@ -682,10 +656,7 @@ export function CaseForm({ caseId }: Props) {
                   </select>
                 </div>
               </label>
-              <button type="submit" disabled={!!saving.general}>
-                {saving.general ? 'Saving…' : 'Save'}
-              </button>
-            </form>
+            </div>
           </section>
         </div>
       )}
@@ -703,8 +674,6 @@ export function CaseForm({ caseId }: Props) {
               markCopied('parties');
               markCopied('witness');
             }}
-            onSave={handleSaveParties}
-            saving={!!saving.parties}
           >
             <h3>Parties</h3>
             {(['initiator', 'respondent'] as PartyRole[]).map((role) => {
@@ -802,8 +771,6 @@ export function CaseForm({ caseId }: Props) {
         text={proceduralMatters}
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
-        onSave={handleSaveProcedural}
-        saving={!!saving.procedural}
       >
         <div className="box-body-split">
           <div className="textarea-col">
@@ -842,8 +809,6 @@ export function CaseForm({ caseId }: Props) {
         text={factsFound}
         copied={!!copied.facts_found}
         onCopied={() => markCopied('facts_found')}
-        onSave={handleSaveFacts}
-        saving={!!saving.facts}
       >
         <div className="box-body-split">
           <div className="textarea-col">
@@ -883,8 +848,6 @@ export function CaseForm({ caseId }: Props) {
           text={conclusion}
           copied={!!copied.conclusion}
           onCopied={() => markCopied('conclusion')}
-          onSave={handleSaveConclusion}
-          saving={!!saving.conclusion}
         >
           <div className="box-body-split">
             <div className="textarea-col">
@@ -967,8 +930,6 @@ export function CaseForm({ caseId }: Props) {
         text={decision}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
-        onSave={handleSaveDecision}
-        saving={!!saving.decision}
       >
         <div className="box-body-split">
           <div className="textarea-col">
@@ -1000,12 +961,7 @@ export function CaseForm({ caseId }: Props) {
       {caseTab === 'review' && (
         <div className="tab-panel">
           <section className="box review-box">
-            <div className="box-header">
-              <h2>Review</h2>
-              <button type="button" onClick={handleSaveReview} disabled={!!saving.review}>
-                {saving.review ? 'Saving…' : 'Save'}
-              </button>
-            </div>
+            <h2>Review</h2>
             <h3>Procedural Matters</h3>
             <textarea value={proceduralMatters} onChange={(e) => setProceduralMatters(e.target.value)} rows={4} />
             <h3>Facts Found</h3>
