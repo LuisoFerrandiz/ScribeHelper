@@ -618,8 +618,9 @@ export function CaseForm({ caseId }: Props) {
             </button>
             {extraction && (
               <p className="muted">
-                Processed. Suggestions from it are offered on the General &amp; Parties and
-                Procedural Matters tabs — nothing was inserted automatically.
+                Processed. Suggestions from it are offered on the General, Parties &amp; Witness,
+                Procedural Matters, Facts Found, Conclusion and Decision tabs — nothing was
+                inserted automatically.
               </p>
             )}
           </section>
