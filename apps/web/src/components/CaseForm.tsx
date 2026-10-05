@@ -980,6 +980,11 @@ export function CaseForm({ caseId }: Props) {
               box="decision"
               currentText={decision}
               onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              protestForm={
+                extraction?.decision_candidate
+                  ? { paragraph: { label: 'From protest form', text: extraction.decision_candidate } }
+                  : undefined
+              }
               partyReference={{
                 initiator: { sailNumber: initiator.sailNumber, boatName: initiator.boatName },
                 respondent: { sailNumber: respondent.sailNumber, boatName: respondent.boatName },
