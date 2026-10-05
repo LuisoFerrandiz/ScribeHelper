@@ -210,7 +210,7 @@ export interface CaseSummaryRow {
 
 export interface CaseFull extends CaseRow {
   event: EventRow;
-  jury: { id: number; is_chairman: 0 | 1; full_name: string }[];
+  jury: { id: number; person_id: number; is_chairman: 0 | 1; full_name: string }[];
   parties: {
     id: number;
     role: PartyRole;

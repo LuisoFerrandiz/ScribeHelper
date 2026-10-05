@@ -45,7 +45,9 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <nav className="tab-bar tab-bar-pill">
+        <div className="app-header-nav">
+          <span className="brand">Scribe Helper</span>
+          <nav className="tab-bar tab-bar-pill">
           <button
             type="button"
             className={tab === 'case' ? 'active' : undefined}
@@ -95,6 +97,7 @@ export function App() {
             </button>
           )}
         </nav>
+        </div>
         <div className="app-header-user">
           <button type="button" onClick={() => setUserMenuOpen((o) => !o)}>
             {user.username}
@@ -117,17 +120,24 @@ export function App() {
 
       {tab === 'case' && (
         <>
-          <CaseList
-            caseId={currentCaseId}
-            onSelect={(eventId, caseId) => {
-              setCurrentEventId(eventId);
-              setCurrentCaseId(caseId);
-            }}
-          />
-          {currentCaseId !== null ? (
-            <CaseForm caseId={currentCaseId} />
+          {currentCaseId === null ? (
+            <>
+              <CaseList
+                caseId={currentCaseId}
+                onSelect={(eventId, caseId) => {
+                  setCurrentEventId(eventId);
+                  setCurrentCaseId(caseId);
+                }}
+              />
+              <p className="muted">Pick a case above, or create a new one.</p>
+            </>
           ) : (
-            <p className="muted">Pick a case above, or create a new one.</p>
+            <>
+              <button type="button" className="back-to-cases" onClick={() => setCurrentCaseId(null)}>
+                ← All cases
+              </button>
+              <CaseForm caseId={currentCaseId} />
+            </>
           )}
         </>
       )}

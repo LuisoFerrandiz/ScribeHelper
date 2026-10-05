@@ -19,7 +19,7 @@ export function registerCaseDetailRoute(app: FastifyInstance) {
     // Panel sitting on THIS case (D-021) — not the event's whole judge pool.
     const jury = db
       .prepare(
-        `SELECT case_jury_member.id, case_jury_member.is_chairman, person.full_name
+        `SELECT case_jury_member.id, case_jury_member.person_id, case_jury_member.is_chairman, person.full_name
          FROM case_jury_member JOIN person ON person.id = case_jury_member.person_id
          WHERE case_jury_member.case_id = ?`,
       )

@@ -58,10 +58,20 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
 
     const setClause = cols.map((c) => `${c} = ?`).join(', ');
     const extra = touchUpdatedAt ? `, updated_at = datetime('now')` : '';
-    db.prepare(`UPDATE ${table} SET ${setClause}${extra} WHERE id = ?`).run(
-      ...cols.map((c) => body[c] as never),
-      id,
-    );
+    try {
+      db.prepare(`UPDATE ${table} SET ${setClause}${extra} WHERE id = ?`).run(
+        ...cols.map((c) => body[c] as never),
+        id,
+      );
+    } catch (e) {
+      // Same UNIQUE guard as the POST handler above — case_jury_member's
+      // UNIQUE(case_id, person_id) is reachable via PUT too (changing an
+      // occupied slot to an already-assigned judge, SPEC-009 RF-008).
+      if ((e as Error).message.includes('UNIQUE constraint failed')) {
+        return reply.code(409).send({ error: 'duplicate' });
+      }
+      throw e;
+    }
 
     const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
     if (!row) return reply.code(404).send({ error: 'not found' });

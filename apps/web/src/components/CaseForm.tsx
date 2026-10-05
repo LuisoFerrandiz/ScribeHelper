@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { api } from '../api';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
+import { JurySlots } from './JurySlots';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
   formatFullDecisionHtml,
-  formatJuryMembers,
   formatParties,
   formatRulesApplicable,
   formatWitnesses,
@@ -21,11 +21,6 @@ import type {
   PersonRow,
   ResourceSearchHit,
 } from '../types';
-
-interface PoolEntry {
-  personId: number;
-  fullName: string;
-}
 
 interface Props {
   caseId: number;
@@ -51,10 +46,10 @@ const emptyParty: PartyEdit = { sailNumber: '', boatName: '', representedBy: '' 
 // Conclusion, Rules Applicable, Decision, Jury Members. The on-screen
 // tab layout is a separate, editable concern (user's call, 2026-09-15):
 // Parties & Witness share one box, edited in document order (Parties,
-// then Witness), Jury Members gets its own tab, and one Save button on
-// the General
-// tab persists case meta + parties + witnesses + the four free-text
-// boxes together.
+// then Witness), and one Save button on the General tab persists case
+// meta + parties + witnesses + the four free-text boxes together.
+// Per-case jury assignment (Jury Members) has no tab here any more —
+// pulled out 2026-10-05 to become its own top-level tab in a later spec.
 export function CaseForm({ caseId }: Props) {
   const [caseFull, setCaseFull] = useState<CaseFull | null>(null);
   const [boats, setBoats] = useState<BoatRow[]>([]);
@@ -104,36 +99,26 @@ export function CaseForm({ caseId }: Props) {
   const [ruleHits, setRuleHits] = useState<ResourceSearchHit[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Judge pool for this case's event (D-021) — who actually sits on THIS
-  // case, and who chairs it, is picked here, not fixed for the event.
-  const [judgePool, setJudgePool] = useState<PoolEntry[]>([]);
-  const [juryPersonName, setJuryPersonName] = useState('');
-  const [juryIsChairman, setJuryIsChairman] = useState(false);
-
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
-  type CaseTab = 'attachments' | 'general' | 'jury' | 'procedural' | 'facts' | 'conclusion' | 'decision';
+  // Per-case jury assignment used to live here as its own tab; pulled
+  // out (2026-10-05, user's call) to become its own top-level tab in a
+  // later spec instead of a CaseForm sub-tab.
+  type CaseTab = 'attachments' | 'general' | 'procedural' | 'facts' | 'conclusion' | 'decision' | 'review';
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
 
   async function reload() {
     try {
-      const [full, allBoats, allPeople, allCases, allPool] = await Promise.all([
+      const [full, allBoats, allPeople, allCases] = await Promise.all([
         api.getCaseFull(caseId),
         api.listBoats(),
         api.listPeople(),
         api.listCases(),
-        api.listJuryMembers(),
       ]);
       setCaseFull(full);
       setBoats(allBoats);
       setPeople(allPeople);
       setOtherCases(allCases.filter((c) => c.event_id === full.event_id && c.id !== caseId));
-      const nameById = new Map(allPeople.map((p) => [p.id, p.full_name]));
-      setJudgePool(
-        allPool
-          .filter((j) => j.event_id === full.event_id)
-          .map((j) => ({ personId: j.person_id, fullName: nameById.get(j.person_id) ?? '—' })),
-      );
 
       setCaseNumber(full.case_number);
       setDay(full.day ?? '');
@@ -163,6 +148,15 @@ export function CaseForm({ caseId }: Props) {
     } catch (e) {
       setError((e as Error).message);
     }
+  }
+
+  // Refreshes ONLY caseFull.jury — never the four free-text useState
+  // (unlike reload() above, which re-seeds them from the server and
+  // would silently discard unsaved edits made on the Review tab,
+  // SPEC-009 RF-007). JurySlots calls this, never reload().
+  async function reloadJury() {
+    const full = await api.getCaseFull(caseId);
+    setCaseFull((prev) => (prev ? { ...prev, jury: full.jury } : full));
   }
 
   useEffect(() => {
@@ -287,25 +281,6 @@ export function CaseForm({ caseId }: Props) {
 
   function handleUnstageWitness(index: number) {
     setWitnessDraft((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function handleAddJury(e: FormEvent) {
-    e.preventDefault();
-    const entry = judgePool.find((p) => p.fullName.toLowerCase() === juryPersonName.trim().toLowerCase());
-    if (!entry) return; // must be in the event's pool — added via the Jury utility
-    await api.createCaseJuryMember({
-      case_id: caseId,
-      person_id: entry.personId,
-      is_chairman: juryIsChairman ? 1 : 0,
-    });
-    setJuryPersonName('');
-    setJuryIsChairman(false);
-    await reload();
-  }
-
-  async function handleRemoveJury(id: number) {
-    await api.deleteCaseJuryMember(id);
-    await reload();
   }
 
   async function handleAddRule(e: FormEvent) {
@@ -448,19 +423,11 @@ export function CaseForm({ caseId }: Props) {
         </button>
         <button
           type="button"
-          className={caseTab === 'jury' ? 'active' : undefined}
-          aria-current={caseTab === 'jury'}
-          onClick={() => setCaseTab('jury')}
-        >
-          2. Jury
-        </button>
-        <button
-          type="button"
           className={caseTab === 'procedural' ? 'active' : undefined}
           aria-current={caseTab === 'procedural'}
           onClick={() => setCaseTab('procedural')}
         >
-          3. Procedural Matters
+          2. Procedural Matters
         </button>
         <button
           type="button"
@@ -468,7 +435,7 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'facts'}
           onClick={() => setCaseTab('facts')}
         >
-          4. Facts Found
+          3. Facts Found
         </button>
         <button
           type="button"
@@ -476,7 +443,7 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'conclusion'}
           onClick={() => setCaseTab('conclusion')}
         >
-          5. Conclusion
+          4. Conclusion
         </button>
         <button
           type="button"
@@ -484,7 +451,15 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'decision'}
           onClick={() => setCaseTab('decision')}
         >
-          6. Decision
+          5. Decision
+        </button>
+        <button
+          type="button"
+          className={caseTab === 'review' ? 'active' : undefined}
+          aria-current={caseTab === 'review'}
+          onClick={() => setCaseTab('review')}
+        >
+          6. Review
         </button>
       </nav>
         <button type="button" className="btn-accent" onClick={handleDownload}>
@@ -705,55 +680,6 @@ export function CaseForm({ caseId }: Props) {
         </div>
       )}
 
-      {caseTab === 'jury' && (
-        <div className="tab-panel">
-          {/* Jury Members — the panel sitting on THIS case (D-021), picked
-              from the event's judge pool (Jury utility, top nav) */}
-          <CopyBox
-            label="Jury Members"
-            text={formatJuryMembers(liveCase)}
-            copied={!!copied.jury_members}
-            onCopied={() => markCopied('jury_members')}
-          >
-            <ul className="list">
-              {caseFull.jury.map((j) => (
-                <li key={j.id}>
-                  {j.full_name}
-                  {j.is_chairman ? ' (Chairman)' : ''}{' '}
-                  <button type="button" onClick={() => handleRemoveJury(j.id)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-              {caseFull.jury.length === 0 && <li className="muted">No jury members assigned to this case yet.</li>}
-            </ul>
-            {judgePool.length === 0 ? (
-              <p className="muted">No judges in this event's pool yet — add them from the Jury utility (top nav).</p>
-            ) : (
-              <form onSubmit={handleAddJury} className="inline-form">
-                <input
-                  list="judge-pool-list"
-                  placeholder="Judge name"
-                  value={juryPersonName}
-                  onChange={(e) => setJuryPersonName(e.target.value)}
-                  required
-                />
-                <label>
-                  <input type="checkbox" checked={juryIsChairman} onChange={(e) => setJuryIsChairman(e.target.checked)} />
-                  Chairman
-                </label>
-                <button type="submit">Add to this case</button>
-              </form>
-            )}
-            <datalist id="judge-pool-list">
-              {judgePool.map((p) => (
-                <option key={p.personId} value={p.fullName} />
-              ))}
-            </datalist>
-          </CopyBox>
-        </div>
-      )}
-
       {caseTab === 'procedural' && (
         <div className="tab-panel">
       {/* 3. Procedural Matters */}
@@ -941,6 +867,29 @@ export function CaseForm({ caseId }: Props) {
           </div>
         </div>
       </CopyBox>
+        </div>
+      )}
+
+      {caseTab === 'review' && (
+        <div className="tab-panel">
+          <section className="box review-box">
+            <h3>Procedural Matters</h3>
+            <textarea value={proceduralMatters} onChange={(e) => setProceduralMatters(e.target.value)} rows={4} />
+            <h3>Facts Found</h3>
+            <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
+            <h3>Conclusion</h3>
+            <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
+            <h3>Decision</h3>
+            <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
+          </section>
+
+          <JurySlots
+            caseId={caseId}
+            eventId={caseFull.event.id}
+            jury={caseFull.jury}
+            onJuryChange={reloadJury}
+            findOrCreatePerson={findOrCreatePerson}
+          />
         </div>
       )}
     </div>

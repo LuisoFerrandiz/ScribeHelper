@@ -99,6 +99,8 @@ export const api = {
   listCaseJuryMembers: () => request<CaseJuryMemberRow[]>('/case-jury-members'),
   createCaseJuryMember: (data: Partial<CaseJuryMemberRow>) =>
     post<CaseJuryMemberRow>('/case-jury-members', data),
+  updateCaseJuryMember: (id: number, data: Partial<CaseJuryMemberRow>) =>
+    put<CaseJuryMemberRow>(`/case-jury-members/${id}`, data),
   deleteCaseJuryMember: (id: number) => del(`/case-jury-members/${id}`),
 
   listCases: () => request<CaseRow[]>('/cases'),
