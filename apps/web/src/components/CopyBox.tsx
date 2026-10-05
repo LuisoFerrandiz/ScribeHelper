@@ -6,6 +6,11 @@ interface CopyBoxProps {
   copied: boolean;
   onCopied: () => void;
   children: ReactNode;
+  // SPEC-011: optional per-box Save, next to Copy — only boxes that
+  // persist their own data pass this (the ones that act immediately,
+  // like Rules Applicable, don't).
+  onSave?: () => void;
+  saving?: boolean;
 }
 
 // One section of the decision form (RULES.md R-29: labels and order are
@@ -14,7 +19,7 @@ interface CopyBoxProps {
 // so a wide screen with several boxes open at once can be tidied down
 // to just the titles — collapsing never hides the Copy button, so a
 // box can still be copied without opening it.
-export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProps) {
+export function CopyBox({ label, text, copied, onCopied, children, onSave, saving }: CopyBoxProps) {
   const [failed, setFailed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -44,9 +49,16 @@ export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProp
             {copied && <span className="copied-badge"> ✓ Copied</span>}
           </h2>
         </button>
-        <button type="button" onClick={handleCopy}>
-          Copy
-        </button>
+        <div className="box-header-actions">
+          {onSave && (
+            <button type="button" onClick={onSave} disabled={!!saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          )}
+          <button type="button" onClick={handleCopy}>
+            Copy
+          </button>
+        </div>
       </div>
       <div className="box-body" hidden={collapsed}>
         {children}

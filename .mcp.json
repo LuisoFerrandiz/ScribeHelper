@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "grammar-checker": {
+      "command": "C:\\Users\\luiso\\AppData\\Roaming\\Python\\Scripts\\uv.exe",
+      "args": [
+        "run",
+        "--directory",
+        "C:\\Users\\luiso\\SynologyDrive_NAS_Web\\SynologyDrive\\Scribe_helper\\.claude\\mcp-servers\\mcp-grammar-checker",
+        "python",
+        "server.py"
+      ]
+    }
+  }
+}
