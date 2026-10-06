@@ -6,6 +6,7 @@ import { registerCaseSummaryRoute } from './caseSummary.js';
 import { registerCaseAttachmentRoutes } from './caseAttachments.js';
 import { registerCaseDeleteRoute } from './caseDelete.js';
 import { registerExtractAttachmentsRoute } from './extractAttachments.js';
+import { registerExtractNotesRoute } from './extractNotes.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
@@ -50,6 +51,7 @@ export function registerRoutes(app: FastifyInstance) {
       'race',
       'informed_at',
       'with_case_note',
+      'notes',
       'procedural_matters',
       'facts_found',
       'conclusion',
@@ -80,6 +82,7 @@ export function registerRoutes(app: FastifyInstance) {
   registerCaseAttachmentRoutes(app);
   registerCaseDeleteRoute(app);
   registerExtractAttachmentsRoute(app);
+  registerExtractNotesRoute(app);
   registerResourceRoutes(app);
   registerPhraseRoutes(app);
   registerDraftRoute(app);

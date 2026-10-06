@@ -22,5 +22,14 @@ if (!hasWithCaseNote) {
   console.log('Migration: added protest_case.with_case_note');
 }
 
+// SPEC-017: second real ALTER TABLE (first was with_case_note, SPEC-016).
+const hasNotes = (db.prepare(`PRAGMA table_info(protest_case)`).all() as { name: string }[]).some(
+  (c) => c.name === 'notes',
+);
+if (!hasNotes) {
+  db.exec(`ALTER TABLE protest_case ADD COLUMN notes TEXT NOT NULL DEFAULT ''`);
+  console.log('Migration: added protest_case.notes');
+}
+
 await seedBasePhrases();
 seedAdminUser();

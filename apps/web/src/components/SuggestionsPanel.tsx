@@ -32,6 +32,7 @@ interface Props {
   currentText: string;
   onInsert: (text: string) => void;
   protestForm?: ProtestFormSuggestion;
+  notesForm?: ProtestFormSuggestion; // SPEC-017: same shape, sourced from hearing notes
   // SPEC-006 RF-006, Facts Found only: always-visible party reference,
   // not one of the three collapsible sources below.
   partyReference?: PartyReferenceData;
@@ -59,8 +60,9 @@ function CollapsibleSection({ title, children }: { title: string; children: Reac
 // protest form (if any), the saved phrase library, and an AI draft.
 // Every insert here is one click the drafter chooses to make; nothing
 // lands in the box on its own (RULES.md R-06/R-07).
-export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestForm, partyReference }: Props) {
+export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestForm, notesForm, partyReference }: Props) {
   const hasProtestForm = !!protestForm && (!!protestForm.lines?.length || !!protestForm.paragraph);
+  const hasNotesForm = !!notesForm && (!!notesForm.lines?.length || !!notesForm.paragraph);
 
   return (
     <div className="suggestions-panel">
@@ -83,6 +85,22 @@ export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestFo
             {protestForm!.paragraph && (
               <button type="button" onClick={() => onInsert(protestForm!.paragraph!.text)}>
                 + {protestForm!.paragraph.label}
+              </button>
+            )}
+          </div>
+        </CollapsibleSection>
+      )}
+      {hasNotesForm && (
+        <CollapsibleSection title="Hearing notes">
+          <div className="suggestions-lines">
+            {notesForm!.lines?.map((line, i) => (
+              <button key={i} type="button" onClick={() => onInsert(line)}>
+                + {line}
+              </button>
+            ))}
+            {notesForm!.paragraph && (
+              <button type="button" onClick={() => onInsert(notesForm!.paragraph!.text)}>
+                + {notesForm!.paragraph.label}
               </button>
             )}
           </div>

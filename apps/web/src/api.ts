@@ -13,6 +13,7 @@ import type {
   ExampleSuggestions,
   InlineCompletion,
   JuryMemberRow,
+  NotesExtraction,
   PartyRow,
   PersonRow,
   PhraseBox,
@@ -138,6 +139,8 @@ export const api = {
   attachmentFileUrl: (id: number) => `${API_URL}/attachments/${id}/file`,
   extractAttachments: (caseId: number) =>
     post<AttachmentExtraction>(`/cases/${caseId}/extract-attachments`, {}),
+  extractNotes: (caseId: number, notes: string) =>
+    post<NotesExtraction>(`/cases/${caseId}/extract-notes`, { notes }),
 
   listResources: (kind: ResourceKind, status?: string) =>
     request<ResourceRow[]>(`/resources?kind=${kind}${status ? `&status=${status}` : ''}`),

@@ -47,6 +47,7 @@ export interface CaseRow {
   race: string | null;
   informed_at: string | null;
   with_case_note: string | null;
+  notes: string;
   procedural_matters: string;
   facts_found: string;
   conclusion: string;
@@ -109,6 +110,15 @@ export interface AttachmentExtraction {
   conclusion_candidate: string;
   decision_candidate: string;
   rule_citations_candidate: string[];
+}
+
+// SPEC-017 — "Process" result from this case's hearing notes (not an
+// uploaded protest form): candidates for the 4 writing boxes only.
+export interface NotesExtraction {
+  procedural_matters_candidate: string;
+  facts_found_candidates: string[];
+  conclusion_candidate: string;
+  decision_candidate: string;
 }
 
 export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
