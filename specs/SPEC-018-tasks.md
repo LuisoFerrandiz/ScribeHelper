@@ -14,5 +14,7 @@ Relacionado: `SPEC-018-hearing-notes-compact.md` (requisitos).
   pequeño que "General"/otros `<h2>` de caja); resto de la página
   (General, pestañas, Save/Download) sin cambios visuales. Commiteado
   (`bfd9c31`) y pusheado a `master`. "Pull and redeploy" ya hecho en
-  Portainer. Pendiente: verificación en vivo contra
-  `http://192.168.1.105:8086/`.
+  Portainer. Verificado en vivo contra `http://192.168.1.105:8086/`
+  (caso real TEST-01): caja "Hearing notes" compacta — título
+  visiblemente más pequeño que "General", textarea baja; resto de la
+  página sin cambios. Cerrada.
