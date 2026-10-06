@@ -128,6 +128,7 @@ export function App() {
                   setCurrentEventId(eventId);
                   setCurrentCaseId(caseId);
                 }}
+                user={user}
               />
               <p className="muted">Pick a case above, or create a new one.</p>
             </>

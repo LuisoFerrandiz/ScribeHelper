@@ -4,6 +4,7 @@ import { registerCaseLinkRoutes } from './caseLinks.js';
 import { registerCaseDetailRoute } from './caseDetail.js';
 import { registerCaseSummaryRoute } from './caseSummary.js';
 import { registerCaseAttachmentRoutes } from './caseAttachments.js';
+import { registerCaseDeleteRoute } from './caseDelete.js';
 import { registerExtractAttachmentsRoute } from './extractAttachments.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerPhraseRoutes } from './phrases.js';
@@ -54,6 +55,7 @@ export function registerRoutes(app: FastifyInstance) {
       'decision',
     ],
     touchUpdatedAt: true,
+    skipDelete: true, // SPEC-015: dedicated route below instead
   });
 
   registerCrud(app, 'parties', {
@@ -75,6 +77,7 @@ export function registerRoutes(app: FastifyInstance) {
   registerCaseSummaryRoute(app);
   registerCaseDetailRoute(app);
   registerCaseAttachmentRoutes(app);
+  registerCaseDeleteRoute(app);
   registerExtractAttachmentsRoute(app);
   registerResourceRoutes(app);
   registerPhraseRoutes(app);

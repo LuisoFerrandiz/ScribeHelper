@@ -1,25 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { api } from '../api';
 import { formatBoat } from '../format';
 import { NewCaseDialog } from './NewCaseDialog';
-import type { CaseSummaryRow } from '../types';
+import type { CaseSummaryRow, SessionUser } from '../types';
 
 interface Props {
   caseId: number | null;
   onSelect: (eventId: number, caseId: number) => void;
+  // SPEC-015: gates the Remove column/button to admins.
+  user: SessionUser;
 }
 
 // Entry screen (SPEC-001) — replaces CaseSelector.tsx's text+datalist
 // picker with a tabular listing of every existing case, grouped by
 // regatta (same visual grouping CaseSelector.tsx already used). "New
 // case" opens the popup from SPEC-002 — no create-form of its own.
-export function CaseList({ caseId, onSelect }: Props) {
+export function CaseList({ caseId, onSelect, user }: Props) {
   const [rows, setRows] = useState<CaseSummaryRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   function reload() {
     return api.listCaseSummaries().then(setRows);
+  }
+
+  // SPEC-015: case_number is unique only per event (UNIQUE(event_id,
+  // case_number)) — two regattas can both have a "Case 1", so the
+  // confirmation must name the regatta too, not just the case number.
+  async function handleDelete(e: MouseEvent, row: CaseSummaryRow) {
+    e.stopPropagation();
+    if (!window.confirm(`Delete case ${row.case_number} (${row.event_name})? This cannot be undone.`)) return;
+    await api.deleteCase(row.id);
+    await reload();
   }
 
   useEffect(() => {
@@ -69,6 +81,7 @@ export function CaseList({ caseId, onSelect }: Props) {
                 <th>Initiator</th>
                 <th>Respondent</th>
                 <th>Decision</th>
+                {user.role === 'admin' && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -84,6 +97,13 @@ export function CaseList({ caseId, onSelect }: Props) {
                     <td>{formatBoat(r.initiator)}</td>
                     <td>{formatBoat(r.respondent)}</td>
                     <td>{r.decided ? 'Decided' : 'Pending'}</td>
+                    {user.role === 'admin' && (
+                      <td>
+                        <button type="button" onClick={(e) => handleDelete(e, r)}>
+                          Remove
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
             </tbody>

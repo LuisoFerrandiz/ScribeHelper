@@ -5,13 +5,17 @@ interface CrudOptions {
   table: string;
   fields: string[]; // insertable/updatable columns, excluding id
   touchUpdatedAt?: boolean; // set updated_at = now() on update
+  // SPEC-015: 'cases' registers a dedicated DELETE elsewhere (admin
+  // guard + attachment file cleanup) — the generic one here would skip
+  // both, so it's left unregistered for that prefix.
+  skipDelete?: boolean;
 }
 
 // Same CRUD shape for every entity in RULES.md/CONTEXT.md: person, event,
 // boat, and the case-scoped tables. One generic handler instead of eight
 // near-identical route files.
 export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOptions) {
-  const { table, fields, touchUpdatedAt } = opts;
+  const { table, fields, touchUpdatedAt, skipDelete } = opts;
 
   app.get(`/${prefix}`, () => {
     return db.prepare(`SELECT * FROM ${table} ORDER BY id`).all();
@@ -78,10 +82,12 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
     return row;
   });
 
-  app.delete(`/${prefix}/:id`, (req, reply) => {
-    const { id } = req.params as { id: string };
-    const result = db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
-    if (result.changes === 0) return reply.code(404).send({ error: 'not found' });
-    reply.code(204).send();
-  });
+  if (!skipDelete) {
+    app.delete(`/${prefix}/:id`, (req, reply) => {
+      const { id } = req.params as { id: string };
+      const result = db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(id);
+      if (result.changes === 0) return reply.code(404).send({ error: 'not found' });
+      reply.code(204).send();
+    });
+  }
 }

@@ -107,6 +107,7 @@ export const api = {
   listCaseSummaries: () => request<CaseSummaryRow[]>('/cases/summary'),
   createCase: (data: Partial<CaseRow>) => post<CaseRow>('/cases', data),
   updateCase: (id: number, data: Partial<CaseRow>) => put<CaseRow>(`/cases/${id}`, data),
+  deleteCase: (id: number) => del(`/cases/${id}`),
   getCaseFull: (id: number) => request<CaseFull>(`/cases/${id}/full`),
 
   createParty: (data: Partial<PartyRow>) => post<PartyRow>('/parties', data),
