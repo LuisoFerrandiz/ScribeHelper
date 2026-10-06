@@ -7,6 +7,7 @@ import { SuggestionsPanel } from './SuggestionsPanel';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
+  formatBoat,
   formatFullDecisionHtml,
   formatParties,
   formatRulesApplicable,
@@ -26,19 +27,24 @@ interface Props {
   caseId: number;
 }
 
-interface PartyEdit {
+// SPEC-016: a case can have several initiators/several respondents —
+// mirrors WitnessDraft's own staging pattern (null id = not yet
+// persisted, created on Save; add/remove only, no inline edit of an
+// already-saved row, same as Witness).
+interface PartyDraft {
+  id: number | null;
   sailNumber: string;
   boatName: string;
   representedBy: string;
 }
+
+const emptyPartyDraft: PartyDraft = { id: null, sailNumber: '', boatName: '', representedBy: '' };
 
 interface WitnessDraft {
   id: number | null; // null = not yet persisted, created on Save
   fullName: string;
   role: string;
 }
-
-const emptyParty: PartyEdit = { sailNumber: '', boatName: '', representedBy: '' };
 
 // The case form. Boxes in fixed form order for the official document
 // (CONTEXT.md section 4, format.ts's formatFullDecision — never
@@ -69,13 +75,22 @@ export function CaseForm({ caseId }: Props) {
   const [day, setDay] = useState('');
   const [race, setRace] = useState('');
   const [informedAt, setInformedAt] = useState('');
+  const [withCaseNote, setWithCaseNote] = useState('');
   const [proceduralMatters, setProceduralMatters] = useState('');
   const [factsFound, setFactsFound] = useState('');
   const [conclusion, setConclusion] = useState('');
   const [decision, setDecision] = useState('');
 
-  const [initiator, setInitiator] = useState<PartyEdit>(emptyParty);
-  const [respondent, setRespondent] = useState<PartyEdit>(emptyParty);
+  // SPEC-016: several initiators/several respondents — one staged list
+  // per role, same add/remove pattern as witnessDraft below.
+  const [partyDrafts, setPartyDrafts] = useState<Record<PartyRole, PartyDraft[]>>({
+    initiator: [],
+    respondent: [],
+  });
+  const [partyForm, setPartyForm] = useState<Record<PartyRole, PartyDraft>>({
+    initiator: emptyPartyDraft,
+    respondent: emptyPartyDraft,
+  });
 
   // Staged locally, reconciled against the server in one batch by the
   // General tab's single Save button (no more per-witness Add call).
@@ -93,10 +108,10 @@ export function CaseForm({ caseId }: Props) {
   // any visible ghost-text) on every keystroke elsewhere in the form.
   const sailNumberRoles = useMemo(
     () => [
-      ...(initiator.sailNumber ? [{ sailNumber: initiator.sailNumber, role: 'initiator' as const }] : []),
-      ...(respondent.sailNumber ? [{ sailNumber: respondent.sailNumber, role: 'respondent' as const }] : []),
+      ...partyDrafts.initiator.filter((p) => p.sailNumber).map((p) => ({ sailNumber: p.sailNumber, role: 'initiator' as const })),
+      ...partyDrafts.respondent.filter((p) => p.sailNumber).map((p) => ({ sailNumber: p.sailNumber, role: 'respondent' as const })),
     ],
-    [initiator.sailNumber, respondent.sailNumber],
+    [partyDrafts],
   );
 
   const [ruleText, setRuleText] = useState('');
@@ -137,22 +152,19 @@ export function CaseForm({ caseId }: Props) {
       setDay(full.day ?? '');
       setRace(full.race ?? '');
       setInformedAt(full.informed_at ?? '');
+      setWithCaseNote(full.with_case_note ?? '');
       setProceduralMatters(full.procedural_matters);
       setFactsFound(full.facts_found);
       setConclusion(full.conclusion);
       setDecision(full.decision);
 
-      const i = full.parties.find((p) => p.role === 'initiator');
-      const r = full.parties.find((p) => p.role === 'respondent');
-      setInitiator({
-        sailNumber: i?.sail_number ?? '',
-        boatName: i?.boat_name ?? '',
-        representedBy: i?.represented_by ?? '',
-      });
-      setRespondent({
-        sailNumber: r?.sail_number ?? '',
-        boatName: r?.boat_name ?? '',
-        representedBy: r?.represented_by ?? '',
+      setPartyDrafts({
+        initiator: full.parties
+          .filter((p) => p.role === 'initiator')
+          .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
+        respondent: full.parties
+          .filter((p) => p.role === 'respondent')
+          .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
       });
 
       setWitnessDraft(full.witnesses.map((w) => ({ id: w.id, fullName: w.full_name, role: w.role ?? '' })));
@@ -193,9 +205,9 @@ export function CaseForm({ caseId }: Props) {
   }
 
   // SPEC-011: refreshes ONLY parties/witnesses (and what's derived
-  // from them: initiator/respondent/witnessDraft) — never
+  // from them: partyDrafts/witnessDraft) — never
   // caseNumber/day/race/informedAt nor the four free-text useState
-  // (same criterion as reloadJury above). New witnesses get a
+  // (same criterion as reloadJury above). New witnesses/parties get a
   // server-assigned id the local draft doesn't have yet;
   // findOrCreateBoat/findOrCreatePerson already keep boats/people
   // current on their own, no need to re-fetch those here.
@@ -203,17 +215,13 @@ export function CaseForm({ caseId }: Props) {
     const full = await api.getCaseFull(caseId);
     setCaseFull((prev) => (prev ? { ...prev, parties: full.parties, witnesses: full.witnesses } : full));
 
-    const i = full.parties.find((p) => p.role === 'initiator');
-    const r = full.parties.find((p) => p.role === 'respondent');
-    setInitiator({
-      sailNumber: i?.sail_number ?? '',
-      boatName: i?.boat_name ?? '',
-      representedBy: i?.represented_by ?? '',
-    });
-    setRespondent({
-      sailNumber: r?.sail_number ?? '',
-      boatName: r?.boat_name ?? '',
-      representedBy: r?.represented_by ?? '',
+    setPartyDrafts({
+      initiator: full.parties
+        .filter((p) => p.role === 'initiator')
+        .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
+      respondent: full.parties
+        .filter((p) => p.role === 'respondent')
+        .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
     });
     setWitnessDraft(full.witnesses.map((w) => ({ id: w.id, fullName: w.full_name, role: w.role ?? '' })));
   }
@@ -270,26 +278,9 @@ export function CaseForm({ caseId }: Props) {
     setCopied((prev) => ({ ...prev, [key]: true }));
   }
 
-  async function savePartyRole(role: PartyRole) {
-    const state = role === 'initiator' ? initiator : respondent;
-    const boatId = state.sailNumber.trim()
-      ? await findOrCreateBoat(state.sailNumber.trim(), state.boatName.trim() || null)
-      : null;
-    const representedById = state.representedBy.trim()
-      ? await findOrCreatePerson(state.representedBy.trim())
-      : null;
-
-    const existing = caseFull?.parties.find((p) => p.role === role);
-    if (existing) {
-      await api.updateParty(existing.id, { boat_id: boatId, represented_by_id: representedById });
-    } else {
-      await api.createParty({ case_id: caseId, role, boat_id: boatId, represented_by_id: representedById });
-    }
-  }
-
   // SPEC-014: one Save for the whole case — General + Parties &
-  // Witness (incl. witness reconciliation) + the four free-text boxes,
-  // all in one action. Replaces SPEC-011's per-tab saves. Rules
+  // Witness (incl. party/witness reconciliation) + the four free-text
+  // boxes, all in one action. Replaces SPEC-011's per-tab saves. Rules
   // Applicable/With case(s)/attachments/jury keep acting instantly,
   // unchanged, never part of this save.
   async function handleSaveAll() {
@@ -300,14 +291,29 @@ export function CaseForm({ caseId }: Props) {
         day: day.trim() || null,
         race: race.trim() || null,
         informed_at: informedAt.trim() || null,
+        with_case_note: withCaseNote.trim() || null,
         procedural_matters: proceduralMatters,
         facts_found: factsFound,
         conclusion,
         decision,
       });
 
-      await savePartyRole('initiator');
-      await savePartyRole('respondent');
+      // SPEC-016: add/remove reconciliation per role, same pattern as
+      // witnesses below — no inline edit of an already-saved party.
+      for (const role of ['initiator', 'respondent'] as PartyRole[]) {
+        const drafts = partyDrafts[role];
+        const keptPartyIds = new Set(drafts.filter((d) => d.id !== null).map((d) => d.id));
+        for (const p of caseFull?.parties.filter((p) => p.role === role) ?? []) {
+          if (!keptPartyIds.has(p.id)) await api.deleteParty(p.id);
+        }
+        for (const d of drafts) {
+          if (d.id === null && (d.sailNumber.trim() || d.boatName.trim() || d.representedBy.trim())) {
+            const boatId = d.sailNumber.trim() ? await findOrCreateBoat(d.sailNumber.trim(), d.boatName.trim() || null) : null;
+            const representedById = d.representedBy.trim() ? await findOrCreatePerson(d.representedBy.trim()) : null;
+            await api.createParty({ case_id: caseId, role, boat_id: boatId, represented_by_id: representedById });
+          }
+        }
+      }
 
       const keptIds = new Set(witnessDraft.filter((w) => w.id !== null).map((w) => w.id));
       for (const w of caseFull?.witnesses ?? []) {
@@ -411,15 +417,36 @@ export function CaseForm({ caseId }: Props) {
     }
   }
 
-  function useSuggestedParty(role: PartyRole) {
+  // SPEC-016: adds a new entry to that role's list instead of
+  // overwriting a single slot — same spirit as addSuggestedWitness
+  // below.
+  function addSuggestedParty(role: PartyRole) {
     const suggested = extraction?.parties[role];
     if (!suggested) return;
-    const setState = role === 'initiator' ? setInitiator : setRespondent;
-    setState({
-      sailNumber: suggested.sail_number ?? '',
-      boatName: suggested.boat_name ?? '',
-      representedBy: suggested.represented_by ?? '',
-    });
+    setPartyDrafts((prev) => ({
+      ...prev,
+      [role]: [
+        ...prev[role],
+        {
+          id: null,
+          sailNumber: suggested.sail_number ?? '',
+          boatName: suggested.boat_name ?? '',
+          representedBy: suggested.represented_by ?? '',
+        },
+      ],
+    }));
+  }
+
+  function handleStageParty(role: PartyRole, e: FormEvent) {
+    e.preventDefault();
+    const form = partyForm[role];
+    if (!form.sailNumber.trim() && !form.boatName.trim() && !form.representedBy.trim()) return;
+    setPartyDrafts((prev) => ({ ...prev, [role]: [...prev[role], { ...form, id: null }] }));
+    setPartyForm((prev) => ({ ...prev, [role]: emptyPartyDraft }));
+  }
+
+  function handleUnstageParty(role: PartyRole, index: number) {
+    setPartyDrafts((prev) => ({ ...prev, [role]: prev[role].filter((_, i) => i !== index) }));
   }
 
   function useSuggestedDay() {
@@ -605,31 +632,31 @@ export function CaseForm({ caseId }: Props) {
         <div className="tab-panel">
           <section className="box general-box">
             <h2>General</h2>
-            <div className="general-fields-row">
-              <label>
-                Case number
+            <div className="general-fields-col">
+              <div className="party-row">
+                <strong>Case number</strong>
                 <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
-              </label>
-              <label>
-                Day
+              </div>
+              <div className="party-row">
+                <strong>Day</strong>
                 <input value={day} onChange={(e) => setDay(e.target.value)} />
-              </label>
-              {extraction?.day_candidate && (
-                <button type="button" onClick={useSuggestedDay}>
-                  Use suggested
-                </button>
-              )}
-              <label>
-                Race
+                {extraction?.day_candidate && (
+                  <button type="button" onClick={useSuggestedDay}>
+                    Use suggested
+                  </button>
+                )}
+              </div>
+              <div className="party-row">
+                <strong>Race</strong>
                 <input value={race} onChange={(e) => setRace(e.target.value)} />
-              </label>
-              {extraction?.race_candidate && (
-                <button type="button" onClick={useSuggestedRace}>
-                  Use suggested
-                </button>
-              )}
-              <label>
-                With case(s)
+                {extraction?.race_candidate && (
+                  <button type="button" onClick={useSuggestedRace}>
+                    Use suggested
+                  </button>
+                )}
+              </div>
+              <div className="party-row">
+                <strong>With case(s)</strong>
                 <div className="with-case-inline">
                   {caseFull.linkedCases.map((lc) => (
                     <span key={lc.id} className="chip">
@@ -655,7 +682,15 @@ export function CaseForm({ caseId }: Props) {
                       ))}
                   </select>
                 </div>
-              </label>
+              </div>
+              <div className="party-row">
+                <strong>With case(s) notes</strong>
+                <input
+                  value={withCaseNote}
+                  onChange={(e) => setWithCaseNote(e.target.value)}
+                  placeholder="Free text — e.g. a case from another regatta"
+                />
+              </div>
             </div>
           </section>
         </div>
@@ -675,39 +710,58 @@ export function CaseForm({ caseId }: Props) {
               markCopied('witness');
             }}
           >
-            <h3>Parties</h3>
-            {(['initiator', 'respondent'] as PartyRole[]).map((role) => {
-              const state = role === 'initiator' ? initiator : respondent;
-              const setState = role === 'initiator' ? setInitiator : setRespondent;
-              return (
-                <div key={role} className="party-row">
-                  <strong>{role === 'initiator' ? 'Initiator' : 'Respondent'}</strong>
+            {(['initiator', 'respondent'] as PartyRole[]).map((role) => (
+              <div key={role}>
+                <h3>{role === 'initiator' ? 'Initiator(s)' : 'Respondent(s)'}</h3>
+                <ul className="list">
+                  {partyDrafts[role].map((p, i) => (
+                    <li key={`${p.id ?? 'new'}-${i}`}>
+                      {formatBoat({ sail_number: p.sailNumber || null, boat_name: p.boatName || null })}
+                      {p.representedBy ? `, represented by ${p.representedBy}` : ''}{' '}
+                      <button type="button" onClick={() => handleUnstageParty(role, i)}>
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                  {partyDrafts[role].length === 0 && (
+                    <li className="muted">No {role === 'initiator' ? 'initiators' : 'respondents'} yet.</li>
+                  )}
+                </ul>
+                {extraction?.parties[role] && (
+                  <p className="muted">
+                    Suggested:{' '}
+                    {formatBoat({
+                      sail_number: extraction.parties[role]?.sail_number ?? null,
+                      boat_name: extraction.parties[role]?.boat_name ?? null,
+                    })}{' '}
+                    <button type="button" onClick={() => addSuggestedParty(role)}>
+                      Add
+                    </button>
+                  </p>
+                )}
+                <form onSubmit={(e) => handleStageParty(role, e)} className="inline-form">
                   <input
                     list="boat-sail-numbers"
                     placeholder="Sail number"
-                    value={state.sailNumber}
-                    onChange={(e) => setState({ ...state, sailNumber: e.target.value })}
+                    value={partyForm[role].sailNumber}
+                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], sailNumber: e.target.value } }))}
                   />
                   <input
                     list="boat-names"
                     placeholder="Boat name"
-                    value={state.boatName}
-                    onChange={(e) => setState({ ...state, boatName: e.target.value })}
+                    value={partyForm[role].boatName}
+                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], boatName: e.target.value } }))}
                   />
                   <input
                     list="people-list"
                     placeholder="Represented by"
-                    value={state.representedBy}
-                    onChange={(e) => setState({ ...state, representedBy: e.target.value })}
+                    value={partyForm[role].representedBy}
+                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], representedBy: e.target.value } }))}
                   />
-                  {extraction?.parties[role] && (
-                    <button type="button" onClick={() => useSuggestedParty(role)}>
-                      Use suggested
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                  <button type="submit">Add</button>
+                </form>
+              </div>
+            ))}
 
             <h3>Witness</h3>
             <ul className="list">
@@ -829,8 +883,8 @@ export function CaseForm({ caseId }: Props) {
               onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
               protestForm={{ lines: extraction?.facts_found_candidates }}
               partyReference={{
-                initiator: { sailNumber: initiator.sailNumber, boatName: initiator.boatName },
-                respondent: { sailNumber: respondent.sailNumber, boatName: respondent.boatName },
+                initiators: partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
+                respondents: partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
               }}
             />
           </div>
@@ -924,6 +978,15 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'decision' && (
         <div className="tab-panel">
+      {/* SPEC-016: a form field, kept out of the Decision CopyBox
+          below (D-029 rule 1 — never mix a form input with a document
+          box in the same tab), same reasoning as "General". */}
+      <section className="box">
+        <div className="party-row">
+          <strong>Informed at (date &amp; time)</strong>
+          <input value={informedAt} onChange={(e) => setInformedAt(e.target.value)} placeholder="e.g. 2026-10-06 18:30" />
+        </div>
+      </section>
       {/* 7. Decision */}
       <CopyBox
         label="Decision"
@@ -947,8 +1010,8 @@ export function CaseForm({ caseId }: Props) {
                   : undefined
               }
               partyReference={{
-                initiator: { sailNumber: initiator.sailNumber, boatName: initiator.boatName },
-                respondent: { sailNumber: respondent.sailNumber, boatName: respondent.boatName },
+                initiators: partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
+                respondents: partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
                 race,
               }}
             />
@@ -970,6 +1033,8 @@ export function CaseForm({ caseId }: Props) {
             <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
             <h3>Decision</h3>
             <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
+            <h3>Informed at (date &amp; time)</h3>
+            <input value={informedAt} onChange={(e) => setInformedAt(e.target.value)} />
           </section>
 
           <JurySlots

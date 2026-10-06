@@ -19,15 +19,16 @@ export function formatBoat(p: { sail_number: string | null; boat_name: string | 
 
 export function formatParties(c: CaseFull): string {
   const roles: Array<'initiator' | 'respondent'> = ['initiator', 'respondent'];
-  return roles
-    .map((role) => {
-      const p = c.parties.find((x) => x.role === role);
-      if (!p) return `${capitalize(role)}: —`;
+  const lines = roles.flatMap((role) => {
+    const matches = c.parties.filter((p) => p.role === role);
+    if (matches.length === 0) return [`${capitalize(role)}: —`];
+    return matches.map((p) => {
       const boat = formatBoat(p);
       const rep = p.represented_by ? `, represented by ${p.represented_by}` : '';
       return `${capitalize(role)}: ${boat}${rep}`;
-    })
-    .join('\n');
+    });
+  });
+  return lines.join('\n');
 }
 
 export function formatWitnesses(c: CaseFull): string {
@@ -43,12 +44,14 @@ export function formatWitnesses(c: CaseFull): string {
 // tied to the party/witness data.
 export function formatAutoProceduralLines(c: CaseFull): string[] {
   const roles: Array<'initiator' | 'respondent'> = ['initiator', 'respondent'];
-  const partyLines = roles.flatMap((role) => {
-    const p = c.parties.find((x) => x.role === role);
-    if (!p || !p.represented_by) return [];
-    const boat = [p.sail_number, p.boat_name].filter(Boolean).join(' ') || capitalize(role);
-    return [`${boat} was represented by ${p.represented_by}.`];
-  });
+  const partyLines = roles.flatMap((role) =>
+    c.parties
+      .filter((p) => p.role === role && p.represented_by)
+      .map((p) => {
+        const boat = [p.sail_number, p.boat_name].filter(Boolean).join(' ') || capitalize(role);
+        return `${boat} was represented by ${p.represented_by}.`;
+      }),
+  );
   const witnessLines = c.witnesses.map((w) => `${w.full_name} gave evidence as a witness.`);
   return [...partyLines, ...witnessLines];
 }
@@ -116,8 +119,8 @@ function nl2br(s: string): string {
 // Parties/Witness tables, boxed free-text sections, Jury Members row.
 // Single self-contained file: inline <style>, no JS, no external assets.
 export function formatFullDecisionHtml(c: CaseFull): string {
-  const initiator = c.parties.find((p) => p.role === 'initiator');
-  const respondent = c.parties.find((p) => p.role === 'respondent');
+  const initiators = c.parties.filter((p) => p.role === 'initiator');
+  const respondents = c.parties.filter((p) => p.role === 'respondent');
   const partyRow = (label: string, p?: (typeof c.parties)[number]) => `
     <tr>
       <th>${label}</th>
@@ -125,6 +128,8 @@ export function formatFullDecisionHtml(c: CaseFull): string {
       <td>${p?.boat_name ? escapeHtml(p.boat_name) : '—'}</td>
       <td>${p?.represented_by ? escapeHtml(p.represented_by) : '—'}</td>
     </tr>`;
+  const partyRows = (label: string, list: typeof c.parties) =>
+    list.length ? list.map((p) => partyRow(label, p)).join('') : partyRow(label, undefined);
 
   const witnessRows = c.witnesses.length
     ? c.witnesses
@@ -146,7 +151,8 @@ export function formatFullDecisionHtml(c: CaseFull): string {
     ...others.map((j) => `<td>${escapeHtml(j.full_name)}</td>`),
   ].join('');
 
-  const withCases = c.linkedCases.map((x) => x.case_number).join(', ') || '—';
+  const linkedList = c.linkedCases.map((x) => x.case_number).join(', ');
+  const withCases = [linkedList, c.with_case_note].filter(Boolean).join(' — ') || '—';
 
   const box = (label: string, text: string) => `
   <div class="box">
@@ -192,8 +198,8 @@ export function formatFullDecisionHtml(c: CaseFull): string {
 <p class="section-title">Parties</p>
 <table>
   <tr><th></th><th>Sail No:</th><th>Boat Name:</th><th>Represented by:</th></tr>
-  ${partyRow('Initiator:', initiator)}
-  ${partyRow('Respondent:', respondent)}
+  ${partyRows('Initiator:', initiators)}
+  ${partyRows('Respondent:', respondents)}
 </table>
 
 <p class="section-title">Witness:</p>

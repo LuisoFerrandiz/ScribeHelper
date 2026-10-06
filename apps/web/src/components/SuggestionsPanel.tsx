@@ -21,8 +21,8 @@ interface ProtestFormSuggestion {
 }
 
 interface PartyReferenceData {
-  initiator: { sailNumber: string; boatName: string };
-  respondent: { sailNumber: string; boatName: string };
+  initiators: { sailNumber: string; boatName: string }[];
+  respondents: { sailNumber: string; boatName: string }[];
   race?: string;
 }
 
@@ -66,8 +66,8 @@ export function SuggestionsPanel({ caseId, box, currentText, onInsert, protestFo
     <div className="suggestions-panel">
       {partyReference && (
         <PartyReference
-          initiator={partyReference.initiator}
-          respondent={partyReference.respondent}
+          initiators={partyReference.initiators}
+          respondents={partyReference.respondents}
           race={partyReference.race}
           currentText={currentText}
         />

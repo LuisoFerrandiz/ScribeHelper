@@ -7,8 +7,8 @@ export interface CaseSummaryRow {
   event_id: number;
   event_name: string;
   decided: boolean;
-  initiator: { sail_number: string | null; boat_name: string | null } | null;
-  respondent: { sail_number: string | null; boat_name: string | null } | null;
+  initiators: { sail_number: string | null; boat_name: string | null }[];
+  respondents: { sail_number: string | null; boat_name: string | null }[];
 }
 
 interface CaseJoinRow {
@@ -62,18 +62,16 @@ export function registerCaseSummaryRoute(app: FastifyInstance) {
 
     const rows: CaseSummaryRow[] = cases.map((c) => {
       const caseParties = partiesByCase.get(c.id) ?? [];
-      const byRole = (role: 'initiator' | 'respondent') => {
-        const p = caseParties.find((x) => x.role === role);
-        return p ? { sail_number: p.sail_number, boat_name: p.boat_name } : null;
-      };
+      const byRole = (role: 'initiator' | 'respondent') =>
+        caseParties.filter((x) => x.role === role).map((p) => ({ sail_number: p.sail_number, boat_name: p.boat_name }));
       return {
         id: c.id,
         case_number: c.case_number,
         event_id: c.event_id,
         event_name: c.event_name,
         decided: c.decision.trim() !== '',
-        initiator: byRole('initiator'),
-        respondent: byRole('respondent'),
+        initiators: byRole('initiator'),
+        respondents: byRole('respondent'),
       };
     });
 

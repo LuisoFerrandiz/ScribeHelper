@@ -111,7 +111,7 @@ export const api = {
   getCaseFull: (id: number) => request<CaseFull>(`/cases/${id}/full`),
 
   createParty: (data: Partial<PartyRow>) => post<PartyRow>('/parties', data),
-  updateParty: (id: number, data: Partial<PartyRow>) => put<PartyRow>(`/parties/${id}`, data),
+  deleteParty: (id: number) => del(`/parties/${id}`),
 
   createWitness: (data: Partial<WitnessRow>) => post<WitnessRow>('/witnesses', data),
   deleteWitness: (id: number) => del(`/witnesses/${id}`),

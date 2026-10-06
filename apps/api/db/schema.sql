@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS protest_case (
   day TEXT,
   race TEXT,
   informed_at TEXT, -- date and time parties were informed, event timezone (RULES.md R-20)
+  with_case_note TEXT, -- SPEC-016: free-text note alongside case_link
 
   -- The four human-written boxes (CONTEXT.md section 4).
   procedural_matters TEXT NOT NULL DEFAULT '',

@@ -450,23 +450,10 @@ a {
   margin-bottom: 8px;
 }
 
-.general-fields-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: end;
-}
-
-.general-fields-row label {
+.general-fields-col {
   display: flex;
   flex-direction: column;
-  font-size: 0.8em;
-  color: var(--ink-soft);
-  gap: 2px;
-}
-
-.general-fields-row input {
-  padding: 4px 6px;
+  gap: 10px;
 }
 
 .with-case-inline {

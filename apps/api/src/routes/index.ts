@@ -49,6 +49,7 @@ export function registerRoutes(app: FastifyInstance) {
       'day',
       'race',
       'informed_at',
+      'with_case_note',
       'procedural_matters',
       'facts_found',
       'conclusion',

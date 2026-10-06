@@ -94,8 +94,8 @@ export function CaseList({ caseId, onSelect, user }: Props) {
                     onClick={() => onSelect(r.event_id, r.id)}
                   >
                     <td>{r.case_number}</td>
-                    <td>{formatBoat(r.initiator)}</td>
-                    <td>{formatBoat(r.respondent)}</td>
+                    <td>{r.initiators.map(formatBoat).join(', ') || '—'}</td>
+                    <td>{r.respondents.map(formatBoat).join(', ') || '—'}</td>
                     <td>{r.decided ? 'Decided' : 'Pending'}</td>
                     {user.role === 'admin' && (
                       <td>

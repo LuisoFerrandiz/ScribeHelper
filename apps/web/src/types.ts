@@ -46,6 +46,7 @@ export interface CaseRow {
   day: string | null;
   race: string | null;
   informed_at: string | null;
+  with_case_note: string | null;
   procedural_matters: string;
   facts_found: string;
   conclusion: string;
@@ -206,8 +207,8 @@ export interface CaseSummaryRow {
   event_id: number;
   event_name: string;
   decided: boolean;
-  initiator: { sail_number: string | null; boat_name: string | null } | null;
-  respondent: { sail_number: string | null; boat_name: string | null } | null;
+  initiators: { sail_number: string | null; boat_name: string | null }[];
+  respondents: { sail_number: string | null; boat_name: string | null }[];
 }
 
 export interface CaseFull extends CaseRow {
