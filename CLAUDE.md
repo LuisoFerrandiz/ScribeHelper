@@ -173,18 +173,13 @@ detrás de algo que necesita red.
 | 4 | Panel de borrador alternativo, con validación de citas | sí |
 | 5 | Autocompletado IA en línea | sí |
 | 5.5 | Despliegue al servidor doméstico, volumen, contraseña | — |
+| 5.6 | Asistencia IA en el formulario: extracción de adjuntos de caso, desglose de Facts Found, panel de sugerencias lateral | sí |
 | 6 | Compartir, solicitudes de reparación (redress) | — |
 
 Principio de orden: todo lo que funciona offline y no puede fallar en
 silencio va primero; todo lo que puede equivocarse de forma convincente
 va al final. Tras la Fase 2 la herramienta ya ahorra tiempo real en una
 regata, sin IA y sin red.
-
-**Nota de estado (auditoría 2026-10-04):** esta tabla no refleja
-trabajo ya desplegado después de la Fase 5.5 (extracción IA de
-adjuntos de caso, desglose de Facts Found, panel de sugerencias
-lateral) — ninguna de esas tres cosas tiene fase propia documentada.
-Pendiente de decisión del usuario sobre cómo documentarlo.
 
 ### Glosario
 
