@@ -642,6 +642,20 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* SPEC-018: Hearing notes is a quick scratchpad, always visible — much
+   smaller than the 4 writing boxes' textarea (which is sized for long
+   prose). */
+.hearing-notes-box h2 {
+  font-size: 0.85em;
+}
+
+.hearing-notes-box textarea {
+  min-height: 60px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 8px 10px;
+}
+
 textarea:focus {
   outline: none;
   border-color: var(--accent);

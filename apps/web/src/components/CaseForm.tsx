@@ -546,9 +546,9 @@ export function CaseForm({ caseId }: Props) {
       </div>
       {error && <p className="error">{error}</p>}
 
-      <section className="box">
+      <section className="box hearing-notes-box">
         <h2>Hearing notes</h2>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         <button type="button" onClick={handleProcessNotes} disabled={notesProcessing || !notes.trim()}>
           {notesProcessing ? 'Processing…' : 'Process'}
         </button>
