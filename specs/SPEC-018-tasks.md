@@ -12,5 +12,7 @@ Relacionado: `SPEC-018-hearing-notes-compact.md` (requisitos).
   contra localhost (caso real TEST-01): screenshot confirma caja
   compacta (textarea `min-height: 60px` real, título visiblemente más
   pequeño que "General"/otros `<h2>` de caja); resto de la página
-  (General, pestañas, Save/Download) sin cambios visuales. Pendiente
-  confirmar contra el entorno desplegado tras "Pull and redeploy".
+  (General, pestañas, Save/Download) sin cambios visuales. Commiteado
+  (`bfd9c31`) y pusheado a `master`. "Pull and redeploy" ya hecho en
+  Portainer. Pendiente: verificación en vivo contra
+  `http://192.168.1.105:8086/`.
