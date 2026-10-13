@@ -17,3 +17,6 @@ data/db/
 # OS
 .DS_Store
 Thumbs.db
+
+# graphify output (regenerable, machine-specific paths)
+graphify-out/
