@@ -729,8 +729,7 @@ textarea:focus {
   flex: 0 0 280px;
 }
 
-/* Protest form / Phrases / AI draft — three independently collapsible
-   sources of insertable text in the sidebar. */
+/* PartyReference + the single suggestion list (SPEC-020). */
 .suggestions-panel {
   display: flex;
   flex-direction: column;
@@ -756,56 +755,47 @@ textarea:focus {
   margin: -1px -4px;
 }
 
-.suggestions-section-toggle {
-  appearance: none;
-  background: none;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  width: 100%;
-  text-align: left;
-  padding: 4px 8px;
-  font-size: 0.85em;
-  cursor: pointer;
-}
-
-.suggestions-section-chevron {
-  display: inline-block;
-  width: 1em;
-}
-
-.suggestions-section-body {
-  margin-top: 4px;
-}
-
-.suggestions-lines {
+.suggestion-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.suggestions-lines > button {
-  text-align: left;
-  font-size: 0.85em;
-}
-
-.phrase-picker-panel {
-  margin-top: 6px;
-  padding: 8px;
-  border: 1px dashed var(--line);
-  border-radius: 4px;
-  background: var(--surface);
-}
-
-.phrase-picker-panel input {
+.suggestion-list input {
   width: 100%;
   padding: 4px 6px;
   font-size: 0.9em;
 }
 
-.phrase-picker-panel .list {
+.suggestion-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.suggestion-actions button {
   font-size: 0.85em;
-  max-height: 160px;
-  overflow-y: auto;
+}
+
+.suggestion-actions button[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+
+.suggestion-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* SPEC-020 RF-003 — long text clipped to 3 lines; the full text is the
+   tooltip and is what gets inserted. */
+.suggestion-item {
+  text-align: left;
+  font-size: 0.85em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .rule-picker {

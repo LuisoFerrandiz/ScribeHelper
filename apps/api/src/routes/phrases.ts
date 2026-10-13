@@ -32,11 +32,12 @@ export function registerPhraseRoutes(app: FastifyInstance) {
          FROM phrase_fts
          JOIN phrase p ON p.id = phrase_fts.phrase_id
          WHERE phrase_fts MATCH ?
+           AND (? IS NULL OR p.box = ?)
          ORDER BY rank
          LIMIT 25`,
       )
-      .all(q.trim()) as unknown as (PhraseRow & { snippet: string })[];
-    return box ? rows.filter((r) => r.box === box) : rows;
+      .all(q.trim(), box ?? null, box ?? null) as unknown as (PhraseRow & { snippet: string })[];
+    return rows;
   });
 
   app.post('/phrases', (req, reply) => {

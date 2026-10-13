@@ -1040,3 +1040,33 @@ future specs and code reviews can cite by name. Applies going forward
 same change; a spec that touches "1. General & Parties" or any of the
 four writing-box tabs should check against these two rules and either
 satisfy them or note explicitly why not.
+
+## D-030 · 2026-10-13 · accepted
+
+**Context:** SPEC-020 (fase F2 del replanteo de `issue.md`). El dueño
+explicó que, en Procedural Matters, Facts Found y Conclusion, al juez no
+le importa de dónde viene una sugerencia; le importa poder pasarla al
+cuadro principal fácilmente. El panel lateral repartía las sugerencias en
+secciones plegables por origen (Protest form, Hearing notes, Phrases, AI
+suggestions) con botones distintos según la sección.
+
+**Decision:** el panel por secciones se sustituye por una **lista única
+uniforme** por caja (`SuggestionList`): siempre visible, botones iguales
+que muestran el texto que se insertará (recortado a 3 líneas, completo
+en el tooltip), sin marca de origen. Por defecto solo lo derivado del
+caso (formulario, luego notas); las frases aparecen al buscar o con
+"Browse phrases"; las sugerencias desde ejemplos, con el botón explícito
+"Suggest from examples" (caché por caja en un hook). Se corrige además
+`GET /phrases/search` para filtrar por caja antes del `LIMIT`.
+`SuggestionsPanel`, `PhrasePicker` y `ExamplePhraseSuggestions` se
+eliminan; `AIDraftPanel` se conserva sin montar hasta F4/F6.
+
+**Alternatives considered:** mantener las secciones con botones
+uniformes; lista mezclada con marca de origen; listar todas las frases
+por defecto.
+
+**Consequences:** una pulsación más para ver frases. `AIDraftPanel`
+queda sin uso en la UI hasta F4/F6. D-029 no cambia (describe fuentes
+uniformes, no secciones) y `constitution.md` tampoco: las fuentes que
+nombra siguen existiendo, solo desaparece su presentación en secciones.
+Sustituye el diseño de secciones de SPEC-001/005/017.

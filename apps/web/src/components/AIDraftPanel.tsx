@@ -17,9 +17,8 @@ interface Props {
 // model cites is checked against the accepted rule corpus and flagged
 // here — nothing is inserted automatically (RULES.md R-34: AI suggestion
 // comes last, the drafter always reviews before it lands in the box).
-// Mounted only while its SuggestionsPanel section is expanded, so a
-// draft is generated on mount; collapsing the section unmounts this
-// panel, and expanding it again remounts and regenerates.
+// Not mounted anywhere since SPEC-020 (kept for F4/F6, see D-030). When
+// mounted, a draft is generated on mount.
 export function AIDraftPanel({ caseId, box, currentText, onInsert }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

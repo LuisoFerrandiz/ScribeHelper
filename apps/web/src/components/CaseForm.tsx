@@ -3,7 +3,8 @@ import { api } from '../api';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
 import { JurySlots } from './JurySlots';
-import { SuggestionsPanel } from './SuggestionsPanel';
+import { PartyReference } from './PartyReference';
+import { SuggestionList } from './SuggestionList';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
@@ -13,6 +14,7 @@ import {
   formatRulesApplicable,
   formatWitnesses,
 } from '../format';
+import { caseSuggestionItems } from '../suggestionItems';
 import type {
   AttachmentExtraction,
   BoatRow,
@@ -439,7 +441,7 @@ export function CaseForm({ caseId }: Props) {
   // automatically (see the useEffect below) when switching into a
   // writing-box tab if the notes changed since the last run. Never
   // writes to the case — same click-to-insert pattern as everything
-  // else in SuggestionsPanel.
+  // else in SuggestionList.
   async function handleProcessNotes() {
     if (!notes.trim() || processingRef.current) return;
     processingRef.current = true;
@@ -895,22 +897,14 @@ export function CaseForm({ caseId }: Props) {
             />
           </div>
           <div className="suggestions-col">
-            <SuggestionsPanel
-              caseId={caseId}
+            <SuggestionList
               box="procedural_matters"
               currentText={proceduralMatters}
               onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              protestForm={{
-                lines: autoProceduralLines,
-                paragraph: extraction?.procedural_matters_candidate
-                  ? { label: 'From protest form', text: extraction.procedural_matters_candidate }
-                  : undefined,
-              }}
-              notesForm={
-                notesExtraction?.procedural_matters_candidate
-                  ? { paragraph: { label: 'From hearing notes', text: notesExtraction.procedural_matters_candidate } }
-                  : undefined
-              }
+              items={caseSuggestionItems(
+                { lines: autoProceduralLines, paragraph: extraction?.procedural_matters_candidate },
+                { paragraph: notesExtraction?.procedural_matters_candidate },
+              )}
             />
           </div>
         </div>
@@ -939,18 +933,22 @@ export function CaseForm({ caseId }: Props) {
             />
           </div>
           <div className="suggestions-col">
-            <SuggestionsPanel
-              caseId={caseId}
-              box="facts_found"
-              currentText={factsFound}
-              onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              protestForm={{ lines: extraction?.facts_found_candidates }}
-              notesForm={{ lines: notesExtraction?.facts_found_candidates }}
-              partyReference={{
-                initiators: partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
-                respondents: partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
-              }}
-            />
+            <div className="suggestions-panel">
+              <PartyReference
+                initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+                respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+                currentText={factsFound}
+              />
+              <SuggestionList
+                box="facts_found"
+                currentText={factsFound}
+                onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+                items={caseSuggestionItems(
+                  { lines: extraction?.facts_found_candidates },
+                  { lines: notesExtraction?.facts_found_candidates },
+                )}
+              />
+            </div>
           </div>
         </div>
       </CopyBox>
@@ -972,21 +970,14 @@ export function CaseForm({ caseId }: Props) {
               <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
             </div>
             <div className="suggestions-col">
-              <SuggestionsPanel
-                caseId={caseId}
+              <SuggestionList
                 box="conclusion"
                 currentText={conclusion}
                 onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-                protestForm={
-                  extraction?.conclusion_candidate
-                    ? { paragraph: { label: 'From protest form', text: extraction.conclusion_candidate } }
-                    : undefined
-                }
-                notesForm={
-                  notesExtraction?.conclusion_candidate
-                    ? { paragraph: { label: 'From hearing notes', text: notesExtraction.conclusion_candidate } }
-                    : undefined
-                }
+                items={caseSuggestionItems(
+                  { paragraph: extraction?.conclusion_candidate },
+                  { paragraph: notesExtraction?.conclusion_candidate },
+                )}
               />
             </div>
           </div>
@@ -1068,27 +1059,23 @@ export function CaseForm({ caseId }: Props) {
             <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
           </div>
           <div className="suggestions-col">
-            <SuggestionsPanel
-              caseId={caseId}
-              box="decision"
-              currentText={decision}
-              onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              protestForm={
-                extraction?.decision_candidate
-                  ? { paragraph: { label: 'From protest form', text: extraction.decision_candidate } }
-                  : undefined
-              }
-              notesForm={
-                notesExtraction?.decision_candidate
-                  ? { paragraph: { label: 'From hearing notes', text: notesExtraction.decision_candidate } }
-                  : undefined
-              }
-              partyReference={{
-                initiators: partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
-                respondents: partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName })),
-                race,
-              }}
-            />
+            <div className="suggestions-panel">
+              <PartyReference
+                initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+                respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+                race={race}
+                currentText={decision}
+              />
+              <SuggestionList
+                box="decision"
+                currentText={decision}
+                onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+                items={caseSuggestionItems(
+                  { paragraph: extraction?.decision_candidate },
+                  { paragraph: notesExtraction?.decision_candidate },
+                )}
+              />
+            </div>
           </div>
         </div>
       </CopyBox>
