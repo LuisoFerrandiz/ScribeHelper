@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/connection.js';
 
+// Keep identical to NotesExtraction in apps/web/src/types.ts — two
+// separate projects, tsc will not catch drift between them.
 export interface NotesExtraction {
   procedural_matters_candidate: string;
   facts_found_candidates: string[];

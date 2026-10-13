@@ -96,6 +96,8 @@ export interface CaseAttachmentRow {
 // suggestions pulled from the case's uploaded protest form(s). Never
 // written to the case automatically; the drafter inserts what's useful
 // box by box.
+// Keep identical to AttachmentExtraction in apps/api/src/ai/extract.ts —
+// two separate projects, tsc will not catch drift between them.
 export interface AttachmentExtraction {
   parties: {
     initiator?: { sail_number?: string; boat_name?: string; represented_by?: string };
@@ -114,6 +116,8 @@ export interface AttachmentExtraction {
 
 // SPEC-017 — "Process" result from this case's hearing notes (not an
 // uploaded protest form): candidates for the 4 writing boxes only.
+// Keep identical to NotesExtraction in apps/api/src/ai/extractNotes.ts —
+// two separate projects, tsc will not catch drift between them.
 export interface NotesExtraction {
   procedural_matters_candidate: string;
   facts_found_candidates: string[];
