@@ -30,7 +30,7 @@ anterior ni sin el visto bueno del dueño en los puntos **[DECISIÓN]**.
 | 1 | ISS-003 | Sacar salida de graphify de Git y excluir `converted/` del grafo. | Bajo | [DECISIÓN] dueño |
 | 2 | ISS-004, ISS-008 | Config MCP estable y verificar borrado de adjuntos. Solo comprobar y ajustar config. | Bajo | [DECISIÓN] ISS-004 |
 | 3 | ISS-005, ISS-009 | Alinear tipos API/web; reconstruir grafo con extra `sql`. | Bajo | — |
-| 4 | ISS-002, ISS-007 | Spec de grounding de citas y destino de candidatos sin UI. Spec primero, código después. | **ALTO** (ISS-002) | [DECISIÓN] ISS-007 |
+| 4 | ISS-002 (ISS-007 aplazado) | Spec de grounding de citas. Spec primero, código después. ISS-007 sigue abierto, sin fecha. | **ALTO** (ISS-002) | — |
 | 5 | ISS-006 | Spec de refactor de `CaseForm.tsx`, extracción por pasos. | Medio | Fases 3-4 cerradas |
 
 Orden de riesgo: la fase 4 es la de mayor riesgo por D-004 (cita falsa convincente). El
@@ -138,6 +138,11 @@ Riesgos altos:
   asumen `RRS`; un prefijo reconocido (`CR`, `NoR`, `SI`) se respeta. Un
   texto sin prefijo y que no cuadre con el RRS se marca "sin clasificar",
   no se adivina.
+- **Replanteado (2026-10-13):** `specs/SPEC-019-citas-normalizadas.md` queda
+  reemplazada. Nuevo enfoque: la cita nace de **elegir una regla del corpus**
+  (botón "Add" en el selector, hoy inexistente) y de los hechos probados, no
+  de texto libre. Ver "Replanteo" al final de este archivo y el plan en
+  `.claude/plans/` (fuera del repo).
 - **Criterio de cierre:** spec aprobada por el dueño; ningún candidato se
   muestra como cita si no está en el corpus.
 
@@ -212,17 +217,29 @@ Riesgos altos:
 - **Criterio de cierre:** spec aprobada; refactor hecho sin cambio de
   comportamiento observable en `http://192.168.1.105:8086/`.
 
-## ISS-007 — P3 `conclusion_candidate` / `decision_candidate` sin UI
+## ISS-007 — P3 `conclusion_candidate` / `decision_candidate`: GAP obsoleto
 
-- **Estado:** abierto (GAP heredado de `SPEC-003`)
-- **Evidencia:** `specs/SPEC-003-documentacion-previa.md` (primer `[GAP]`).
-  `SPEC-012` resolvió parte del caso para Decision; confirmar qué sigue sin
-  conectar antes de actuar.
-- **Impacto práctico:** bajo; un formulario de protesta se presenta antes de
-  la audiencia, así que estos campos casi nunca traen contenido.
-- **Qué hacer:** [DECISIÓN] preguntar si se conecta o si se eliminan de la
-  extracción para ahorrar tokens y ruido.
-- **Criterio de cierre:** decisión registrada y aplicada.
+- **Estado:** el GAP de `SPEC-003` ya no existe; verificado en código
+  (2026-10-13). Los dos campos **sí tienen UI**: `CaseForm.tsx` l.981 y
+  l.1077 los ofrecen como "From protest form" en los paneles de sugerencias
+  de Conclusion (SPEC-007) y Decision (SPEC-012), junto a "From hearing
+  notes" (SPEC-017). El prompt de `extract.ts` l.123 ya avisa de que casi
+  siempre vendrán vacíos.
+- **Error del análisis inicial:** este issue se abrió desde `SPEC-003`, que
+  quedó desactualizada, sin comprobar `CaseForm.tsx`. La recomendación de
+  "quitarlos" se basó en esa premisa falsa.
+- **Decisión del dueño (2026-10-13):** dejar los campos como están por ahora
+  y **mantener el issue abierto**: toda esta parte de la extracción y las
+  sugerencias "From protest form" se va a reconstruir en el futuro. No
+  quitar ni modificar `conclusion_candidate`/`decision_candidate` en
+  `AttachmentExtraction`, en el prompt de `extract.ts` ni en los dos
+  `protestForm` de `CaseForm.tsx` hasta que exista una spec de rediseño.
+  `NotesExtraction` (hearing notes) queda fuera de este issue.
+- **Cuando se retome:** abrir spec propia; revisar junto con ISS-002
+  (`rule_citations_candidate`) y ISS-006 (tamaño de `CaseForm.tsx`), porque
+  los tres tocan la misma extracción. Actualizar o archivar `SPEC-003`, que
+  hoy describe un GAP que ya no existe.
+- **Estado:** abierto, aplazado (sin fecha).
 
 ## ISS-008 — P3 Limpieza de adjuntos al borrar un caso: verificar
 
@@ -249,7 +266,7 @@ Riesgos altos:
 
 ## ISS-009 — P3 Calidad del grafo (no afecta al producto)
 
-- **Estado:** abierto
+- **Estado:** resuelto (2026-10-13). Instalado `graphifyy[sql]`; `graphify update .` reconstruyó el grafo: 748 nodos, 1252 aristas, 69 comunidades. `schema.sql` entra con 27 nodos (tablas). Dangling 0, missing 0, self-loops 0 (antes 21 dangling). Las etiquetas de comunidad se renombraron por su hub (había 59 y ahora 69): `graphify label` o `/graphify --cluster-only` las vuelve a nombrar. Quedan sin cubrir D-027 de `DECISIONS.md` y los PDF originales. `graphify-out/` está ignorado, no hay nada que commitear.
 - **Evidencia:** chequeo de salud: 21 aristas dangling, 36 colapsadas,
   219 nodos débilmente conectados. `schema.sql` no entra en el grafo
   porque falta `tree_sitter_sql` (`pip install "graphifyy[sql]"`).
@@ -269,3 +286,32 @@ Riesgos altos:
   `constitution.md` → Calidad.
 - Los tsconfig y package.json duplicados entre `apps/api` y `apps/web` son
   esperables en un monorepo sin workspaces.
+
+---
+
+## Replanteo (2026-10-13) — cinco fuentes y cadena de redacción
+
+Modelo: fuentes 1 RRS, 2 ejemplos, 3 formulario de protesta, 4 NoR/SI, 5
+frases. Cadena: Hearing notes → Facts Found → Rules Applicable → Conclusion →
+Decision. Una cita solo puede venir de 1 o 4. Fases:
+
+| Fase | Contenido | Issue |
+|---|---|---|
+| F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica, `doc_type`, validación por límites de token | ISS-002 |
+| F2 | Lista única de sugerencias, un clic copia al cuadro | ISS-006 (facilita) |
+| F3 | Frases con huecos y relleno; inserción al cursor | — |
+| F4 | IA que complementa solo lo que las frases no dicen | — |
+| F5 | Reglas sugeridas desde Facts Found (FTS) | ISS-002 |
+| F6 | Cadena coherente y aviso de desfase | ISS-010 |
+
+## ISS-010 — P2 Coherencia entre cajas (Facts → Rules → Conclusion → Decision)
+
+- **Estado:** abierto (fase F6).
+- **Evidencia:** `apps/api/src/ai/draft.ts` solo lee la caja inmediatamente
+  anterior (Decision ve Conclusion, no Facts ni reglas); su rama en el panel
+  es código muerto para las 4 cajas. `complete.ts` (ghost text) ve solo los
+  últimos 1500 caracteres, sin datos del caso. Si cambia un hecho probado,
+  nada avisa de que la conclusión y la decisión pueden haber quedado
+  desfasadas.
+- **Criterio de cierre:** spec aprobada; las cajas posteriores ven las
+  anteriores relevantes y la UI avisa del desfase.
