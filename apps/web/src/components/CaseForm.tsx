@@ -148,6 +148,7 @@ export function CaseForm({ caseId }: Props) {
     | 'procedural'
     | 'facts'
     | 'conclusion'
+    | 'rules'
     | 'decision'
     | 'review';
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
@@ -608,11 +609,19 @@ export function CaseForm({ caseId }: Props) {
         </button>
         <button
           type="button"
+          className={caseTab === 'rules' ? 'active' : undefined}
+          aria-current={caseTab === 'rules'}
+          onClick={() => setCaseTab('rules')}
+        >
+          6. Rules Applicable
+        </button>
+        <button
+          type="button"
           className={caseTab === 'decision' ? 'active' : undefined}
           aria-current={caseTab === 'decision'}
           onClick={() => setCaseTab('decision')}
         >
-          6. Decision
+          7. Decision
         </button>
         <button
           type="button"
@@ -620,7 +629,7 @@ export function CaseForm({ caseId }: Props) {
           aria-current={caseTab === 'review'}
           onClick={() => setCaseTab('review')}
         >
-          7. Review
+          8. Review
         </button>
       </nav>
         <button type="button" className="btn-accent" onClick={handleDownload}>
@@ -957,8 +966,7 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'conclusion' && (
         <div className="tab-panel">
-      <div className="two-col">
-        {/* 5. Conclusion */}
+      {/* 5. Conclusion */}
         <CopyBox
           label="Conclusion"
           text={conclusion}
@@ -982,7 +990,11 @@ export function CaseForm({ caseId }: Props) {
             </div>
           </div>
         </CopyBox>
+        </div>
+      )}
 
+      {caseTab === 'rules' && (
+        <div className="tab-panel">
         {/* 6. Rules Applicable */}
         <CopyBox
           label="Rules Applicable"
@@ -1032,7 +1044,6 @@ export function CaseForm({ caseId }: Props) {
             </ul>
           </div>
         </CopyBox>
-      </div>
         </div>
       )}
 

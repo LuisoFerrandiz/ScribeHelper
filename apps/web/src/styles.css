@@ -683,25 +683,7 @@ textarea:focus {
   background: var(--success-soft);
 }
 
-/* Conclusion + Rules Applicable side by side (Conclusion's writing tools
-   apply to the whole pair, so they sit below both columns, not nested
-   inside just one box). Stacks to one column on narrow screens. */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.two-col > * {
-  margin-bottom: 0;
-}
-
 @media (max-width: 720px) {
-  .two-col {
-    grid-template-columns: 1fr;
-  }
-
   .box-body-split {
     flex-direction: column;
   }
