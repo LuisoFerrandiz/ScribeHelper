@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react';
-import { serverError } from '../api';
+import { useEffect, useState, type FormEvent } from 'react';
+import { api, serverError } from '../api';
+import type { RuleSearchResult } from '../types';
+import { RuleHitList } from './RuleHitList';
 import { RulePicker } from './RulePicker';
 
 interface Props {
@@ -9,6 +11,7 @@ interface Props {
   // (SPEC-023 RF-011). Computed by the caller, which owns the text.
   missing: string[];
   hasText: boolean;
+  factsText: string; // Facts Found as on screen, saved or not (SPEC-027)
   onInsert: (text: string) => void;
   onInsertMissing: () => void;
   // SPEC-022: registers the citation (the server validates it against the
@@ -28,6 +31,7 @@ export function RulesSuggestions({
   citations,
   missing,
   hasText,
+  factsText,
   onInsert,
   onInsertMissing,
   onAddCitation,
@@ -35,6 +39,42 @@ export function RulesSuggestions({
 }: Props) {
   const [ruleText, setRuleText] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // SPEC-027: rules suggested from the Facts Found text. A click makes a new
+  // request object (so a repeat click re-asks); it is also re-sent when the
+  // registered citations change, so "Already cited" refreshes after an Add.
+  // The answer of an older request is dropped (cancelled).
+  const [request, setRequest] = useState<{ text: string } | null>(null);
+  const [suggested, setSuggested] = useState<RuleSearchResult | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const citationsKey = citations.map((c) => c.id).join(',');
+
+  useEffect(() => {
+    if (request === null) return;
+    let cancelled = false;
+    setSuggesting(true);
+    setSuggestError(null);
+    api
+      .suggestRules(caseId, request.text)
+      .then((r) => {
+        if (!cancelled) setSuggested(r);
+      })
+      .catch((e) => {
+        if (!cancelled) setSuggestError(serverError(e));
+      })
+      .finally(() => {
+        if (!cancelled) setSuggesting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [request, caseId, citationsKey]);
+
+  function handleSuggest() {
+    setSuggested(null);
+    setRequest({ text: factsText });
+  }
 
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
@@ -89,6 +129,20 @@ export function RulesSuggestions({
         <button type="submit">Add</button>
       </form>
       {error && <p className="error">{error}</p>}
+
+      <div className="rule-suggest">
+        <button type="button" onClick={handleSuggest} disabled={!factsText.trim() || suggesting}>
+          {suggesting ? 'Searching…' : 'Suggest from Facts Found'}
+        </button>
+        {suggestError && <p className="error">{suggestError}</p>}
+        {!suggesting && !suggestError && suggested && suggested.hits.length === 0 && (
+          <p className="muted">No rules matched the Facts Found text.</p>
+        )}
+        {suggested && suggested.hits.length > 0 && (
+          <RuleHitList hits={suggested.hits} onAddSection={(section_id) => onAddCitation({ section_id })} />
+        )}
+        <p className="muted">Keyword match against the loaded rules; you decide which apply.</p>
+      </div>
 
       <RulePicker
         caseId={caseId}

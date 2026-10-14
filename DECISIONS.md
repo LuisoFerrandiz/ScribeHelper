@@ -1297,3 +1297,31 @@ por caja es el camino más usado).
 
 **Consequences:** falsos positivos posibles (`[sic]`, una `X`/`Y` escrita a
 propósito) que solo informan. Solo cliente; sin cambios de API ni de datos.
+
+## D-038 · 2026-10-14 · accepted
+
+**Reglas sugeridas desde Facts Found (SPEC-027, F5).** Un botón "Suggest from
+Facts Found" en Rules Applicable envía el texto de la caja en pantalla a
+`POST /rules/suggest`, que busca en el índice por regla de SPEC-022 (FTS5,
+`bm25` con el encabezado pesando 5 veces el cuerpo) y devuelve hasta 8 reglas
+con el mismo Add validado. Es **determinista**: sin IA, sin red y sin coste.
+Los términos se reducen con un stemming simple (`-ing`, `-ed`, `-es`, `-s`) y
+se buscan como prefijo, porque los hechos van en pasado y las reglas en
+presente y el índice no tiene stemming; se descartan palabras vacías y el
+vocabulario omnipresente (`boat`, `race`, `rule`, `rrs`…). Un número escrito
+en los hechos con prefijo ("RRS 14", "rule 10") sale primero. Las variantes
+de apéndice del RRS van detrás de las reglas principales y se omiten si la
+principal con el mismo número ya está. Solo Facts Found es fuente (lo
+probado); nada se inserta sin un clic.
+
+**Alternatives considered:** IA que decida qué regla aplica (rechazada por
+ahora: puede equivocarse con convicción, principio de orden del proyecto; la
+búsqueda determinista primero); sugerir al teclear Facts Found (rechazada:
+ruido y llamadas continuas; botón explícito); hearing notes y formulario de
+protesta como fuentes (rechazada: no son lo probado); cambiar el índice a
+stemming de FTS5 `porter` (rechazada: migración de esquema y reindexado para
+un aviso aproximado).
+
+**Consequences:** es una ayuda aproximada, con ruido (una frase floja trae
+reglas de relleno): la ayuda lo dice y el juez decide. Sin cambios de
+esquema. Reutiliza `RuleHitList` (extraído de `RulePicker`).

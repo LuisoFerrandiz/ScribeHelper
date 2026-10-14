@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api, serverError } from '../api';
+import { api } from '../api';
+import { RuleHitList } from './RuleHitList';
 import type { RuleSearchResult } from '../types';
 
 interface Props {
@@ -9,8 +10,6 @@ interface Props {
   onAddSection: (sectionId: number) => Promise<void>;
 }
 
-const UNCLASSIFIED_REASON = 'Classify this document first (Upload rules)';
-
 // SPEC-022 RF-004/RF-005 — search the loaded rules by number or words; each
 // result is one numbered rule with its canonical citation and an Add button
 // that registers it and writes it into the Rules Applicable text.
@@ -18,7 +17,6 @@ export function RulePicker({ caseId, citationsKey, onAddSection }: Props) {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<RuleSearchResult | null>(null);
   const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Debounced search; `cancelled` drops the answer of an older query (race guard).
   useEffect(() => {
@@ -47,15 +45,6 @@ export function RulePicker({ caseId, citationsKey, onAddSection }: Props) {
     };
   }, [query, caseId, citationsKey]);
 
-  async function handleAdd(sectionId: number) {
-    setError(null);
-    try {
-      await onAddSection(sectionId);
-    } catch (e) {
-      setError(serverError(e));
-    }
-  }
-
   return (
     <div className="rule-picker">
       <input
@@ -63,7 +52,6 @@ export function RulePicker({ caseId, citationsKey, onAddSection }: Props) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      {error && <p className="error">{error}</p>}
       {searching && <p className="muted">Searching…</p>}
       {!searching && result && result.hits.length === 0 && (
         <p className="muted">
@@ -71,35 +59,7 @@ export function RulePicker({ caseId, citationsKey, onAddSection }: Props) {
           {result.otherEvents && ' Notice of Race and Sailing Instructions only appear for their own regatta.'}
         </p>
       )}
-      <ul className="list">
-        {result?.hits.map((h) => (
-          <li key={h.section_id}>
-            <strong>{h.citation ?? h.heading}</strong> <span className="muted">{h.heading}</span>
-            <br />
-            <span className="muted">{h.doc_title}</span>
-            {h.snippet && h.snippet !== h.heading && (
-              <>
-                <br />
-                <span className="muted">{h.snippet}</span>
-              </>
-            )}
-            <br />
-            {h.cited ? (
-              <span className="muted">Already cited</span>
-            ) : (
-              <button
-                type="button"
-                disabled={!h.can_add}
-                title={h.can_add ? undefined : UNCLASSIFIED_REASON}
-                onClick={() => handleAdd(h.section_id)}
-              >
-                Add
-              </button>
-            )}
-            {!h.can_add && <span className="muted"> {UNCLASSIFIED_REASON}</span>}
-          </li>
-        ))}
-      </ul>
+      {result && <RuleHitList hits={result.hits} onAddSection={onAddSection} />}
     </div>
   );
 }

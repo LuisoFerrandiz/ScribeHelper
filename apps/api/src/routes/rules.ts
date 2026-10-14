@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/connection.js';
 import { parseCitation } from '../rules/citation.js';
+import { suggestSections } from '../rules/factsQuery.js';
 import {
   ELIGIBLE_SQL,
   SECTION_COLUMNS,
@@ -28,13 +29,7 @@ export function registerRuleSearchRoute(app: FastifyInstance) {
     const eventId = eventIdOfCase(caseId);
     if (!q) return { hits: [], otherEvents: false };
 
-    const cited = new Set<string>();
-    if (caseId) {
-      const rows = db.prepare('SELECT rule_reference FROM case_rule_citation WHERE case_id = ?').all(caseId) as {
-        rule_reference: string;
-      }[];
-      for (const r of rows) cited.add(normalizeStoredReference(r.rule_reference));
-    }
+    const cited = citedSet(caseId);
 
     const hits: ReturnType<typeof toHit>[] = [];
     const seen = new Set<number>();
@@ -99,6 +94,29 @@ export function registerRuleSearchRoute(app: FastifyInstance) {
         .get(eventId, eventId);
     return { hits, otherEvents };
   });
+
+  // SPEC-027: rule candidates from the Facts Found text on screen (saved or not).
+  app.post('/rules/suggest', (req, reply) => {
+    const body = (req.body ?? {}) as { case_id?: unknown; text?: unknown };
+    if (typeof body.text !== 'string') return reply.code(400).send({ error: 'text must be a string' });
+    const caseId = typeof body.case_id === 'number' && Number.isInteger(body.case_id) ? body.case_id : null;
+    const cited = citedSet(caseId);
+    const hits = suggestSections(body.text, eventIdOfCase(caseId)).map((s) =>
+      toHit(s, s.heading, cited),
+    );
+    return { hits, otherEvents: false };
+  });
+}
+
+// Canonical citations already registered for the case.
+function citedSet(caseId: number | null): Set<string> {
+  const cited = new Set<string>();
+  if (!caseId) return cited;
+  const rows = db.prepare('SELECT rule_reference FROM case_rule_citation WHERE case_id = ?').all(caseId) as {
+    rule_reference: string;
+  }[];
+  for (const r of rows) cited.add(normalizeStoredReference(r.rule_reference));
+  return cited;
 }
 
 function toHit(s: SectionRow, snippet: string, cited: Set<string>) {

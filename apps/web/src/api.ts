@@ -138,7 +138,9 @@ export const api = {
     post<RuleCitationRow>('/rule-citations', data),
   searchRules: (q: string, caseId: number) =>
     request<RuleSearchResult>(`/rules/search?q=${encodeURIComponent(q)}&case_id=${caseId}`),
-  deleteRuleCitation: (id: number) => del(`/rule-citations/${id}`),
+  suggestRules: (caseId: number, text: string) =>
+    post<RuleSearchResult>('/rules/suggest', { case_id: caseId, text }),
+  deleteRuleCitation:(id: number) => del(`/rule-citations/${id}`),
 
   createCaseLink: (data: CaseLinkRow) => post<CaseLinkRow>('/case-links', data),
   deleteCaseLink: (data: CaseLinkRow) => del('/case-links', data),
