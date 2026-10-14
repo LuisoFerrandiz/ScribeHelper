@@ -13,6 +13,17 @@ const BOX_LABEL: Record<CompleteBox, string> = {
   decision: 'Decision',
 };
 
+// The model sometimes answers the drafter instead of continuing the text
+// ("I need more context…"). Prompt line plus the deterministic filter below.
+const NO_CHATTER =
+  ' Never address the drafter and never talk about yourself or the task: if you cannot ' +
+  'continue the text, output nothing at all.';
+
+// Assistant chatter, not a continuation: first-person replies, questions to the
+// drafter, apologies, offers of help.
+const CHATTER =
+  /^(I\b|I['’]m\b|I['’]ll\b|I['’]d\b|I['’]ve\b|my\b|sorry\b|apolog|unfortunately\b|sure\b|certainly\b|of course\b|please\b|could you\b|can you\b|would you\b|it looks like\b|it seems\b|here is\b|here['’]s\b|there is no\b|there['’]s no\b|no (text|context|content)\b|the (text|content) (provided|given|you)\b)/i;
+
 // Rules Applicable: prose only. The model must never write a rule number,
 // prefix (RRS, NoR, SI, CR) or rule section — a rule is only cited when the
 // drafter picks it from the corpus (D-004, SPEC-023 RF-003).
@@ -24,7 +35,7 @@ const RULES_BOX_SYSTEM =
   'NEVER write a rule number, a rule prefix (RRS, NoR, SI, CR), a section reference, ' +
   'an appendix letter or any digit that could be read as part of a rule. ' +
   'If the given text ends in the middle of a rule reference, or already ends a complete ' +
-  'thought, output nothing.';
+  'thought, output nothing.' + NO_CHATTER;
 
 // Only the tail of the box is sent — bounds token cost on a call that
 // fires automatically while typing (Phase 5, CONTEXT.md section 9).
@@ -53,7 +64,7 @@ export async function generateInlineCompletion(box: CompleteBox, text: string): 
       'Output only the continuation — the text that comes immediately after what was given, ' +
       'never repeat any of it. Stop after at most one sentence. Never introduce a rule ' +
       'reference, boat, person, or fact that is not already implied by the given text. ' +
-      'If the given text already ends a complete thought, output nothing.',
+      'If the given text already ends a complete thought, output nothing.' + NO_CHATTER,
     messages: [{ role: 'user', content: tail }],
   });
 
@@ -65,6 +76,7 @@ export async function generateInlineCompletion(box: CompleteBox, text: string): 
 
   // Deterministic backstop for the prompt rule above: a Rules Applicable
   // suggestion that mentions a digit or a rule prefix is dropped (D-004).
+  if (CHATTER.test(suggestion)) return '';
   if (box === 'rules_applicable' && /\d|\b(RRS|NoR|SI|CR)\b/i.test(suggestion)) return '';
   return suggestion;
 }
