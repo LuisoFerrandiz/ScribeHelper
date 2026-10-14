@@ -6,6 +6,7 @@ import { JurySlots } from './JurySlots';
 import { PartyReference } from './PartyReference';
 import { RulesSuggestions } from './RulesSuggestions';
 import { SuggestionList } from './SuggestionList';
+import { TabBar } from './TabBar';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
@@ -16,6 +17,7 @@ import {
   missingCitations,
   formatWitnesses,
 } from '../format';
+import { type CaseTab } from '../caseTabs';
 import { caseSuggestionItems } from '../suggestionItems';
 import type {
   AttachmentExtraction,
@@ -141,16 +143,6 @@ export function CaseForm({ caseId }: Props) {
   // order (formatFullDecision), unaffected by which tab is active.
   // Per-case jury assignment is not a tab: JurySlots sits at the bottom of
   // the Review tab (D-031).
-  type CaseTab =
-    | 'attachments'
-    | 'general'
-    | 'parties'
-    | 'procedural'
-    | 'facts'
-    | 'conclusion'
-    | 'rules'
-    | 'decision'
-    | 'review';
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
 
   async function reload() {
@@ -537,80 +529,7 @@ export function CaseForm({ caseId }: Props) {
       </section>
 
       <div className="tab-bar-row">
-        <nav className="tab-bar tab-bar-pill">
-        <button
-          type="button"
-          className={caseTab === 'attachments' ? 'active' : undefined}
-          aria-current={caseTab === 'attachments'}
-          onClick={() => setCaseTab('attachments')}
-        >
-          0. Protest Form(s)
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'general' ? 'active' : undefined}
-          aria-current={caseTab === 'general'}
-          onClick={() => setCaseTab('general')}
-        >
-          1. General
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'parties' ? 'active' : undefined}
-          aria-current={caseTab === 'parties'}
-          onClick={() => setCaseTab('parties')}
-        >
-          2. Parties &amp; Witness
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'procedural' ? 'active' : undefined}
-          aria-current={caseTab === 'procedural'}
-          onClick={() => setCaseTab('procedural')}
-        >
-          3. Procedural Matters
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'facts' ? 'active' : undefined}
-          aria-current={caseTab === 'facts'}
-          onClick={() => setCaseTab('facts')}
-        >
-          4. Facts Found
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'conclusion' ? 'active' : undefined}
-          aria-current={caseTab === 'conclusion'}
-          onClick={() => setCaseTab('conclusion')}
-        >
-          5. Conclusion
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'rules' ? 'active' : undefined}
-          aria-current={caseTab === 'rules'}
-          onClick={() => setCaseTab('rules')}
-        >
-          6. Rules Applicable
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'decision' ? 'active' : undefined}
-          aria-current={caseTab === 'decision'}
-          onClick={() => setCaseTab('decision')}
-        >
-          7. Decision
-        </button>
-        <button
-          type="button"
-          className={caseTab === 'review' ? 'active' : undefined}
-          aria-current={caseTab === 'review'}
-          onClick={() => setCaseTab('review')}
-        >
-          8. Review
-        </button>
-      </nav>
+        <TabBar caseTab={caseTab} onSelect={setCaseTab} />
         <button type="button" className="btn-accent" onClick={handleDownload}>
           Download decision (.html)
         </button>
