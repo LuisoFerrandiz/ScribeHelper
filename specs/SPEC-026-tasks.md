@@ -1,6 +1,6 @@
 # SPEC-026 — Tareas
 
-Estado (2026-10-14): tareas 0-6 hechas (typecheck, build y script OK; navegador solo en vivo tras el redeploy); falta commit (7).
+Estado (2026-10-14): todo hecho; desplegado `53d0b58` y verificado en vivo (aviso en caja, colapsada, Review, Download con y sin pendientes, Parties sin aviso).
 
 - [x] **0. `reviewer` sobre la spec** y ajustes (v2).
 - [x] **1. `pendingMarks.ts`** y script `check_pending.ts` (frases de la base + límites).
