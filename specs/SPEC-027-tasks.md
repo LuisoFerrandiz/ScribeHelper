@@ -1,6 +1,6 @@
 # SPEC-027 — Tareas
 
-Estado (2026-10-14): tareas 0-5 hechas (build api y web, script OK); falta commit (6) y verificación en vivo.
+Estado (2026-10-14): todo hecho; desplegado `244f436` y verificado en vivo (botón, texto sin guardar, 14 primero por referencia explícita, Add, Already cited, Remove).
 
 - [x] **0. `reviewer` sobre la spec** y ajustes.
 - [x] **1. `factsQuery.ts`** y script `check_f5.ts`.
