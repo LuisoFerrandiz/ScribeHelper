@@ -730,29 +730,24 @@ export function CaseForm({ caseId }: Props) {
       {caseTab === 'conclusion' && (
         <div className="tab-panel">
       {/* 5. Conclusion */}
-        <CopyBox
+        <WritingBox
           label="Conclusion"
-          text={conclusion}
+          copyText={conclusion}
           copied={!!copied.conclusion}
           onCopied={() => markCopied('conclusion')}
-        >
-          <div className="box-body-split">
-            <div className="textarea-col">
-              <GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />
-            </div>
-            <div className="suggestions-col">
-              <SuggestionList
-                box="conclusion"
-                currentText={conclusion}
-                onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-                items={caseSuggestionItems(
-                  { paragraph: extraction?.conclusion_candidate },
-                  { paragraph: notesExtraction?.conclusion_candidate },
-                )}
-              />
-            </div>
-          </div>
-        </CopyBox>
+          textarea={<GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />}
+          side={
+            <SuggestionList
+              box="conclusion"
+              currentText={conclusion}
+              onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              items={caseSuggestionItems(
+                { paragraph: extraction?.conclusion_candidate },
+                { paragraph: notesExtraction?.conclusion_candidate },
+              )}
+            />
+          }
+        />
         </div>
       )}
 
