@@ -163,39 +163,24 @@ export function CaseForm({ caseId }: Props) {
     }
   }
 
-  // Refreshes ONLY caseFull.jury — never the four free-text useState
-  // (unlike reload() above, which re-seeds them from the server and
-  // would silently discard unsaved edits made on the Review tab,
-  // SPEC-009 RF-007). JurySlots calls this, never reload().
-  async function reloadJury() {
+  // SPEC-024 step 1c: one partial refresh for the four parts that only
+  // replace a single caseFull slice. Each one refreshes ONLY its own slice —
+  // never the four free-text useState (unlike reload() above, which re-seeds
+  // them from the server and would silently discard unsaved edits made on
+  // the Review tab, SPEC-009 RF-007 / SPEC-013), nor the General fields.
+  //   jury          — JurySlots calls this, never reload().
+  //   linkedCases   — SPEC-013, "With case(s)".
+  //   attachments   — SPEC-013, protest forms.
+  //   ruleCitations — SPEC-013, the citation registry.
+  async function refreshCasePart(part: 'jury' | 'linkedCases' | 'attachments' | 'ruleCitations') {
     const full = await api.getCaseFull(caseId);
-    setCaseFull((prev) => (prev ? { ...prev, jury: full.jury } : full));
-  }
-
-  // SPEC-013: refreshes ONLY caseFull.linkedCases — same criterion as
-  // reloadJury/refreshParties above, never the four free-text useState
-  // nor the General fields.
-  async function refreshLinkedCases() {
-    const full = await api.getCaseFull(caseId);
-    setCaseFull((prev) => (prev ? { ...prev, linkedCases: full.linkedCases } : full));
-  }
-
-  // SPEC-013: refreshes ONLY caseFull.attachments.
-  async function refreshAttachments() {
-    const full = await api.getCaseFull(caseId);
-    setCaseFull((prev) => (prev ? { ...prev, attachments: full.attachments } : full));
-  }
-
-  // SPEC-013: refreshes ONLY caseFull.ruleCitations.
-  async function refreshRuleCitations() {
-    const full = await api.getCaseFull(caseId);
-    setCaseFull((prev) => (prev ? { ...prev, ruleCitations: full.ruleCitations } : full));
+    setCaseFull((prev) => (prev ? { ...prev, [part]: full[part] } : full));
   }
 
   // SPEC-011: refreshes ONLY parties/witnesses (and what's derived
   // from them: partyDrafts/witnessDraft) — never
   // caseNumber/day/race/informedAt nor the four free-text useState
-  // (same criterion as reloadJury above). New witnesses/parties get a
+  // (same criterion as refreshCasePart above). New witnesses/parties get a
   // server-assigned id the local draft doesn't have yet;
   // findOrCreateBoat/findOrCreatePerson already keep boats/people
   // current on their own, no need to re-fetch those here.
@@ -315,12 +300,12 @@ export function CaseForm({ caseId }: Props) {
       rule_reference: text.trim(),
       position: caseFull.ruleCitations.length,
     });
-    await refreshRuleCitations();
+    await refreshCasePart('ruleCitations');
   }
 
   async function handleRemoveRule(id: number) {
     await api.deleteRuleCitation(id);
-    await refreshRuleCitations();
+    await refreshCasePart('ruleCitations');
   }
 
   // "With Case(s)" (top row, general tab): link/unlink is a discrete
@@ -328,12 +313,12 @@ export function CaseForm({ caseId }: Props) {
   // as soon as you pick a case.
   async function handleLinkCase(linkedCaseId: number) {
     await api.createCaseLink({ case_id: caseId, linked_case_id: linkedCaseId });
-    await refreshLinkedCases();
+    await refreshCasePart('linkedCases');
   }
 
   async function handleRemoveLink(linkedCaseId: number) {
     await api.deleteCaseLink({ case_id: caseId, linked_case_id: linkedCaseId });
-    await refreshLinkedCases();
+    await refreshCasePart('linkedCases');
   }
 
   // Tab 0: protest form(s) for this case (DECISIONS.md D-027). Any
@@ -346,7 +331,7 @@ export function CaseForm({ caseId }: Props) {
     setUploadingAttachment(true);
     try {
       await api.uploadCaseAttachment(caseId, file);
-      await refreshAttachments();
+      await refreshCasePart('attachments');
       setError(null);
     } catch (err) {
       setError((err as Error).message);
@@ -357,7 +342,7 @@ export function CaseForm({ caseId }: Props) {
 
   async function handleRemoveAttachment(id: number) {
     await api.deleteCaseAttachment(id);
-    await refreshAttachments();
+    await refreshCasePart('attachments');
   }
 
   // Manual "Process" (D-027 follow-up) — reads the uploaded protest
@@ -968,7 +953,7 @@ export function CaseForm({ caseId }: Props) {
             caseId={caseId}
             eventId={caseFull.event.id}
             jury={caseFull.jury}
-            onJuryChange={reloadJury}
+            onJuryChange={() => refreshCasePart('jury')}
             findOrCreatePerson={findOrCreatePerson}
           />
         </div>
