@@ -59,11 +59,14 @@ Riesgos altos:
 
 ## ISS-002 — P1 `rule_citations_candidate` sin grounding contra el corpus
 
-- **Estado:** abierto, en curso (actualizado 2026-10-14). El replanteo lo
-  convirtió en la fase F1: `specs/SPEC-022-reglas-aplicables-desde-corpus.md`
-  v3 (revisada dos veces por el `reviewer`, con plan y 15 tasks; D-034 al
-  implementarla). Depende de `SPEC-023` (ya hecha). **Sin código de F1 aún.**
-  Origen: GAP heredado de `SPEC-003`.
+- **Estado:** **cerrado (2026-10-14)**. El replanteo lo convirtió en la fase
+  F1: `specs/SPEC-022-reglas-aplicables-desde-corpus.md` v3. Implementado en
+  `b26325c`, desplegado y verificado en vivo (D-034): índice por regla,
+  cita canónica con parte, `doc_type`, alta validada en el servidor,
+  `draft.ts` por límites de token. Queda fuera lo que dependía de F5/F6:
+  la validación de referencias tecleadas a mano en las cajas de texto y
+  `rule_citations_candidate` (ISS-007, aplazado). Origen: GAP heredado de
+  `SPEC-003`.
 - **Evidencia:** `specs/SPEC-003-documentacion-previa.md` líneas ~112-130 y
   `specs/SPEC-003-plan.md` "GAP heredados". `apps/api/src/ai/extract.ts`
   devuelve `rule_citations_candidate` (líneas 18, 72, 169) sin
@@ -310,7 +313,7 @@ Decision. Una cita solo puede venir de 1 o 4. Fases:
 
 | Fase | Contenido | Issue | Estado (2026-10-14) |
 |---|---|---|---|
-| F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica con parte, `doc_type`, índice por regla, validación por límites de token | ISS-002 | Spec `SPEC-022` v3 + plan + tasks; **sin implementar** |
+| F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica con parte, `doc_type`, índice por regla, validación por límites de token | ISS-002 | **Hecha y desplegada**: `SPEC-022`, D-034, `b26325c` |
 | F2 | Lista única de sugerencias, un clic copia al cuadro | ISS-006 (facilita) | **Hecha y desplegada**: `SPEC-020`, D-030 |
 | F3 | Frases con huecos y relleno; inserción al cursor | — | Pendiente |
 | F4 | IA que complementa solo lo que las frases no dicen | — | Pendiente |
@@ -366,7 +369,9 @@ Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
 
 ## ISS-013 — P3 NoR y SI de París 2024 subidos con la capa equivocada
 
-- **Estado:** abierto (2026-10-14).
+- **Estado:** **resuelto en producción (2026-10-14)**: reclasificados a
+  `event` (NoR → `nor`, SI → `si_amendment`, regata TEST). Queda la decisión
+  de versionar o ignorar los cuatro ficheros de `data/`.
 - **Evidencia:** `data/rules/rrs/Paris-2024-Sailing-Notice-of-Race_…` y
   `…Sailing-Instructions…` (`.md` y PDF original en `data/originals/`) se
   subieron con capa `rrs`, y la pantalla de reclasificar no puede pasar a
