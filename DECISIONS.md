@@ -1070,3 +1070,27 @@ queda sin uso en la UI hasta F4/F6. D-029 no cambia (describe fuentes
 uniformes, no secciones) y `constitution.md` tampoco: las fuentes que
 nombra siguen existiendo, solo desaparece su presentación en secciones.
 Sustituye el diseño de secciones de SPEC-001/005/017.
+
+## D-031 · 2026-10-14 · accepted
+
+**Context:** el menú superior tenía una entrada "Jury" (`JuryPanel.tsx`,
+D-018/SPEC-009) para gestionar la lista de jueces del evento. Desde
+SPEC-009 el jurado de cada caso se elige en la propia pantalla del caso
+(`JurySlots`), que además permite añadir un juez nuevo al evento
+(`createJuryMember`) al asignarlo. El dueño indica que la entrada de menú
+"Jury" ya no tiene sentido.
+
+**Decision:** se quita la entrada "Jury" del menú superior y se borra
+`JuryPanel.tsx`. La lista de jueces del evento se sigue alimentando desde
+`JurySlots` en cada caso. Sustituye lo dicho en D-018 sobre la "utilidad
+Jury en el menú superior"; no cambia el modelo de datos de D-021 (pool del
+evento + jurado por caso).
+
+**Alternatives considered:** dejar la entrada (rechazada: redundante);
+moverla a la pantalla del caso (no necesario, `JurySlots` ya cubre el
+alta).
+
+**Consequences:** ya no hay pantalla para **quitar** un juez del pool del
+evento (`deleteJuryMember` queda en `api.ts` sin uso en la UI). Si hace
+falta, se añade en `JurySlots` en una spec futura. Los jueces del pool ya
+asignados a casos no se ven afectados.

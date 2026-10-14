@@ -2,17 +2,16 @@ import { useEffect, useState } from 'react';
 import { AuthError, api } from './api';
 import { CaseForm } from './components/CaseForm';
 import { CaseList } from './components/CaseList';
-import { JuryPanel } from './components/JuryPanel';
 import { Login } from './components/Login';
 import { ResourceUpload } from './components/ResourceUpload';
 import { UsersPanel } from './components/UsersPanel';
 import type { SessionUser } from './types';
 
-type Tab = 'case' | 'jury' | 'upload-examples' | 'upload-rules' | 'users';
+type Tab = 'case' | 'upload-examples' | 'upload-rules' | 'users';
 
 // Case screen is the app's entry point (D-018): pick or create a regatta
-// and case from the top selector, no separate Events list. Jury and
-// resource uploads are utilities reached from the top nav, scoped to
+// and case from the top selector, no separate Events list. Resource
+// uploads are utilities reached from the top nav, scoped to
 // whichever regatta is currently selected. Login (D-026) gates all of
 // it — nothing renders until the initial /auth/me check resolves.
 export function App() {
@@ -55,16 +54,6 @@ export function App() {
             onClick={() => setTab('case')}
           >
             Case
-          </button>
-          <button
-            type="button"
-            className={tab === 'jury' ? 'active' : undefined}
-            aria-current={tab === 'jury'}
-            onClick={() => setTab('jury')}
-            disabled={currentEventId === null}
-            title={currentEventId === null ? 'Pick a regatta on the Case tab first' : undefined}
-          >
-            Jury
           </button>
           {user.role === 'admin' && (
             <button
@@ -142,8 +131,6 @@ export function App() {
           )}
         </>
       )}
-
-      {tab === 'jury' && currentEventId !== null && <JuryPanel eventId={currentEventId} />}
 
       {tab === 'upload-examples' && <ResourceUpload kind="example" eventId={currentEventId} />}
       {tab === 'upload-rules' && <ResourceUpload kind="rule" eventId={currentEventId} />}
