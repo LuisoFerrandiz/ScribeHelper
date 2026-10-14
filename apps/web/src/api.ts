@@ -1,6 +1,7 @@
 import type { BoxStamps } from './staleBoxes';
 import type {
   ChainContext,
+  GapFillResult,
   AttachmentExtraction,
   BoatRow,
   CaseAttachmentRow,
@@ -144,6 +145,12 @@ export const api = {
     request<RuleSearchResult>(`/rules/search?q=${encodeURIComponent(q)}&case_id=${caseId}`),
   suggestRules: (caseId: number, text: string) =>
     post<RuleSearchResult>('/rules/suggest', { case_id: caseId, text }),
+  fillGaps: (
+    caseId: number,
+    gaps: { id: number; text: string; before: string; after: string }[],
+    notes: string,
+    factsFound: string,
+  ) => post<GapFillResult>(`/cases/${caseId}/fill-gaps`, { gaps, notes, facts_found: factsFound }),
   checkRuleRefs: (caseId: number, text: string) =>
     post<{ unresolved: string[] }>('/rules/check', { case_id: caseId, text }),
   deleteRuleCitation: (id: number) => del(`/rule-citations/${id}`),

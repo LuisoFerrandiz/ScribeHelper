@@ -275,3 +275,16 @@ export interface ChainContext {
   rules_applicable?: string;
   conclusion?: string;
 }
+
+// SPEC-031: a value the AI proposes for a data gap, with the source and the literal quote.
+export interface GapFill {
+  id: number;
+  value: string;
+  source: 'notes' | 'facts_found' | 'protest_form' | 'case_data';
+  quote: string;
+}
+
+export interface GapFillResult {
+  fills: GapFill[];
+  noValue: number[];
+}

@@ -24,6 +24,7 @@ import { caseSuggestionItems } from '../suggestionItems';
 import { describePending, pendingMarks } from '../pendingMarks';
 import { staleSources, type BoxStamps, type ChainBox } from '../staleBoxes';
 import { StaleNote } from './StaleNote';
+import { GapFillPanel } from './GapFillPanel';
 import type {
   AttachmentExtraction,
   BoatRow,
@@ -490,6 +491,17 @@ export function CaseForm({ caseId }: Props) {
     const next = await api.markBoxReviewed(caseId, box);
     setCaseFull((prev) => (prev ? { ...prev, ...next } : prev));
   }
+  // SPEC-031: AI proposals for the data gaps of a phrase box. Accepting writes
+  // through the box handle, which also closes its Tab gap session.
+  const gapPanel = (text: string, handle: React.RefObject<GhostTextareaHandle | null>, set: (v: string) => void) => (
+    <GapFillPanel
+      caseId={caseId}
+      text={text}
+      notes={notes}
+      factsFound={factsFound}
+      onApply={(next) => (handle.current ? handle.current.replaceValue(next) : set(next))}
+    />
+  );
   const staleNote = (box: 'rules_applicable' | 'conclusion' | 'decision') => (
     <StaleNote
       sources={staleSources(box as ChainBox, stamps)}
@@ -624,6 +636,7 @@ export function CaseForm({ caseId }: Props) {
         label="Procedural Matters"
         copyText={proceduralMatters}
         copied={!!copied.procedural_matters}
+        below={gapPanel(proceduralMatters, proceduralBoxRef, setProceduralMatters)}
         onCopied={() => markCopied('procedural_matters')}
         textarea={
           <GhostTextarea
@@ -662,6 +675,7 @@ export function CaseForm({ caseId }: Props) {
         label="Facts Found"
         copyText={factsFound}
         copied={!!copied.facts_found}
+        below={gapPanel(factsFound, factsBoxRef, setFactsFound)}
         onCopied={() => markCopied('facts_found')}
         textarea={
           <GhostTextarea
@@ -709,6 +723,7 @@ export function CaseForm({ caseId }: Props) {
           copyText={conclusion}
           notes={staleNote('conclusion')}
           copied={!!copied.conclusion}
+          below={gapPanel(conclusion, conclusionBoxRef, setConclusion)}
           onCopied={() => markCopied('conclusion')}
           textarea={
             <GhostTextarea
@@ -802,6 +817,7 @@ export function CaseForm({ caseId }: Props) {
         copyText={decision}
         notes={staleNote('decision')}
         copied={!!copied.decision}
+        below={gapPanel(decision, decisionBoxRef, setDecision)}
         onCopied={() => markCopied('decision')}
         textarea={
           <GhostTextarea

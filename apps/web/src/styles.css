@@ -1022,3 +1022,8 @@ textarea:focus {
   align-items: center;
   gap: 4px;
 }
+
+.gap-fill {
+  margin-top: 8px;
+  font-size: 0.9em;
+}

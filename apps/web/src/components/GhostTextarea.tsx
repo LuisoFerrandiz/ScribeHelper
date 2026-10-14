@@ -45,6 +45,9 @@ interface Props {
 export interface GhostTextareaHandle {
   // Insert a library phrase at the caret (SPEC-025 RF-002).
   insertAtCaret: (text: string) => void;
+  // SPEC-031: the box text changed from outside (an accepted AI value): close
+  // the gap session, whose positions no longer apply, and write the new text.
+  replaceValue: (next: string) => void;
 }
 
 const DEBOUNCE_MS = 900;
@@ -173,6 +176,11 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
       }
       setSuggestion('');
       openZone(start, text);
+      onChange(next);
+    },
+    replaceValue(next: string) {
+      setZone(null);
+      setSuggestion('');
       onChange(next);
     },
   }));

@@ -1405,3 +1405,37 @@ palabras en Rules Applicable puede pasar el filtro (se acepta con Tab y no
 queda registrada); el fantasma ya visible puede quedar obsoleto si cambia una
 caja anterior; el contexto no se valida contra el corpus, pero SPEC-028 avisa
 de referencias que no existen. Sin cambios de esquema.
+
+## D-042 · 2026-10-14 · accepted
+
+**La IA rellena solo los huecos de datos de las frases (SPEC-031, F4).** Un
+botón "Fill data gaps with AI" en las cuatro cajas de frases pide a la IA un
+valor para cada hueco **de datos** (`[##]`, `[race ##]`, `[date]`, `[time]`…),
+con su fuente y una cita literal; el juez acepta o descarta cada valor con la
+cita a la vista. La librería real mostró que casi todos los huecos son
+**alternativas** (233 de 498, pegados a otro: `[injury] [serious damage]`) u
+opciones de redacción; elegir entre ellos es una decisión del juez y la
+herramienta no decide nada, así que **nunca se ofrecen**. Solo 30 de 333 frases
+tienen huecos de datos. La defensa contra el invento es **determinista**, no el
+prompt: el servidor descarta toda propuesta cuya cita no aparezca literalmente
+en la fuente que vio el modelo, cuyo valor no esté contenido en la cita, o que
+contenga una referencia de regla o las palabras rule/RRS/NoR/SI/CR (D-004).
+Fuentes: hearing notes y Facts Found en pantalla, partes, testigos y
+formularios de protesta convertidos del caso. Aceptar comprueba que el hueco
+sigue siendo el mismo (texto y contexto) y escribe por el mango de la caja,
+que cierra la sesión de Tab; "Accept all" valida contra el texto original y
+aplica de atrás hacia delante.
+
+**Alternatives considered:** elegir también entre alternativas (rechazada: es
+la decisión del juez); rellenar todos los huecos de golpe y deshacer
+(rechazada por el dueño: aceptar uno a uno con vista previa); avisar de lo que
+ninguna frase cubre (descartada por el dueño); rellenar de forma determinista
+los datos que la app ya conoce (parcialmente: los datos del caso van como
+fuente `case_data`, y las X/Y siguen en la barra de partes).
+
+**Consequences:** alcance estrecho a propósito (unas 9 % de las frases); una
+llamada de Sonnet por clic, acotada (hasta unos 17 000 caracteres de fuentes,
+20 huecos). El valor sale literal de la fuente y el juez lo ve con su cita,
+pero eso no garantiza que sea el dato correcto para ese hueco. Datos de partes,
+testigos y formularios se envían al modelo como ya hacen la extracción de
+adjuntos y de notas. Sin cambios de esquema.
