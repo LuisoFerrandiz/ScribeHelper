@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { db } from '../db/connection.js';
 import { parseCitation } from '../rules/citation.js';
-import { suggestSections } from '../rules/factsQuery.js';
+import { suggestSections, unresolvedRefs } from '../rules/factsQuery.js';
 import {
   ELIGIBLE_SQL,
   SECTION_COLUMNS,
@@ -105,6 +105,13 @@ export function registerRuleSearchRoute(app: FastifyInstance) {
       toHit(s, s.heading, cited),
     );
     return { hits, otherEvents: false };
+  });
+  // SPEC-028: typed references in the Rules Applicable text that the loaded rules do not contain.
+  app.post('/rules/check', (req, reply) => {
+    const body = (req.body ?? {}) as { case_id?: unknown; text?: unknown };
+    if (typeof body.text !== 'string') return reply.code(400).send({ error: 'text must be a string' });
+    const caseId = typeof body.case_id === 'number' && Number.isInteger(body.case_id) ? body.case_id : null;
+    return { unresolved: unresolvedRefs(body.text, eventIdOfCase(caseId)) };
   });
 }
 

@@ -1,5 +1,5 @@
 import { db } from '../db/connection.js';
-import { parseCitation } from './citation.js';
+import { formatCitation, parseCitation } from './citation.js';
 import { ELIGIBLE_SQL, SECTION_COLUMNS, prefixOf, sectionsForCitation } from './sectionQuery.js';
 import type { SectionRow } from './sectionQuery.js';
 
@@ -103,5 +103,23 @@ export function suggestSections(rawText: string, eventId: number | null): Sectio
   const mainKeys = new Set(rows.filter((s) => !isAppendixPart(s)).map(key));
   rows.filter((s) => !isAppendixPart(s)).forEach(add);
   rows.filter((s) => isAppendixPart(s) && !mainKeys.has(key(s))).forEach(add);
+  return out;
+}
+
+// SPEC-028: references typed in the text that match no eligible section.
+// Unique by canonical form, in order of appearance, shown as first written.
+// Years ("RRS 2021") and text parseCitation does not understand are ignored.
+export function unresolvedRefs(rawText: string, eventId: number | null): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const ref of explicitRefs(rawText.slice(0, MAX_FACTS_CHARS))) {
+    const parsed = parseCitation(ref);
+    if (!parsed || !parsed.prefix) continue;
+    if (/^\d{4,}$/.test(parsed.number)) continue;
+    const canonical = formatCitation({ prefix: parsed.prefix, part: parsed.part, number: parsed.number });
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    if (sectionsForCitation(parsed, eventId).length === 0) out.push(ref.replace(/\s+/g, ' '));
+  }
   return out;
 }

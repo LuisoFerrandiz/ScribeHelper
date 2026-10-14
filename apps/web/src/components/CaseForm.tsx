@@ -733,6 +733,7 @@ export function CaseForm({ caseId }: Props) {
               missing={missingCitations(liveCase)}
               hasText={rulesApplicable.trim() !== ''}
               factsText={factsFound}
+              rulesText={rulesApplicable}
               onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
               onInsertMissing={() =>
                 setRulesApplicable((prev) => {

@@ -1325,3 +1325,27 @@ un aviso aproximado).
 **Consequences:** es una ayuda aproximada, con ruido (una frase floja trae
 reglas de relleno): la ayuda lo dice y el juez decide. Sin cambios de
 esquema. Reutiliza `RuleHitList` (extraído de `RulePicker`).
+
+## D-039 · 2026-10-14 · accepted
+
+**Validar las referencias tecleadas en Rules Applicable (SPEC-028, F6).** Una
+cita añadida con Add ya está validada contra el corpus (SPEC-022), pero la caja
+es texto libre. `POST /rules/check` extrae del texto en pantalla las
+referencias con prefijo ("RRS 44.2", "rule 14", "NoR 1.9", "SI 12"), con la
+misma `explicitRefs` de SPEC-027, y devuelve las que no resuelven a ninguna
+sección elegible del caso; `RulesSuggestions` muestra "Not found in the loaded
+rules: …" con debounce de 500 ms. **Avisa, no bloquea ni edita.** Años
+(`RRS 2021`) y texto que `parseCitation` no entiende se ignoran; se deduplica
+por forma canónica.
+
+**Alternatives considered:** bloquear Save o Download con referencias sin
+resolver (rechazada: el juez puede citar algo que el corpus aún no tiene);
+validar en el cliente (rechazada: el índice y la elegibilidad por evento viven
+en el servidor); extender la extracción a listas y rangos (rechazada por ahora:
+`explicitRefs` es compartida con F5 y los casos son raros).
+
+**Consequences:** límites aceptados: `RULE 14` en mayúsculas, `Rules 10`,
+listas, rangos y referencias con parte (`RRS Appendix B 44`) no se comprueban;
+solo los primeros 8000 caracteres; un documento de evento sin clasificar no
+resuelve NoR ni SI. Cargar un documento se refleja al reabrir la pestaña. Solo
+Rules Applicable, sin cambios de esquema.

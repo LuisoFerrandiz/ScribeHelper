@@ -12,6 +12,7 @@ interface Props {
   missing: string[];
   hasText: boolean;
   factsText: string; // Facts Found as on screen, saved or not (SPEC-027)
+  rulesText: string; // Rules Applicable text as on screen (SPEC-028)
   onInsert: (text: string) => void;
   onInsertMissing: () => void;
   // SPEC-022: registers the citation (the server validates it against the
@@ -32,6 +33,7 @@ export function RulesSuggestions({
   missing,
   hasText,
   factsText,
+  rulesText,
   onInsert,
   onInsertMissing,
   onAddCitation,
@@ -71,6 +73,32 @@ export function RulesSuggestions({
     };
   }, [request, caseId, citationsKey]);
 
+  // SPEC-028: typed references the loaded rules do not contain. Informative
+  // only. Debounced; the answer of an older text is dropped; no stale warning
+  // is left on an empty text, a failed call or another case.
+  const [unresolved, setUnresolved] = useState<string[]>([]);
+  useEffect(() => {
+    if (!rulesText.trim()) {
+      setUnresolved([]);
+      return;
+    }
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      api
+        .checkRuleRefs(caseId, rulesText)
+        .then((r) => {
+          if (!cancelled) setUnresolved(r.unresolved);
+        })
+        .catch(() => {
+          if (!cancelled) setUnresolved([]);
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [rulesText, caseId]);
+
   function handleSuggest() {
     setSuggested(null);
     setRequest({ text: factsText });
@@ -97,6 +125,12 @@ export function RulesSuggestions({
           <button type="button" onClick={onInsertMissing}>
             Insert missing
           </button>
+        </p>
+      )}
+
+      {unresolved.length > 0 && (
+        <p className="rules-warning">
+          Not found in the loaded rules: {unresolved.join(', ')}. Check them or load the document.
         </p>
       )}
 
