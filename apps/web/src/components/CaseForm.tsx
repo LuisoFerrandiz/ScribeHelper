@@ -974,15 +974,15 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'rules' && (
         <div className="tab-panel">
-        {/* 6. Rules Applicable — SPEC-023: a writing box like the others;
-            suggestions on the left (visual order only), text on the right. */}
+        {/* 6. Rules Applicable — SPEC-023: a writing box like the others
+            (text on the left, suggestions on the right). */}
         <CopyBox
           label="Rules Applicable"
           text={formatRulesApplicable(liveCase)}
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
         >
-          <div className="box-body-split box-body-split-reverse">
+          <div className="box-body-split">
             <div className="textarea-col">
               <GhostTextarea
                 caseId={caseId}

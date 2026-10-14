@@ -1,8 +1,9 @@
 # SPEC-023 — Rules Applicable como caja de redacción
 
 Estado: implementada en local (draft v2 confirmado por el dueño, 2026-10-14). Pedida por el dueño (2026-10-14): Rules Applicable
-tiene, como las otras cuatro cajas, **sugerencias del sistema a la
-izquierda y un cuadro de texto a la derecha**, y ese cuadro aparece también
+tiene, como las otras cuatro cajas, **sugerencias del sistema y un
+cuadro de texto** (orden inicial pedido: sugerencias a la izquierda; corregido
+después a cuadro a la izquierda, como las otras cajas), y ese cuadro aparece también
 en Review entre Conclusion y Decision. Opción A del dueño: campo de texto
 propio, "igual que en las otras pestañas" (incluido el texto fantasma).
 v2 incorpora la revisión del `reviewer` (3 bloqueos, 8 importantes).
@@ -91,8 +92,8 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
 
 **Dentro:**
 1. Campo `protest_case.rules_applicable`, por `ALTER` guardado.
-2. Pestaña "6. Rules Applicable": cuadro (con texto fantasma) a la derecha,
-   sugerencias a la izquierda.
+2. Pestaña "6. Rules Applicable": cuadro (con texto fantasma) a la izquierda,
+   sugerencias del sistema a la derecha, como las otras cajas.
 3. El cuadro en Review entre Conclusion y Decision.
 4. Copy, Download y documento completo con el texto del cuadro.
 5. Aviso de citas registradas que no están en el texto.
@@ -116,13 +117,12 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
   (el `ALTER` del arranque la crea), no en el `CREATE TABLE`. Se añade a
   los `fields` de `cases` en `routes/index.ts` y a `CaseRow`/`CaseFull` en
   `types.ts` (si no, el `PUT` lo ignora o `updateCase` no compila).
-- **RF-002 — Disposición.** `CopyBox` con `box-body-split`, igual que las
-  otras cajas. El DOM mantiene el orden de las otras cajas (cuadro primero,
-  sugerencias después), para conservar orden de lectura y de Tab. En
-  pantalla ancha se invierte solo visualmente con un modificador CSS
-  (`.box-body-split-reverse`, `flex-direction: row-reverse`): sugerencias a
-  la izquierda, cuadro a la derecha (decisión del dueño). En ≤ 720 px se
-  apilan con el cuadro arriba, como las demás. El cuadro usa `rows` como
+- **RF-002 — Disposición.** `CopyBox` con `box-body-split`, **idéntica a las
+  otras cajas**: cuadro de texto a la izquierda y sugerencias a la derecha;
+  en ≤ 720 px se apilan con el cuadro arriba. (v2 invertía el orden
+  visual por la petición inicial del dueño, sugerencias a la izquierda; el
+  dueño lo corrigió el 2026-10-14 tras verlo desplegado y pidió el orden de
+  las otras cajas. No hay clase de inversión.) El cuadro usa `rows` como
   Conclusion.
 - **RF-003 — Texto fantasma.** `GhostTextarea` para `rules_applicable`, Tab
   acepta, mismos tiempos y `MIN_CHARS` que las otras cajas. `POST
@@ -133,7 +133,7 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
   teclear, no devuelve nada. El prompt de esta caja es propio, no el de las
   otras cuatro (`ai/complete.ts` añade una rama por caja). Sin la clave
   `ANTHROPIC_API_KEY` el texto fantasma falla en silencio, como hoy.
-- **RF-004 — Sugerencias del sistema (izquierda).** Componente propio
+- **RF-004 — Sugerencias del sistema (derecha).** Componente propio
   `RulesSuggestions.tsx`, **sin** frases, "Browse phrases", "Suggest from
   examples" ni "Save as phrase". Contiene, de arriba abajo:
   1. buscador del corpus: resultados de **solo lectura** con la etiqueta
@@ -211,8 +211,6 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
 - **Casos antiguos:** el documento depende de si el cuadro está vacío
   (RF-007). El aviso de RF-011 cubre el cambio de comportamiento al empezar
   a escribir.
-- **Orden visual invertido** respecto a las otras cajas: decisión del
-  dueño; el orden de Tab y de lectura se mantiene.
 - **Datos en producción:** solo una columna aditiva con valor por defecto.
 - **`CaseForm.tsx` ya es grande** (ISS-006): el bloque se mueve a
   `RulesSuggestions.tsx`; el estado del cuadro suma pocas líneas.
@@ -221,7 +219,7 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
 
 1. `npm run build` (api) y `npm run typecheck` (web) limpios.
 2. En vivo en `http://192.168.1.105:8086/`, caso de prueba:
-   - sugerencias a la izquierda y cuadro a la derecha; en ventana estrecha,
+   - cuadro a la izquierda y sugerencias a la derecha, como las otras cajas; en ventana estrecha,
      cuadro arriba;
    - texto fantasma con Tab (≥ 15 caracteres), que no escribe números de
      regla; sin `ANTHROPIC_API_KEY` no rompe;
