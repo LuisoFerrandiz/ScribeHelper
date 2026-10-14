@@ -17,10 +17,12 @@ ficheros), SPEC-009 RF-007 y SPEC-013 (refrescos parciales), SPEC-014
 `CaseForm()` concentra el estado del caso, la carga y los refrescos
 parciales, el guardado, el procesado de notas y adjuntos, y **todo el
 JSX de nueve pestañas**. Cada spec reciente (011 a 023) lo ha tocado y no
-hay suite de tests. Objetivo: bajarlo a **≈ 450-500 líneas** (estimación
-del reviewer; el JSX son ~560 líneas que salen, pero quedan estado,
-carga, guardado y handlers) extrayendo piezas **sin cambiar lo que ve ni
-lo que hace el usuario**, en pasos pequeños y verificables.
+hay suite de tests. Objetivo: bajarlo todo lo posible extrayendo piezas
+**sin cambiar lo que ve ni lo que hace el usuario**, en pasos pequeños y
+verificables. **Meta revisada (2026-10-14):** ≈ 700 líneas tras el paso 4
+(quedan ~100 de estado, `reload`, refrescos, `handleSaveAll` y ~130 de
+handlers, más el `return`); el paso 5 (hooks) lo bajaría a ≈ 550-600. La
+meta inicial de 450-500 era optimista.
 
 ## Qué hay hoy (verificado 2026-10-14)
 
@@ -128,8 +130,7 @@ Conclusion, Facts, Decision, Rules (la más distinta, al final).
 **Paso 4 — `PartiesTab`** presentacional (con las tres `<datalist>`, que
 solo usa esa pestaña; `boats` y `people` por props).
 **Paso 5 (opcional, riesgo alto) — hooks en el padre** (`useNotesExtraction`,
-`useCaseSave`), solo si tras el paso 4 `CaseForm.tsx` supera ~500 líneas o
-si el dueño lo pide. Los hooks se declaran antes de `if (!caseFull) return`,
+`useCaseSave`), solo si el dueño lo pide tras el paso 4. Los hooks se declaran antes de `if (!caseFull) return`,
 conservan la dependencia `[caseTab]` del efecto de notas y su closure, y
 exponen `lastProcessedNotes` para sembrarlo en `reload()`.
 
