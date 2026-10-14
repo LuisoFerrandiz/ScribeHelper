@@ -9,6 +9,7 @@ import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
 import { SuggestionList } from './SuggestionList';
 import { TabBar } from './TabBar';
+import { WritingBox } from './WritingBox';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
@@ -654,35 +655,32 @@ export function CaseForm({ caseId }: Props) {
       {caseTab === 'procedural' && (
         <div className="tab-panel">
       {/* 3. Procedural Matters */}
-      <CopyBox
+      <WritingBox
         label="Procedural Matters"
-        text={proceduralMatters}
+        copyText={proceduralMatters}
         copied={!!copied.procedural_matters}
         onCopied={() => markCopied('procedural_matters')}
-      >
-        <div className="box-body-split">
-          <div className="textarea-col">
-            <GhostTextarea
-              caseId={caseId}
-              box="procedural_matters"
-              value={proceduralMatters}
-              onChange={setProceduralMatters}
-              rows={4}
-            />
-          </div>
-          <div className="suggestions-col">
-            <SuggestionList
-              box="procedural_matters"
-              currentText={proceduralMatters}
-              onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              items={caseSuggestionItems(
-                { lines: autoProceduralLines, paragraph: extraction?.procedural_matters_candidate },
-                { paragraph: notesExtraction?.procedural_matters_candidate },
-              )}
-            />
-          </div>
-        </div>
-      </CopyBox>
+        textarea={
+          <GhostTextarea
+            caseId={caseId}
+            box="procedural_matters"
+            value={proceduralMatters}
+            onChange={setProceduralMatters}
+            rows={4}
+          />
+        }
+        side={
+          <SuggestionList
+            box="procedural_matters"
+            currentText={proceduralMatters}
+            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+            items={caseSuggestionItems(
+              { lines: autoProceduralLines, paragraph: extraction?.procedural_matters_candidate },
+              { paragraph: notesExtraction?.procedural_matters_candidate },
+            )}
+          />
+        }
+      />
         </div>
       )}
 
