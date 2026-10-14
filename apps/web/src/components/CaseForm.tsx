@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { api } from '../api';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
-import { JurySlots } from './JurySlots';
 import { PartyReference } from './PartyReference';
+import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
 import { SuggestionList } from './SuggestionList';
 import { TabBar } from './TabBar';
@@ -933,23 +933,19 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'review' && (
         <div className="tab-panel">
-          <section className="box review-box">
-            <h2>Review</h2>
-            <h3>Procedural Matters</h3>
-            <textarea value={proceduralMatters} onChange={(e) => setProceduralMatters(e.target.value)} rows={4} />
-            <h3>Facts Found</h3>
-            <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
-            <h3>Conclusion</h3>
-            <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
-            <h3>Rules Applicable</h3>
-            <textarea value={rulesApplicable} onChange={(e) => setRulesApplicable(e.target.value)} rows={4} />
-            <h3>Decision</h3>
-            <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
-            <h3>Informed at (date &amp; time)</h3>
-            <input value={informedAt} onChange={(e) => setInformedAt(e.target.value)} />
-          </section>
-
-          <JurySlots
+          <ReviewTab
+            proceduralMatters={proceduralMatters}
+            onProceduralMattersChange={setProceduralMatters}
+            factsFound={factsFound}
+            onFactsFoundChange={setFactsFound}
+            conclusion={conclusion}
+            onConclusionChange={setConclusion}
+            rulesApplicable={rulesApplicable}
+            onRulesApplicableChange={setRulesApplicable}
+            decision={decision}
+            onDecisionChange={setDecision}
+            informedAt={informedAt}
+            onInformedAtChange={setInformedAt}
             caseId={caseId}
             eventId={caseFull.event.id}
             jury={caseFull.jury}
