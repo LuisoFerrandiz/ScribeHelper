@@ -55,6 +55,7 @@ export function registerRoutes(app: FastifyInstance) {
       'procedural_matters',
       'facts_found',
       'conclusion',
+      'rules_applicable',
       'decision',
     ],
     touchUpdatedAt: true,

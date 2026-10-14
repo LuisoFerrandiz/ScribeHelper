@@ -4,6 +4,7 @@ import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
 import { JurySlots } from './JurySlots';
 import { PartyReference } from './PartyReference';
+import { RulesSuggestions } from './RulesSuggestions';
 import { SuggestionList } from './SuggestionList';
 import {
   buildDecisionFilename,
@@ -12,6 +13,7 @@ import {
   formatFullDecisionHtml,
   formatParties,
   formatRulesApplicable,
+  missingCitations,
   formatWitnesses,
 } from '../format';
 import { caseSuggestionItems } from '../suggestionItems';
@@ -23,7 +25,6 @@ import type {
   NotesExtraction,
   PartyRole,
   PersonRow,
-  ResourceSearchHit,
 } from '../types';
 
 interface Props {
@@ -82,6 +83,9 @@ export function CaseForm({ caseId }: Props) {
   const [proceduralMatters, setProceduralMatters] = useState('');
   const [factsFound, setFactsFound] = useState('');
   const [conclusion, setConclusion] = useState('');
+  // SPEC-023: Rules Applicable text (saved with Save), next to the instant
+  // citation registry (caseFull.ruleCitations).
+  const [rulesApplicable, setRulesApplicable] = useState('');
   const [decision, setDecision] = useState('');
 
   // SPEC-017: free-form hearing notes, persisted with the rest of the
@@ -131,10 +135,6 @@ export function CaseForm({ caseId }: Props) {
     [partyDrafts],
   );
 
-  const [ruleText, setRuleText] = useState('');
-  const [ruleQuery, setRuleQuery] = useState('');
-  const [ruleHits, setRuleHits] = useState<ResourceSearchHit[]>([]);
-  const [searching, setSearching] = useState(false);
 
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
@@ -176,6 +176,7 @@ export function CaseForm({ caseId }: Props) {
       setProceduralMatters(full.procedural_matters);
       setFactsFound(full.facts_found);
       setConclusion(full.conclusion);
+      setRulesApplicable(full.rules_applicable ?? '');
       setDecision(full.decision);
 
       setPartyDrafts({
@@ -251,29 +252,6 @@ export function CaseForm({ caseId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
-  // Rule picker (Phase 3): a debounced lookup against the loaded corpus
-  // (FTS5, accepted rule resources only, D-020) — surfaces where a rule
-  // number actually appears so a citation can be verified before typing
-  // it into the box below (D-004: nothing cited without a trace). Whole
-  // documents are indexed, not individual numbered rules, so this finds
-  // the right document/snippet; the exact reference is still typed by
-  // hand into ruleText.
-  useEffect(() => {
-    if (!ruleQuery.trim()) {
-      setRuleHits([]);
-      return;
-    }
-    setSearching(true);
-    const handle = setTimeout(() => {
-      api
-        .searchResources(ruleQuery.trim())
-        .then(setRuleHits)
-        .catch(() => setRuleHits([]))
-        .finally(() => setSearching(false));
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [ruleQuery]);
-
   async function findOrCreateBoat(sailNumber: string, boatName: string | null): Promise<number> {
     const existing = boats.find(
       (b) =>
@@ -300,8 +278,9 @@ export function CaseForm({ caseId }: Props) {
 
   // SPEC-014: one Save for the whole case — General + Parties &
   // Witness (incl. party/witness reconciliation) + the four free-text
-  // boxes, all in one action. Replaces SPEC-011's per-tab saves. Rules
-  // Applicable/With case(s)/attachments/jury keep acting instantly,
+  // boxes (SPEC-023: plus the Rules Applicable text), all in one action.
+  // Replaces SPEC-011's per-tab saves. The rule citation registry (add/
+  // remove), With case(s), attachments and jury keep acting instantly,
   // unchanged, never part of this save.
   async function handleSaveAll() {
     setSavingAll(true);
@@ -316,6 +295,7 @@ export function CaseForm({ caseId }: Props) {
         procedural_matters: proceduralMatters,
         facts_found: factsFound,
         conclusion,
+        rules_applicable: rulesApplicable,
         decision,
       });
 
@@ -368,15 +348,13 @@ export function CaseForm({ caseId }: Props) {
     setWitnessDraft((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleAddRule(e: FormEvent) {
-    e.preventDefault();
-    if (!ruleText.trim() || !caseFull) return;
+  async function handleAddRule(text: string) {
+    if (!text.trim() || !caseFull) return;
     await api.createRuleCitation({
       case_id: caseId,
-      rule_reference: ruleText.trim(),
+      rule_reference: text.trim(),
       position: caseFull.ruleCitations.length,
     });
-    setRuleText('');
     await refreshRuleCitations();
   }
 
@@ -524,6 +502,7 @@ export function CaseForm({ caseId }: Props) {
     procedural_matters: proceduralMatters,
     facts_found: factsFound,
     conclusion,
+    rules_applicable: rulesApplicable,
     decision,
   };
   const autoProceduralLines = formatAutoProceduralLines(liveCase);
@@ -995,53 +974,40 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'rules' && (
         <div className="tab-panel">
-        {/* 6. Rules Applicable */}
+        {/* 6. Rules Applicable — SPEC-023: a writing box like the others;
+            suggestions on the left (visual order only), text on the right. */}
         <CopyBox
           label="Rules Applicable"
           text={formatRulesApplicable(liveCase)}
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
         >
-          <ul className="list">
-            {caseFull.ruleCitations.map((r) => (
-              <li key={r.id}>
-                {r.rule_reference}{' '}
-                <button type="button" onClick={() => handleRemoveRule(r.id)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-            {caseFull.ruleCitations.length === 0 && <li className="muted">No rules cited yet.</li>}
-          </ul>
-          <form onSubmit={handleAddRule} className="inline-form">
-            <input
-              placeholder="e.g. RRS 18.2(b)"
-              value={ruleText}
-              onChange={(e) => setRuleText(e.target.value)}
-              required
-            />
-            <button type="submit">Add</button>
-          </form>
-
-          <div className="rule-picker">
-            <input
-              placeholder="Search the loaded rules corpus (e.g. propulsion)"
-              value={ruleQuery}
-              onChange={(e) => setRuleQuery(e.target.value)}
-            />
-            {searching && <p className="muted">Searching…</p>}
-            {!searching && ruleQuery.trim() !== '' && ruleHits.length === 0 && (
-              <p className="muted">No match in the loaded corpus. Upload it first (Upload rules, top nav).</p>
-            )}
-            <ul className="list">
-              {ruleHits.map((h) => (
-                <li key={h.id}>
-                  <strong>{h.title}</strong> <span className="muted">({h.layer})</span>
-                  <br />
-                  <span className="muted">{h.snippet}</span>
-                </li>
-              ))}
-            </ul>
+          <div className="box-body-split box-body-split-reverse">
+            <div className="textarea-col">
+              <GhostTextarea
+                caseId={caseId}
+                box="rules_applicable"
+                value={rulesApplicable}
+                onChange={setRulesApplicable}
+                rows={6}
+              />
+            </div>
+            <div className="suggestions-col">
+              <RulesSuggestions
+                citations={caseFull.ruleCitations}
+                missing={missingCitations(liveCase)}
+                hasText={rulesApplicable.trim() !== ''}
+                onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
+                onInsertMissing={() =>
+                  setRulesApplicable((prev) => {
+                    const refs = missingCitations(liveCase).join('\n');
+                    return prev ? `${prev}\n${refs}` : refs;
+                  })
+                }
+                onAddCitation={handleAddRule}
+                onRemoveCitation={handleRemoveRule}
+              />
+            </div>
           </div>
         </CopyBox>
         </div>
@@ -1103,6 +1069,8 @@ export function CaseForm({ caseId }: Props) {
             <textarea value={factsFound} onChange={(e) => setFactsFound(e.target.value)} rows={6} />
             <h3>Conclusion</h3>
             <textarea value={conclusion} onChange={(e) => setConclusion(e.target.value)} rows={4} />
+            <h3>Rules Applicable</h3>
+            <textarea value={rulesApplicable} onChange={(e) => setRulesApplicable(e.target.value)} rows={4} />
             <h3>Decision</h3>
             <textarea value={decision} onChange={(e) => setDecision(e.target.value)} rows={4} />
             <h3>Informed at (date &amp; time)</h3>

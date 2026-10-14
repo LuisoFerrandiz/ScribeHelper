@@ -975,3 +975,37 @@ textarea:focus {
 .case-list-table tbody tr.active {
   background: var(--accent-soft);
 }
+
+/* SPEC-023 — Rules Applicable: suggestions on the left, text on the right.
+   Only the visual order is reversed; the DOM keeps the order of the other
+   boxes (text first), so reading and Tab order match them. Stacks with the
+   text on top on narrow screens. */
+.box-body-split-reverse {
+  flex-direction: row-reverse;
+}
+
+@media (max-width: 720px) {
+  .box-body-split-reverse {
+    flex-direction: column;
+  }
+}
+
+.suggestion-row {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.suggestion-row .suggestion-item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rules-warning {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--accent-soft);
+  font-size: 0.85em;
+}

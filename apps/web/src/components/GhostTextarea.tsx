@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { api } from '../api';
-import type { PhraseBox } from '../types';
+import type { RulesBox } from '../types';
 
 interface SailNumberRole {
   sailNumber: string;
@@ -9,7 +9,7 @@ interface SailNumberRole {
 
 interface Props {
   caseId: number;
-  box: PhraseBox;
+  box: RulesBox;
   value: string;
   onChange: (value: string) => void;
   rows: number;

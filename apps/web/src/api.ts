@@ -17,6 +17,7 @@ import type {
   PartyRow,
   PersonRow,
   PhraseBox,
+  RulesBox,
   PhraseRow,
   PhraseSearchHit,
   ResourceFull,
@@ -170,7 +171,7 @@ export const api = {
     post<DraftResult>(`/cases/${caseId}/draft`, { box, currentText }),
   suggestPhrasesFromExamples: (box: ExampleSuggestionBox) =>
     request<ExampleSuggestions>(`/ai/example-suggestions/${box}`),
-  completeInline: (caseId: number, box: PhraseBox, text: string) =>
+  completeInline: (caseId: number, box: RulesBox, text: string) =>
     post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text }),
 
   login: (username: string, password: string) => post<SessionUser>('/auth/login', { username, password }),

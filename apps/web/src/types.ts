@@ -51,6 +51,7 @@ export interface CaseRow {
   procedural_matters: string;
   facts_found: string;
   conclusion: string;
+  rules_applicable: string; // SPEC-023: free text next to the case_rule_citation registry
   decision: string;
   created_at: string;
   updated_at: string;
@@ -126,6 +127,9 @@ export interface NotesExtraction {
 }
 
 export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
+// SPEC-023: boxes with ghost text. Rules Applicable is a writing box, but not a
+// phrase box (the phrase table only knows the four above).
+export type RulesBox = PhraseBox | 'rules_applicable';
 
 export interface PhraseRow {
   id: number;

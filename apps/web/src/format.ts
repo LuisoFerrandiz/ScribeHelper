@@ -56,12 +56,32 @@ export function formatAutoProceduralLines(c: CaseFull): string[] {
   return [...partyLines, ...witnessLines];
 }
 
+// SPEC-023: the box text is the document text. Cases written before the box
+// existed (empty text, registered citations) keep printing the citation list.
 export function formatRulesApplicable(c: CaseFull): string {
+  if (c.rules_applicable?.trim()) return c.rules_applicable;
   if (c.ruleCitations.length === 0) return '—';
   return [...c.ruleCitations]
     .sort((a, b) => a.position - b.position)
     .map((r) => r.rule_reference)
     .join('\n');
+}
+
+// Whole-token match (SPEC-023 RF-011): "RRS 44" is not found inside "RRS 44.2"
+// nor "RRS 144". Case-insensitive.
+function citationInText(text: string, reference: string): boolean {
+  const escaped = reference.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!escaped) return true;
+  return new RegExp(`(^|[^A-Za-z0-9])${escaped}(?![A-Za-z0-9]|\\.\\d)`, 'i').test(text);
+}
+
+// Registered citations that do not appear in the Rules Applicable text.
+export function missingCitations(c: CaseFull): string[] {
+  const text = c.rules_applicable ?? '';
+  return [...c.ruleCitations]
+    .sort((a, b) => a.position - b.position)
+    .map((r) => r.rule_reference)
+    .filter((ref) => !citationInText(text, ref));
 }
 
 export function formatJuryMembers(c: CaseFull): string {

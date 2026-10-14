@@ -1094,3 +1094,40 @@ alta).
 evento (`deleteJuryMember` queda en `api.ts` sin uso en la UI). Si hace
 falta, se añade en `JurySlots` en una spec futura. Los jueces del pool ya
 asignados a casos no se ven afectados.
+
+## D-032 · 2026-10-14 · accepted
+
+**Context:** SPEC-023. Rules Applicable era una lista de citas
+(`case_rule_citation`, D-014) sin cuadro de texto; las otras cuatro
+cajas son cuadros de redacción con sugerencias al lado. El dueño pide
+que Rules Applicable sea una caja más: sugerencias del sistema a la
+izquierda, cuadro de texto a la derecha (con texto fantasma), y el cuadro
+también en la pestaña Review entre Conclusion y Decision.
+
+**Decision:** se añade `protest_case.rules_applicable` (texto), guardado
+con el Save único (SPEC-014). La tabla `case_rule_citation` se conserva
+como **registro de citas** (alta y baja instantáneas). El documento
+(Copy, Download) sale del texto del cuadro; si está vacío y el caso tiene
+citas, sigue saliendo la lista de citas (casos anteriores, sin migración).
+Si hay texto y alguna cita registrada no aparece en él, la pestaña lo avisa
+y ofrece "Insert missing". El texto fantasma en esta caja usa un prompt
+propio que **nunca escribe números de regla ni prefijos**, con un filtro
+determinista en el servidor que descarta cualquier sugerencia con dígitos
+o con RRS/NoR/SI/CR.
+
+**Alternatives considered:** cuadro derivado de solo lectura (opción B del
+dueño, descartada); fallback sin aviso (descartado: perdía reglas en
+silencio al empezar a escribir); ampliar `PhraseBox` y la tabla `phrase`
+(requiere recrear la tabla por su `CHECK`; fuera de alcance).
+
+**Consequences:** sustituye parcialmente a D-014 (la tabla sigue, ahora
+junto a una columna de texto). Es una **excepción a "solo cuatro cajas"**
+de `CLAUDE.md` y `constitution.md`, cuyo texto no se ha modificado (lo
+actualizará el dueño si quiere). Excepción conocida a D-029 regla 1 (la
+pestaña mezcla caja de documento y controles de alta, como ya admitía
+SPEC-021). Tensión con D-004: lo que se teclea en el cuadro no se valida
+contra el corpus; SPEC-022 valida lo que se añade al registro, y la
+validación de las referencias escritas a mano queda para una fase
+posterior (F6). SPEC-014 RF-006 se conserva solo para las citas del
+registro. `draft.ts` ignora el texto del cuadro a propósito (el panel de
+borrador no está montado, D-030). No edita D-004.

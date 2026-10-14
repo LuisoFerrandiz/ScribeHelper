@@ -31,5 +31,15 @@ if (!hasNotes) {
   console.log('Migration: added protest_case.notes');
 }
 
+// SPEC-023: Rules Applicable becomes a writing box; free text next to the
+// case_rule_citation registry (D-032).
+const hasRulesApplicable = (db.prepare(`PRAGMA table_info(protest_case)`).all() as { name: string }[]).some(
+  (c) => c.name === 'rules_applicable',
+);
+if (!hasRulesApplicable) {
+  db.exec(`ALTER TABLE protest_case ADD COLUMN rules_applicable TEXT NOT NULL DEFAULT ''`);
+  console.log('Migration: added protest_case.rules_applicable');
+}
+
 await seedBasePhrases();
 seedAdminUser();
