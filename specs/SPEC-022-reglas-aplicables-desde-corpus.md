@@ -7,7 +7,7 @@ ejecutó el parser sobre los cuatro `.md` reales; el dueño confirmó citar
 con la parte (2026-10-14). Pendiente de plan/tasks actualizados y de
 implementación. Sustituye a `SPEC-019` (reemplazada).
 
-Relacionado: `DECISIONS.md` D-004 (nada se cita fuera del corpus
+Depende de `SPEC-023` (caja de texto; D-032). Relacionado: `DECISIONS.md` D-004 (nada se cita fuera del corpus
 validado), D-009 (flujo subir → revisar → aceptar), D-011/D-020 (índice
 FTS de reglas por documento, solo aceptadas), D-023 (gotcha FTS5
 UNINDEXED), D-024 (panel de borrador IA), `constitution.md`, SPEC-021
@@ -90,7 +90,7 @@ reutilizará) y el botón "Add".
 6. **Límites de token** y validación contra `rule_section` en `draft.ts`.
 7. **Revisión al aceptar**: la pantalla de revisión muestra cuántas
    reglas se detectaron y avisa si son 0.
-8. **Entrada nueva en `DECISIONS.md`** (D-032).
+8. **Entrada nueva en `DECISIONS.md`** (D-033).
 
 **Fuera de esta spec:**
 - Reglas sugeridas desde Facts Found (F5), aunque el índice las habilita.
@@ -190,9 +190,15 @@ reutilizará) y el botón "Add".
   rule found in the loaded corpus." y, solo si el caso tiene otras
   regatas con reglas subidas, la pista de que las reglas de evento solo
   aparecen para su regata.
-- **RF-005 — Botón "Add".** Cada resultado muestra la cita canónica, el
-  título de la regla, el documento y el fragmento, con botón "Add" que
-  crea la cita normalizada. Deja de ofrecerse si ya está en el caso.
+- **RF-005 — Botón "Add".** (Se apoya en SPEC-023: la caja ya tiene cuadro
+  de texto.) Cada resultado muestra la cita canónica, el título de la regla,
+  el documento y el fragmento, con botón "Add" que, **en un solo clic**,
+  registra la cita normalizada en `case_rule_citation` **y** la añade al
+  final del cuadro `rules_applicable` (`prev ? prev + '
+' + cita : cita`).
+  Deja de ofrecerse si ya está en el caso. Los resultados viven dentro de
+  `RulesSuggestions` (SPEC-023) y sustituyen su estado "read-only".
+  *Propuesta pendiente de confirmar con el dueño.*
 - **RF-006 — Texto libre como vía secundaria.** El campo actual sigue
   disponible. El servidor normaliza (`Rule 44`, `rule 44.2`, `R. 44`, `44`
   → `RRS …`; prefijos `CR`/`NoR`/`SI` se respetan; espacios, mayúsculas y
@@ -236,14 +242,16 @@ reutilizará) y el botón "Add".
     caracteres; el cuerpo de una sección termina en la siguiente cabecera
     de sección o de parte (RF-002). Una sección padre (`RRS 44`) solo
     contiene su título: su excerpt es corto y es aceptable.
-- **RF-011 — Citas existentes intactas.** No se modifican en la base.
-  Copy, Review y Download siguen mostrando `rule_reference` tal cual
-  (`format.ts`). Se muestran sin marca especial: es decisión del dueño (no
-  migrar, no marcar) y D-032 la registra y justifica frente a D-004 ("si no
-  está seguro lo dice"): las citas antiguas las escribió el propio juez. El borrador IA, si no
-  encuentra su texto, ya dice "text not found" sin inventar. No hay
-  edición de cita; "normalizar al editar" significa: al volver a añadirla
-  pasa por RF-006/RF-009.
+- **RF-011 — Citas existentes intactas.** No se modifican en la base. Tras
+  SPEC-023, Copy, Review y Download salen del texto del cuadro
+  `rules_applicable` (y de `rule_reference` solo cuando el cuadro está
+  vacío: fallback de SPEC-023 RF-007). No se marcan las citas antiguas: es
+  decisión del dueño (no migrar, no marcar) y D-033 la registra y
+  justifica frente a D-004 ("si no está seguro lo dice"): las citas
+  antiguas las escribió el propio juez. El borrador IA, si no encuentra su
+  texto, ya dice "text not found" sin inventar. No hay edición de cita;
+  "normalizar al editar" significa: al volver a añadirla pasa por
+  RF-006/RF-009.
 - **RF-012 — Mensajes.** Todo texto visible en inglés: "Classify this
   document first (Upload rules)", "Not found in the loaded rules:
   <cita>", "Already cited", "Specify the document: RRS, CR, NoR or SI",
@@ -287,7 +295,7 @@ reutilizará) y el botón "Add".
   añadida marcada), para no engordar `CaseForm` (ISS-006).
 - Copia de seguridad: avisar al dueño de copiar `data/db` antes del
   redeploy, porque el arranque añade columnas y rellena un índice.
-- D-032 en `DECISIONS.md`: citas por regla, formato canónico, partes,
+- D-033 en `DECISIONS.md`: citas por regla, formato canónico, partes,
   `doc_type`, índice por regla y validación en servidor. Anota que
   sustituye el diseño por documento de D-011/D-020 **en lo que respecta a
   citas**; no edita D-004.
@@ -335,10 +343,10 @@ reutilizará) y el botón "Add".
    (`Rule 44` → `RRS 44`, `C.6.1` → `C6.1`, `NoR 1.9`, `R. 44`); límites de
    token (`4` vs `44`, `42.1` vs `142.1`, `44` vs `44.1`); `44.2(a)` vs
    `44.2(zz)`.
-3. En vivo en `http://192.168.1.105:8086/`: reclasificar NoR/SI a `event`
+3. En vivo en `http://192.168.1.105:8086/` (pestaña Rules Applicable de SPEC-023): reclasificar NoR/SI a `event`
    con su `doc_type`; buscar "propulsion", "44.2" y "1.9" en Rules
    Applicable; "Add" crea `RRS 44.2` / `NoR 1.9` sin teclear; no se añade
-   dos veces; `Rule 999` se rechaza; Remove y Copy funcionan; una regla
+   dos veces; `Rule 999` se rechaza; el "Add" también deja la cita en el cuadro; Remove (del registro) y Copy (del cuadro) funcionan; una regla
    `event` sin clasificar muestra "Add" desactivado.
 4. Las tres vías de entrada de una cita (RF-005, RF-006, RF-010):
    - **Botón Add:** crear `NoR 1.9`; con un `section_id` forjado de otro

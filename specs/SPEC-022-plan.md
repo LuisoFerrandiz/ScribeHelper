@@ -199,16 +199,18 @@ borrado explícito del FTS antes del cascade.
   `doc_type`; mantiene "Move to examples/rules".
 - Revisión: muestra "N rules detected", muestra de citas y el aviso de 0.
 
-### `RulePicker.tsx` (nuevo) y `CaseForm.tsx`
-- `RulePicker` contiene búsqueda con debounce 300 ms y guarda anti-carrera
-  (`cancelled`), resultados con cita, título, documento, fragmento y
-  "Add"; "Add" desactivado si `cited` o documento sin clasificar (con
-  motivo). Reemplaza el bloque `rule-picker` y su estado
-  (`ruleQuery`, `ruleHits`, `searching`) de `CaseForm.tsx`.
-- `handleAddRule` llama a la nueva API; muestra el error del servidor.
-- Se reduce `CaseForm.tsx` en líneas netas.
+### `RulePicker.tsx` (nuevo), `RulesSuggestions.tsx` (SPEC-023) y `CaseForm.tsx`
+- `RulePicker` (búsqueda con debounce 300 ms y guarda anti-carrera,
+  resultados con cita, título, documento, fragmento y "Add") se monta
+  **dentro** de `RulesSuggestions.tsx` de SPEC-023; no hay un segundo hueco.
+  "Add" desactivado si `cited` o documento sin clasificar (con motivo).
+- "Add" llama a la alta validada y, con la respuesta, `CaseForm` inserta la
+  cita en el cuadro `rules_applicable` (un solo clic, RF-005).
+- `handleAddRule` llama a la nueva API; muestra el error del servidor. Se
+  retira el estado `ruleQuery/ruleHits/searching` de `CaseForm` si SPEC-023
+  no lo movió ya.
 
-## 7. `DECISIONS.md` — D-032 (append-only; D-031 es la del menú Jury)
+## 7. `DECISIONS.md` — D-033 (append-only; D-031 es la del menú Jury y D-032 la de SPEC-023)
 Citas por regla, formato canónico y partes, `doc_type`, índice por
 regla, validación en servidor, bloqueo de PUT/POST genéricos. Registra también que las citas antiguas no se migran ni se marcan y por
 qué (D-004). Alternativas:
