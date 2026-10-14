@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { api } from '../api';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
+import { GeneralTab } from './GeneralTab';
 import { PartyReference } from './PartyReference';
 import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
@@ -550,69 +551,23 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'general' && (
         <div className="tab-panel">
-          <section className="box general-box">
-            <h2>General</h2>
-            <div className="general-fields-col">
-              <div className="party-row">
-                <strong>Case number</strong>
-                <input value={caseNumber} onChange={(e) => setCaseNumber(e.target.value)} required />
-              </div>
-              <div className="party-row">
-                <strong>Day</strong>
-                <input value={day} onChange={(e) => setDay(e.target.value)} />
-                {extraction?.day_candidate && (
-                  <button type="button" onClick={useSuggestedDay}>
-                    Use suggested
-                  </button>
-                )}
-              </div>
-              <div className="party-row">
-                <strong>Race</strong>
-                <input value={race} onChange={(e) => setRace(e.target.value)} />
-                {extraction?.race_candidate && (
-                  <button type="button" onClick={useSuggestedRace}>
-                    Use suggested
-                  </button>
-                )}
-              </div>
-              <div className="party-row">
-                <strong>With case(s)</strong>
-                <div className="with-case-inline">
-                  {caseFull.linkedCases.map((lc) => (
-                    <span key={lc.id} className="chip">
-                      {lc.case_number}
-                      <button type="button" onClick={() => handleRemoveLink(lc.id)} aria-label={`Unlink case ${lc.case_number}`}>
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      if (e.target.value) handleLinkCase(Number(e.target.value));
-                    }}
-                  >
-                    <option value="">+ Link case…</option>
-                    {otherCases
-                      .filter((c) => !caseFull.linkedCases.some((lc) => lc.id === c.id))
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          Case {c.case_number}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-              <div className="party-row">
-                <strong>With case(s) notes</strong>
-                <input
-                  value={withCaseNote}
-                  onChange={(e) => setWithCaseNote(e.target.value)}
-                  placeholder="Free text — e.g. a case from another regatta"
-                />
-              </div>
-            </div>
-          </section>
+          <GeneralTab
+            caseNumber={caseNumber}
+            onCaseNumberChange={setCaseNumber}
+            day={day}
+            onDayChange={setDay}
+            race={race}
+            onRaceChange={setRace}
+            withCaseNote={withCaseNote}
+            onWithCaseNoteChange={setWithCaseNote}
+            extraction={extraction}
+            onUseSuggestedDay={useSuggestedDay}
+            onUseSuggestedRace={useSuggestedRace}
+            linkedCases={caseFull.linkedCases}
+            otherCases={otherCases}
+            onLinkCase={handleLinkCase}
+            onRemoveLink={handleRemoveLink}
+          />
         </div>
       )}
 
