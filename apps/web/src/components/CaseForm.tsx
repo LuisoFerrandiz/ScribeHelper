@@ -687,43 +687,40 @@ export function CaseForm({ caseId }: Props) {
       {caseTab === 'facts' && (
         <div className="tab-panel">
       {/* 4. Facts Found */}
-      <CopyBox
+      <WritingBox
         label="Facts Found"
-        text={factsFound}
+        copyText={factsFound}
         copied={!!copied.facts_found}
         onCopied={() => markCopied('facts_found')}
-      >
-        <div className="box-body-split">
-          <div className="textarea-col">
-            <GhostTextarea
-              caseId={caseId}
+        textarea={
+          <GhostTextarea
+            caseId={caseId}
+            box="facts_found"
+            value={factsFound}
+            onChange={setFactsFound}
+            rows={6}
+            sailNumberRoles={sailNumberRoles}
+          />
+        }
+        side={
+          <div className="suggestions-panel">
+            <PartyReference
+              initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+              respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+              currentText={factsFound}
+            />
+            <SuggestionList
               box="facts_found"
-              value={factsFound}
-              onChange={setFactsFound}
-              rows={6}
-              sailNumberRoles={sailNumberRoles}
+              currentText={factsFound}
+              onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              items={caseSuggestionItems(
+                { lines: extraction?.facts_found_candidates },
+                { lines: notesExtraction?.facts_found_candidates },
+              )}
             />
           </div>
-          <div className="suggestions-col">
-            <div className="suggestions-panel">
-              <PartyReference
-                initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-                respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-                currentText={factsFound}
-              />
-              <SuggestionList
-                box="facts_found"
-                currentText={factsFound}
-                onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-                items={caseSuggestionItems(
-                  { lines: extraction?.facts_found_candidates },
-                  { lines: notesExtraction?.facts_found_candidates },
-                )}
-              />
-            </div>
-          </div>
-        </div>
-      </CopyBox>
+        }
+      />
         </div>
       )}
 
