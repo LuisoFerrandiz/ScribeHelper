@@ -1240,3 +1240,40 @@ del redeploy conviene copiar `data/db`; después hay que reclasificar el NoR y
 las SI de París (subidos con capa `rrs`) a `event` con su tipo (ISS-013). El
 índice habilita F5 (reglas sugeridas desde Facts Found). Cases, Calls y
 apelaciones (capa 5) siguen sin capa ni cita.
+
+## D-036 · 2026-10-14 · accepted
+
+**Context:** F3 del replanteo (ISS-010 y `issue.md`). 160 de las 333 frases
+base traen huecos entre corchetes (`[##]`, `[injury]`, `[insert name]`) y X/Y
+como etiquetas de las partes, pero se insertaban literales y al final del
+cuadro; el texto fantasma no usaba la librería (solo número de vela e IA).
+
+**Decision:** SPEC-025. Un hueco es un corchete equilibrado del nivel exterior
+(anidados dentro; un `[` sin pareja es texto) y **cada corchete es un hueco
+propio, también los pegados**: las alternativas (`[injury] [serious damage]`)
+las borra o las deja el escribano. Los paréntesis no son huecos. Una frase de
+la librería se inserta **en el cursor** (al final como antes si el cuadro nunca
+tuvo el foco) y abre una sesión sobre el texto insertado: el primer hueco queda
+seleccionado, Tab / Shift+Tab los recorren y Escape la cierra. **X e Y** (sueltas
+o `[X]`/`[Y]`, un `[X] [Y]` pegado es un grupo) no son paradas de Tab: una barra
+de partes bajo el cuadro ofrece los barcos del caso y un clic sustituye todas
+las apariciones; no se asume qué parte es iniciador o respondido. El texto
+fantasma propone primero el resto de una frase de la librería por prefijo del
+último párrafo (mínimo 12 caracteres, la más corta; comparación en el cliente,
+sin llamada de red), después el número de vela y la IA como hasta ahora.
+Rules Applicable no cambia.
+
+**Alternatives considered:** formulario previo por hueco (rechazada: más clics y
+se pierde el contexto); relleno automático de X=iniciador, Y=respondido
+(rechazada: X/Y son etiquetas genéricas, y se equivocaría sin avisar); Tab por
+cada X/Y suelta (rechazada: hasta 7 paradas inútiles por frase); alternativas
+pegadas como un solo hueco (rechazada por el dueño); ruta `GET
+/phrases/complete` por pulsación (rechazada: no es offline y añade red a cada
+tecla).
+
+**Consequences:** **los huecos sin rellenar no se avisan al copiar ni al
+descargar**: un `[##]` puede llegar al documento final (fallo silencioso
+conocido, se aborda en F6 con un aviso). La inserción hecha por la aplicación
+no entra en el historial de deshacer del navegador. No se tocan el esquema ni
+la API. Sustituye en lo necesario el "frases con huecos" de `CLAUDE.md`, sin
+editarlo.

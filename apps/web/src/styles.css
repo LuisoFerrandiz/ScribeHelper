@@ -995,3 +995,24 @@ textarea:focus {
   background: var(--accent-soft);
   font-size: 0.85em;
 }
+
+/* SPEC-025: gap session hint and party bar, under the writing box. */
+.gap-hint {
+  margin: 6px 0 0;
+  font-size: 0.8em;
+}
+
+.party-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 0.85em;
+}
+
+.party-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}

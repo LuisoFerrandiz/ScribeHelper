@@ -9,12 +9,17 @@ interface Props {
   currentText: string;
   onInsert: (text: string) => void;
   items: SuggestionItem[]; // case-derived, already ordered (SPEC-020 RF-006)
+  // SPEC-025: library phrases go in at the caret and open a gap session; the
+  // rest (case-derived items, examples) keep using onInsert.
+  onInsertPhrase?: (text: string) => void;
+  onPhraseSaved?: () => void;
 }
 
 interface Entry {
   key: string;
   text: string; // inserted in full
   title: string; // tooltip
+  isPhrase: boolean; // library phrase (SPEC-025)
 }
 
 function matches(text: string, q: string): boolean {
@@ -22,14 +27,14 @@ function matches(text: string, q: string): boolean {
 }
 
 function phraseEntry(p: PhraseRow): Entry {
-  return { key: `phrase:${p.id}`, text: p.body, title: p.label ? `${p.label}\n\n${p.body}` : p.body };
+  return { key: `phrase:${p.id}`, text: p.body, title: p.label ? `${p.label}\n\n${p.body}` : p.body, isPhrase: true };
 }
 
 // SPEC-020 — the single suggestion list of a writing box. Nothing is
 // inserted without a click (constitution). Origin is internal data only:
 // no sections, no labels. Case-derived items show by default; phrases
 // appear on search or "Browse phrases"; examples on "Suggest from examples".
-export function SuggestionList({ box, currentText, onInsert, items }: Props) {
+export function SuggestionList({ box, currentText, onInsert, items, onInsertPhrase, onPhraseSaved }: Props) {
   const [query, setQuery] = useState('');
   const [browsing, setBrowsing] = useState(false);
   const [browse, setBrowse] = useState<PhraseRow[]>([]);
@@ -75,6 +80,7 @@ export function SuggestionList({ box, currentText, onInsert, items }: Props) {
       await api.createPhrase({ box, label: label.trim(), body: currentText.trim() });
       setLabel('');
       if (browsing) setBrowse(await api.listPhrases(box));
+      onPhraseSaved?.();
     } finally {
       setSaving(false);
     }
@@ -82,12 +88,12 @@ export function SuggestionList({ box, currentText, onInsert, items }: Props) {
 
   const caseEntries: Entry[] = items
     .filter((it) => !q || matches(it.text, q))
-    .map((it) => ({ key: it.id, text: it.text, title: it.text }));
+    .map((it) => ({ key: it.id, text: it.text, title: it.text, isPhrase: false }));
   const phraseRows: PhraseRow[] = q ? hits : browsing ? browse : [];
   const phraseEntries = phraseRows.map(phraseEntry);
   const exampleEntries: Entry[] = (examples.phrases ?? [])
     .filter((t) => !q || matches(t, q))
-    .map((t, i) => ({ key: `example:${i}`, text: t, title: t }));
+    .map((t, i) => ({ key: `example:${i}`, text: t, title: t, isPhrase: false }));
   const entries = [...caseEntries, ...phraseEntries, ...exampleEntries];
 
   let message: string | null = null;
@@ -117,7 +123,15 @@ export function SuggestionList({ box, currentText, onInsert, items }: Props) {
       )}
       <div className="suggestion-items">
         {entries.map((e) => (
-          <button key={e.key} type="button" className="suggestion-item" title={e.title} onClick={() => onInsert(e.text)}>
+          <button
+            key={e.key}
+            type="button"
+            className="suggestion-item"
+            title={e.title}
+            data-gap-ui
+            onMouseDown={(ev) => ev.preventDefault()}
+            onClick={() => (e.isPhrase && onInsertPhrase ? onInsertPhrase(e.text) : onInsert(e.text))}
+          >
             {e.text}
           </button>
         ))}
@@ -129,6 +143,7 @@ export function SuggestionList({ box, currentText, onInsert, items }: Props) {
           Save current text as phrase
         </button>
       </div>
+      <p className="muted">Use [brackets] for gaps and X / Y for the parties.</p>
     </div>
   );
 }

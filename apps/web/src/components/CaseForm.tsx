@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
 import { AttachmentsTab } from './AttachmentsTab';
-import { GhostTextarea } from './GhostTextarea';
+import { GhostTextarea, type GhostTextareaHandle } from './GhostTextarea';
 import { GeneralTab } from './GeneralTab';
 import { PartiesTab } from './PartiesTab';
 import { PartyReference } from './PartyReference';
@@ -120,6 +120,15 @@ export function CaseForm({ caseId }: Props) {
     ],
     [partyDrafts],
   );
+
+  // SPEC-025: one handle per box that uses the phrase library, so a click on a
+  // phrase inserts it at the caret of that box; `phraseRefresh` makes the boxes
+  // reload their phrases after the user saves one.
+  const proceduralBoxRef = useRef<GhostTextareaHandle>(null);
+  const factsBoxRef = useRef<GhostTextareaHandle>(null);
+  const conclusionBoxRef = useRef<GhostTextareaHandle>(null);
+  const decisionBoxRef = useRef<GhostTextareaHandle>(null);
+  const [phraseRefresh, setPhraseRefresh] = useState(0);
 
 
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
@@ -573,6 +582,10 @@ export function CaseForm({ caseId }: Props) {
             value={proceduralMatters}
             onChange={setProceduralMatters}
             rows={4}
+            ref={proceduralBoxRef}
+            phraseBox="procedural_matters"
+            phraseRefreshKey={phraseRefresh}
+            parties={sailNumberRoles}
           />
         }
         side={
@@ -580,6 +593,8 @@ export function CaseForm({ caseId }: Props) {
             box="procedural_matters"
             currentText={proceduralMatters}
             onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
+            onInsertPhrase={(text) => proceduralBoxRef.current?.insertAtCaret(text)}
+            onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
             items={caseSuggestionItems(
               { lines: autoProceduralLines, paragraph: extraction?.procedural_matters_candidate },
               { paragraph: notesExtraction?.procedural_matters_candidate },
@@ -606,6 +621,10 @@ export function CaseForm({ caseId }: Props) {
             onChange={setFactsFound}
             rows={6}
             sailNumberRoles={sailNumberRoles}
+            ref={factsBoxRef}
+            phraseBox="facts_found"
+            phraseRefreshKey={phraseRefresh}
+            parties={sailNumberRoles}
           />
         }
         side={
@@ -619,6 +638,8 @@ export function CaseForm({ caseId }: Props) {
               box="facts_found"
               currentText={factsFound}
               onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              onInsertPhrase={(text) => factsBoxRef.current?.insertAtCaret(text)}
+              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
               items={caseSuggestionItems(
                 { lines: extraction?.facts_found_candidates },
                 { lines: notesExtraction?.facts_found_candidates },
@@ -638,12 +659,26 @@ export function CaseForm({ caseId }: Props) {
           copyText={conclusion}
           copied={!!copied.conclusion}
           onCopied={() => markCopied('conclusion')}
-          textarea={<GhostTextarea caseId={caseId} box="conclusion" value={conclusion} onChange={setConclusion} rows={4} />}
+          textarea={
+            <GhostTextarea
+              caseId={caseId}
+              box="conclusion"
+              value={conclusion}
+              onChange={setConclusion}
+              rows={4}
+              ref={conclusionBoxRef}
+              phraseBox="conclusion"
+              phraseRefreshKey={phraseRefresh}
+              parties={sailNumberRoles}
+            />
+          }
           side={
             <SuggestionList
               box="conclusion"
               currentText={conclusion}
               onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              onInsertPhrase={(text) => conclusionBoxRef.current?.insertAtCaret(text)}
+              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
               items={caseSuggestionItems(
                 { paragraph: extraction?.conclusion_candidate },
                 { paragraph: notesExtraction?.conclusion_candidate },
@@ -710,7 +745,19 @@ export function CaseForm({ caseId }: Props) {
         copyText={decision}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
-        textarea={<GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />}
+        textarea={
+          <GhostTextarea
+            caseId={caseId}
+            box="decision"
+            value={decision}
+            onChange={setDecision}
+            rows={4}
+            ref={decisionBoxRef}
+            phraseBox="decision"
+            phraseRefreshKey={phraseRefresh}
+            parties={sailNumberRoles}
+          />
+        }
         side={
           <div className="suggestions-panel">
             <PartyReference
@@ -723,6 +770,8 @@ export function CaseForm({ caseId }: Props) {
               box="decision"
               currentText={decision}
               onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              onInsertPhrase={(text) => decisionBoxRef.current?.insertAtCaret(text)}
+              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
               items={caseSuggestionItems(
                 { paragraph: extraction?.decision_candidate },
                 { paragraph: notesExtraction?.decision_candidate },
