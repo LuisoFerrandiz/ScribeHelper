@@ -752,40 +752,37 @@ export function CaseForm({ caseId }: Props) {
         <div className="tab-panel">
         {/* 6. Rules Applicable — SPEC-023: a writing box like the others
             (text on the left, suggestions on the right). */}
-        <CopyBox
+        <WritingBox
           label="Rules Applicable"
-          text={formatRulesApplicable(liveCase)}
+          copyText={formatRulesApplicable(liveCase)}
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
-        >
-          <div className="box-body-split">
-            <div className="textarea-col">
-              <GhostTextarea
-                caseId={caseId}
-                box="rules_applicable"
-                value={rulesApplicable}
-                onChange={setRulesApplicable}
-                rows={6}
-              />
-            </div>
-            <div className="suggestions-col">
-              <RulesSuggestions
-                citations={caseFull.ruleCitations}
-                missing={missingCitations(liveCase)}
-                hasText={rulesApplicable.trim() !== ''}
-                onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
-                onInsertMissing={() =>
-                  setRulesApplicable((prev) => {
-                    const refs = missingCitations(liveCase).join('\n');
-                    return prev ? `${prev}\n${refs}` : refs;
-                  })
-                }
-                onAddCitation={handleAddRule}
-                onRemoveCitation={handleRemoveRule}
-              />
-            </div>
-          </div>
-        </CopyBox>
+          textarea={
+            <GhostTextarea
+              caseId={caseId}
+              box="rules_applicable"
+              value={rulesApplicable}
+              onChange={setRulesApplicable}
+              rows={6}
+            />
+          }
+          side={
+            <RulesSuggestions
+              citations={caseFull.ruleCitations}
+              missing={missingCitations(liveCase)}
+              hasText={rulesApplicable.trim() !== ''}
+              onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
+              onInsertMissing={() =>
+                setRulesApplicable((prev) => {
+                  const refs = missingCitations(liveCase).join('\n');
+                  return prev ? `${prev}\n${refs}` : refs;
+                })
+              }
+              onAddCitation={handleAddRule}
+              onRemoveCitation={handleRemoveRule}
+            />
+          }
+        />
         </div>
       )}
 
