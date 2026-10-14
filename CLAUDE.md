@@ -47,19 +47,34 @@ capas:
   desde un pool de jueces que sí pertenece al evento (`jury_member`) —
   dos niveles, no uno; corregido de la redacción original que decía que
   el jurado pertenecía solo al evento (`DECISIONS.md` D-021).
-- **Cajas escritas por el humano** — solo cuatro, las únicas donde
-  aplica asistencia de redacción: Procedural Matters, Facts Found,
-  Conclusion, Decision. **Rules Applicable es un híbrido**: lo escribe
-  el humano, pero se nutre de una lista cerrada y validada respaldada
-  por el corpus.
+- **Cajas escritas por el humano** — cinco, donde aplica asistencia de
+  redacción (texto fantasma): Procedural Matters, Facts Found,
+  Conclusion, Rules Applicable y Decision. **Cuatro de ellas**
+  (Procedural Matters, Facts Found, Conclusion, Decision) usan además la
+  librería de frases, la lista única de sugerencias y las sugerencias
+  desde ejemplos. **Rules Applicable es un
+  híbrido** (`DECISIONS.md` D-032): una caja de texto (`rules_applicable`,
+  se guarda con Save) junto a un **registro de citas** validado
+  (`case_rule_citation`, alta y baja instantáneas, respaldado por el
+  corpus). El documento sale del texto de la caja; si está vacía, de la
+  lista de citas. Su texto fantasma nunca escribe números de regla, y no
+  usa la librería de frases (la tabla `phrase` solo conoce las otras
+  cuatro cajas).
 
-### Los dos mecanismos de sugerencia
+### Los mecanismos de sugerencia
 
-Son sistemas separados, no dos modos del mismo sistema.
+Son sistemas separados, no dos modos del mismo sistema. Además, cada caja
+de redacción tiene a su lado una **lista única de sugerencias**
+(`SuggestionList`, `DECISIONS.md` D-030): lo derivado del caso
+(formulario de protesta y hearing notes) por defecto; frases por búsqueda
+o "Browse phrases"; ejemplos con "Suggest from examples". Un clic inserta;
+nada se inserta solo, y no se muestra de qué origen viene cada
+sugerencia. En Rules Applicable la lista es `RulesSuggestions` (citas
+registradas, alta manual y buscador del corpus).
 
 | | Autocompletado en línea | Panel de borrador alternativo |
 |---|---|---|
-| Dónde | En el editor, como ghost text | Un panel aparte |
+| Dónde | En el editor, como ghost text | Un panel aparte (`AIDraftPanel`, sin montar desde SPEC-020; D-030) |
 | Qué | Termina la frase que se está escribiendo | Una versión alternativa completa |
 | Aceptar | Tab | Aceptar, editar o ignorar |
 | Fuente | Librería de frases (determinista) + IA | IA |
@@ -174,6 +189,7 @@ detrás de algo que necesita red.
 | 5 | Autocompletado IA en línea | sí |
 | 5.5 | Despliegue al servidor doméstico, volumen, contraseña | — |
 | 5.6 | Asistencia IA en el formulario: extracción de adjuntos de caso, desglose de Facts Found, panel de sugerencias lateral | sí |
+| 5.7 | Replanteo (2026-10): lista única de sugerencias (SPEC-020), Rules Applicable como pestaña y caja de redacción propias (SPEC-021, SPEC-023), menú "Jury" quitado (D-031). Pendiente: F1 citas desde el corpus (SPEC-022), F3-F6 — ver `issue.md` | sí |
 | 6 | Compartir, solicitudes de reparación (redress) | — |
 
 Principio de orden: todo lo que funciona offline y no puede fallar en
@@ -197,6 +213,16 @@ regata, sin IA y sin red.
 
 ## Método de trabajo
 
+- **Spec-Driven Development**: cada unidad de trabajo tiene
+  `specs/SPEC-NNN-<slug>.md` (requisitos), `SPEC-NNN-plan.md` y
+  `SPEC-NNN-tasks.md`; el subagente `reviewer` revisa la spec antes de
+  construir. Los problemas abiertos y el plan por fases viven en
+  `issue.md`.
+- **Pestañas del caso**: 0 Protest Form(s), 1 General, 2 Parties &
+  Witness, 3 Procedural Matters, 4 Facts Found, 5 Conclusion, 6 Rules
+  Applicable, 7 Decision, 8 Review. Los jueces del caso se eligen al
+  final de Review (`JurySlots`); no hay entrada "Jury" en el menú
+  superior.
 - **Toda decisión significativa se registra en `DECISIONS.md`**, con las
   alternativas que estaban sobre la mesa y la razón elegida. Es
   "append only": para cambiar una decisión se añade una entrada nueva

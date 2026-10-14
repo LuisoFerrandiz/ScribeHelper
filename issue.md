@@ -59,7 +59,11 @@ Riesgos altos:
 
 ## ISS-002 — P1 `rule_citations_candidate` sin grounding contra el corpus
 
-- **Estado:** abierto (GAP heredado de `SPEC-003`)
+- **Estado:** abierto, en curso (actualizado 2026-10-14). El replanteo lo
+  convirtió en la fase F1: `specs/SPEC-022-reglas-aplicables-desde-corpus.md`
+  v3 (revisada dos veces por el `reviewer`, con plan y 15 tasks; D-034 al
+  implementarla). Depende de `SPEC-023` (ya hecha). **Sin código de F1 aún.**
+  Origen: GAP heredado de `SPEC-003`.
 - **Evidencia:** `specs/SPEC-003-documentacion-previa.md` líneas ~112-130 y
   `specs/SPEC-003-plan.md` "GAP heredados". `apps/api/src/ai/extract.ts`
   devuelve `rule_citations_candidate` (líneas 18, 72, 169) sin
@@ -148,7 +152,7 @@ Riesgos altos:
 
 ## ISS-003 — P2 Salida de graphify versionada, con rutas absolutas y copias de datos
 
-- **Estado:** resuelto (2026-10-13), pendiente de commit: `graphify-out/` en `.gitignore`, sacado del índice con `git rm --cached` (los ficheros siguen en disco) y `.graphifyignore` con `graphify-out/`.
+- **Estado:** resuelto (2026-10-13), commit `45f4be4`: `graphify-out/` en `.gitignore`, sacado del índice con `git rm --cached` (los ficheros siguen en disco) y `.graphifyignore` con `graphify-out/`.
 - **Evidencia:** `git ls-files graphify-out` incluye
   `.graphify_python` (ruta absoluta del intérprete) y `.graphify_root`.
   `graphify-out/converted/` contiene una copia convertida de
@@ -168,7 +172,7 @@ Riesgos altos:
 
 ## ISS-004 — P2 `.mcp.json` con rutas absolutas de esta máquina
 
-- **Estado:** resuelto (2026-10-13) por decisión del dueño: se deja la ruta completa a `uv.exe` (`Python313\Scripts`). Sin cambios. Riesgo aceptado: si cambia la versión de Python, la ruta se rompe y hay que actualizarla. Falta solo confirmar con `/mcp` tras reiniciar Claude Code.
+- **Estado:** resuelto (2026-10-13), commit `06fbb27`, por decisión del dueño: se deja la ruta completa a `uv.exe` (`Python313\Scripts`). Sin cambios. Riesgo aceptado: si cambia la versión de Python, la ruta se rompe y hay que actualizarla. Falta solo confirmar con `/mcp` tras reiniciar Claude Code.
 - **Evidencia:** `.mcp.json` (commit `06fbb27`) apunta a
   `C:\Users\luiso\AppData\Roaming\Python\Python313\Scripts\uv.exe` y a la
   carpeta del servidor `mcp-grammar-checker`. Ya falló una vez al cambiar
@@ -184,7 +188,7 @@ Riesgos altos:
 
 ## ISS-005 — P2 Tipo `AttachmentExtraction` duplicado entre API y web
 
-- **Estado:** resuelto (2026-10-13), pendiente de commit. Sin deriva hoy; comentarios cruzados añadidos en los 4 tipos (`extract.ts`, `extractNotes.ts`, `types.ts` x2). `npm run typecheck` (web) y `npm run build` (api) pasan limpios. Los dos tipos
+- **Estado:** resuelto (2026-10-13), commit `2e83660`. Sin deriva hoy; comentarios cruzados añadidos en los 4 tipos (`extract.ts`, `extractNotes.ts`, `types.ts` x2). `npm run typecheck` (web) y `npm run build` (api) pasan limpios. Los dos tipos
   (`apps/api/src/ai/extract.ts` l.5 y `apps/web/src/types.ts` l.99) tienen
   los mismos 10 campos con los mismos tipos; solo difiere un comentario.
   `NotesExtraction` (`extractNotes.ts` l.4 y `types.ts` l.117) también es
@@ -205,8 +209,10 @@ Riesgos altos:
 
 ## ISS-006 — P2 `CaseForm.tsx` concentra demasiada lógica
 
-- **Estado:** abierto
-- **Evidencia:** `apps/web/src/components/CaseForm.tsx` tiene 1125 líneas;
+- **Estado:** abierto. Actualizado 2026-10-14: `CaseForm.tsx` tiene ahora 1091
+  líneas (SPEC-020 y SPEC-023 sacaron lista de sugerencias y buscador a
+  `SuggestionList.tsx` y `RulesSuggestions.tsx`); F1 lo adelgazará más.
+- **Evidencia (2026-10-13):** `apps/web/src/components/CaseForm.tsx` tenía 1125 líneas;
   `CaseForm()` es el nodo más conectado del grafo (36 aristas, el siguiente
   tiene 19). La comunidad "CaseForm Core" tiene cohesión 0.068 (baja).
 - **Por qué importa:** cada spec (SPEC-011…018) ha tocado este fichero; el
@@ -295,14 +301,27 @@ Modelo: fuentes 1 RRS, 2 ejemplos, 3 formulario de protesta, 4 NoR/SI, 5
 frases. Cadena: Hearing notes → Facts Found → Rules Applicable → Conclusion →
 Decision. Una cita solo puede venir de 1 o 4. Fases:
 
-| Fase | Contenido | Issue |
-|---|---|---|
-| F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica, `doc_type`, validación por límites de token | ISS-002 |
-| F2 | Lista única de sugerencias, un clic copia al cuadro | ISS-006 (facilita) |
-| F3 | Frases con huecos y relleno; inserción al cursor | — |
-| F4 | IA que complementa solo lo que las frases no dicen | — |
-| F5 | Reglas sugeridas desde Facts Found (FTS) | ISS-002 |
-| F6 | Cadena coherente y aviso de desfase | ISS-010 |
+| Fase | Contenido | Issue | Estado (2026-10-14) |
+|---|---|---|---|
+| F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica con parte, `doc_type`, índice por regla, validación por límites de token | ISS-002 | Spec `SPEC-022` v3 + plan + tasks; **sin implementar** |
+| F2 | Lista única de sugerencias, un clic copia al cuadro | ISS-006 (facilita) | **Hecha y desplegada**: `SPEC-020`, D-030 |
+| F3 | Frases con huecos y relleno; inserción al cursor | — | Pendiente |
+| F4 | IA que complementa solo lo que las frases no dicen | — | Pendiente |
+| F5 | Reglas sugeridas desde Facts Found (FTS) | ISS-002 | Pendiente (reutiliza el índice de F1) |
+| F6 | Cadena coherente, aviso de desfase y validar referencias tecleadas en Rules Applicable | ISS-010 | Pendiente |
+
+Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
+
+- `SPEC-021`: Rules Applicable en pestaña propia (6), entre Conclusion y
+  Decision; Review pasa a 8. `c3e6c1b`.
+- `SPEC-023` (D-032): Rules Applicable como caja de redacción con campo
+  `rules_applicable`, texto fantasma sin números de regla, aviso "Insert
+  missing" y cuadro también en Review. `4acf5de`; el ajuste de columnas
+  (cuadro a la izquierda, sugerencias a la derecha) `4f24294` está
+  commiteado pero **sin push ni redeploy**.
+- D-031: se quitó la entrada "Jury" del menú superior. `4de41e5`.
+- Fix `client_max_body_size 50m` en nginx (las subidas de más de 1 MB
+  daban 413). `1063cdf`.
 
 ## ISS-010 — P2 Coherencia entre cajas (Facts → Rules → Conclusion → Decision)
 
@@ -315,3 +334,37 @@ Decision. Una cita solo puede venir de 1 o 4. Fases:
   desfasadas.
 - **Criterio de cierre:** spec aprobada; las cajas posteriores ven las
   anteriores relevantes y la UI avisa del desfase.
+
+## ISS-011 — CERRADO Ya no se puede quitar un juez del pool del evento
+
+- **Estado:** cerrado, aceptado sin acción (2026-10-14). El dueño aclaró que
+  solo quería quitar "Jury" del menú general y mantener la caja "Jury
+  Members" al final de Review (donde se eligen los jueces del caso y se
+  marca al presidente). No necesita una pantalla para quitar jueces del
+  pool. Se limpió el resto de código ligado al menú: `api.deleteJuryMember`
+  (sin uso) y dos comentarios de `CaseForm.tsx` que hablaban de una futura
+  pestaña de jurado.
+- **Origen:** D-031 quitó la entrada "Jury" del menú superior y borró
+  `JuryPanel.tsx`, la única pantalla que llamaba a `deleteJuryMember`.
+  Añadir jueces sigue funcionando desde `JurySlots`.
+- **Qué hacer:** si hace falta, spec pequeña para quitar un juez del pool
+  desde `JurySlots`. Sin urgencia.
+
+## ISS-012 — CERRADO `CLAUDE.md` y `constitution.md` desactualizados tras SPEC-023
+
+- **Estado:** resuelto (2026-10-14) por orden del dueño, D-033. `CLAUDE.md`
+  actualizado en sitio (cinco cajas, mecanismos de sugerencia, fila 5.7 de
+  fases, método SDD y pestañas del caso). `constitution.md` no se edita
+  (es append-only): sección "Enmiendas" con la entrada del 2026-10-14.
+
+## ISS-013 — P3 NoR y SI de París 2024 subidos con la capa equivocada
+
+- **Estado:** abierto (2026-10-14).
+- **Evidencia:** `data/rules/rrs/Paris-2024-Sailing-Notice-of-Race_…` y
+  `…Sailing-Instructions…` (`.md` y PDF original en `data/originals/`) se
+  subieron con capa `rrs`, y la pantalla de reclasificar no puede pasar a
+  `event`. Sin versionar en Git.
+- **Qué hacer:** tras implementar SPEC-022 (reclasificar con capa, regata y
+  `doc_type`), pasarlos a `event` con `nor` y `si_amendment`. Decidir si se
+  versionan o se ignoran (son públicos, ISS-001). Sirvieron para ajustar el
+  parser de SPEC-022 (estilo "número espacio texto", Addendums).

@@ -1,9 +1,10 @@
 # SPEC-023 — Tareas
 
-Estado: implementado en local (typecheck web, build api y build web
+Estado: implementado y commiteado (`4acf5de`, ajuste de columnas
+`4f24294`; este último sin push aún). Typecheck web, build api y build web
 limpios; migración probada dos veces en una base temporal; regex de
-`citationInText` probado con script). Pendiente: verificación en vivo,
-commit/push y redeploy.
+`citationInText` probado con script. Pendiente: push de `4f24294`,
+redeploy y verificación en vivo.
 
 Relacionado: `SPEC-023-caja-reglas-aplicables.md` (requisitos).
 

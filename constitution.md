@@ -185,3 +185,38 @@ sustituye explícitamente — nunca se edita o se borra en silencio lo que
 ya dice este archivo. Todo cambio significativo a esta constitución es,
 en sí mismo, una decisión que debería quedar también registrada en
 `DECISIONS.md` con sus alternativas y su razón.
+
+## Enmiendas
+
+Entradas añadidas según la regla de arriba; sustituyen explícitamente lo
+que se indica y no se editan los textos anteriores.
+
+### Enmienda 2026-10-14 — cinco cajas de redacción y lista única (`DECISIONS.md` D-030, D-031, D-032, D-033)
+
+- **Sustituye** lo dicho en *Principios → Coherencia interna* sobre "las
+  cuatro pestañas de redacción": las cajas de redacción son **cinco**
+  (Procedural Matters, Facts Found, Conclusion, Rules Applicable,
+  Decision). La regla (2) de D-029 (la misma fuente de sugerencias en
+  todas las pestañas de redacción) se aplica a las **cuatro** que usan la
+  librería de frases; Rules Applicable queda fuera por ahora porque la
+  tabla de frases solo conoce esas cuatro (D-032).
+- **Sustituye** la presentación por secciones de origen (Phrases, AI
+  suggestions, protest form) por una **lista única de sugerencias** sin
+  marca de origen (D-030). Las fuentes siguen existiendo y se rigen por
+  los mismos límites: nada se inserta sin una acción explícita; una frase
+  nunca se presenta como regla.
+- **Rules Applicable** pasa de "lista cerrada de citas" a caja de
+  redacción con texto propio **más** un registro de citas validado
+  (D-032, sustituye en parte a D-014). Es una **excepción conocida a
+  D-029 regla 1** (la pestaña mezcla una caja de documento con controles
+  de alta, como ya admitía SPEC-021).
+- **Tensión con "Nada se cita si no está en el corpus" (D-004):** lo que el
+  juez teclea en el cuadro de Rules Applicable no se valida contra el
+  corpus; lo que se añade al registro de citas sí (SPEC-022). La IA no
+  puede escribir números de regla en esa caja (prompt propio y filtro
+  determinista en el servidor). Validar las referencias tecleadas queda
+  para una fase posterior (F6). El límite no se relaja.
+- **Menú:** se quita la entrada "Jury" del menú superior; los jueces del
+  caso se eligen al final de Review (D-031).
+- **Cuenta de decisiones:** `DECISIONS.md` llega a D-033 a fecha
+  2026-10-14 (la sección anterior citaba D-001 a D-027).

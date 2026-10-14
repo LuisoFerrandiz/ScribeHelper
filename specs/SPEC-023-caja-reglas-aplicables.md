@@ -192,7 +192,7 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
   componente en vez de crear otro hueco. `CaseForm` sigue teniendo los
   manejadores `handleAddRule` y `handleRemoveRule` (recibidos por props).
 - Se elimina el CSS que queda sin uso al mover el bloque.
-- **D-032** en `DECISIONS.md` (la de citas de SPEC-022 pasa a D-033):
+- **D-032** en `DECISIONS.md` (la de citas de SPEC-022 pasa a D-034):
   Rules Applicable pasa de lista de citas a caja de redacción con registro
   de citas; sustituye parcialmente a D-014; excepción a "solo cuatro cajas"
   de CLAUDE.md y `constitution.md`; excepción conocida a D-029 regla 1;
@@ -201,7 +201,7 @@ ejemplo "RRS 44.2 applies because …"), con el sistema sugiriendo reglas.
   cita **y** la inserta en el cuadro" (propuesta de esta spec); su RF-011 se
   reescribe (Copy/Review/Download salen del cuadro, no de `rule_reference`);
   su `RulePicker` vive dentro de `RulesSuggestions`; su numeración D-032
-  pasa a D-033; su verificación se rehace sobre esta pestaña.
+  pasa a D-034; su verificación se rehace sobre esta pestaña.
 
 ## Riesgos
 

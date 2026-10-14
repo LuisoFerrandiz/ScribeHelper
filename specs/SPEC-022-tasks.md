@@ -35,7 +35,7 @@ Relacionado: `SPEC-022-reglas-aplicables-desde-corpus.md` (requisitos),
 - [ ] **12. `RulePicker.tsx` dentro de `RulesSuggestions.tsx` (SPEC-023) y
   `CaseForm.tsx`** — buscador por regla con "Add" que registra e inserta; adelgazar `CaseForm`; retirar `searchResources` de `api.ts` si
   queda sin uso.
-- [ ] **13. `DECISIONS.md`** — D-033 (append-only).
+- [ ] **13. `DECISIONS.md`** — D-034 (append-only).
 - [ ] **14. Verificar en local.** `npm run build` (api), `npm run
   typecheck` (web), script de la tarea 3 y prueba manual con API local.
 - [ ] **15. Commit y push a `master` (solo cuando el dueño lo ordene).

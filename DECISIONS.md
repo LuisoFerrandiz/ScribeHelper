@@ -1131,3 +1131,26 @@ validación de las referencias escritas a mano queda para una fase
 posterior (F6). SPEC-014 RF-006 se conserva solo para las citas del
 registro. `draft.ts` ignora el texto del cuadro a propósito (el panel de
 borrador no está montado, D-030). No edita D-004.
+
+## D-033 · 2026-10-14 · accepted
+
+**Context:** SPEC-020, SPEC-021, SPEC-023 y D-030 a D-032 cambian el
+modelo descrito en `CLAUDE.md` y `constitution.md` (lista única de
+sugerencias, Rules Applicable como quinta caja de redacción con registro
+de citas, menú "Jury" quitado). D-032 dejó pendiente actualizar ambos
+textos; el dueño lo ordena el 2026-10-14.
+
+**Decision:** `CLAUDE.md` se actualiza en sitio (cinco cajas, mecanismos de
+sugerencia, tabla de fases con la fila 5.7, método SDD y pestañas del
+caso). `constitution.md`, que es append-only, **no se edita**: se añade una
+sección "Enmiendas" con una entrada fechada que sustituye explícitamente lo
+que cambia (cuatro pestañas de redacción → cinco, presentación por
+secciones, tensión con D-004, menú Jury, cuenta de decisiones).
+
+**Alternatives considered:** editar el texto de `constitution.md` en sitio
+(rechazada: viola su propia regla de append-only); no actualizarlos y
+dejar solo D-032 (rechazada: dejaba la documentación contradictoria).
+
+**Consequences:** `CLAUDE.md` y `constitution.md` coinciden con el código
+desplegado. La decisión de citas de SPEC-022 pasa a ser D-034. ISS-012 de
+`issue.md` queda resuelto.

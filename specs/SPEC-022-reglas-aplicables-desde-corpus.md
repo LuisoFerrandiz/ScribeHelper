@@ -90,7 +90,7 @@ reutilizará) y el botón "Add".
 6. **Límites de token** y validación contra `rule_section` en `draft.ts`.
 7. **Revisión al aceptar**: la pantalla de revisión muestra cuántas
    reglas se detectaron y avisa si son 0.
-8. **Entrada nueva en `DECISIONS.md`** (D-033).
+8. **Entrada nueva en `DECISIONS.md`** (D-034).
 
 **Fuera de esta spec:**
 - Reglas sugeridas desde Facts Found (F5), aunque el índice las habilita.
@@ -246,7 +246,7 @@ reutilizará) y el botón "Add".
   SPEC-023, Copy, Review y Download salen del texto del cuadro
   `rules_applicable` (y de `rule_reference` solo cuando el cuadro está
   vacío: fallback de SPEC-023 RF-007). No se marcan las citas antiguas: es
-  decisión del dueño (no migrar, no marcar) y D-033 la registra y
+  decisión del dueño (no migrar, no marcar) y D-034 la registra y
   justifica frente a D-004 ("si no está seguro lo dice"): las citas
   antiguas las escribió el propio juez. El borrador IA, si no encuentra su
   texto, ya dice "text not found" sin inventar. No hay edición de cita;
@@ -295,7 +295,7 @@ reutilizará) y el botón "Add".
   añadida marcada), para no engordar `CaseForm` (ISS-006).
 - Copia de seguridad: avisar al dueño de copiar `data/db` antes del
   redeploy, porque el arranque añade columnas y rellena un índice.
-- D-033 en `DECISIONS.md`: citas por regla, formato canónico, partes,
+- D-034 en `DECISIONS.md`: citas por regla, formato canónico, partes,
   `doc_type`, índice por regla y validación en servidor. Anota que
   sustituye el diseño por documento de D-011/D-020 **en lo que respecta a
   citas**; no edita D-004.

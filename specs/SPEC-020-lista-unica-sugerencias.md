@@ -1,9 +1,9 @@
 # SPEC-020 — Lista única de sugerencias en las cuatro cajas de redacción
 
-Estado: draft v2. Las 4 preguntas abiertas están resueltas por el dueño
-(2026-10-13). Revisada por el subagente `reviewer` (19 hallazgos); el
-dueño aceptó las 4 propuestas de diseño y las correcciones se incorporan
-aquí. Pendiente: plan y tasks.
+Estado: **implementada, desplegada y verificada en vivo (2026-10-13/14)**
+en `8a06e43`. Las 4 preguntas abiertas las resolvió el dueño; el
+`reviewer` dio 19 hallazgos, aceptados e incorporados. Verificación en
+vivo parcial: ver `SPEC-020-tasks.md` (tarea 9).
 
 Origen: fase F2 del replanteo de `issue.md` (sección "Replanteo",
 2026-10-13). Sustituye la presentación por secciones de origen

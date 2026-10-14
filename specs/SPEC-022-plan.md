@@ -210,7 +210,7 @@ borrado explícito del FTS antes del cascade.
   retira el estado `ruleQuery/ruleHits/searching` de `CaseForm` si SPEC-023
   no lo movió ya.
 
-## 7. `DECISIONS.md` — D-033 (append-only; D-031 es la del menú Jury y D-032 la de SPEC-023)
+## 7. `DECISIONS.md` — D-034 (append-only; D-031 es la del menú Jury, D-032 la de SPEC-023 y D-033 la de actualizar CLAUDE.md y constitution.md)
 Citas por regla, formato canónico y partes, `doc_type`, índice por
 regla, validación en servidor, bloqueo de PUT/POST genéricos. Registra también que las citas antiguas no se migran ni se marcan y por
 qué (D-004). Alternativas:
