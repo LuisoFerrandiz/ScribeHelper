@@ -318,7 +318,7 @@ Decision. Una cita solo puede venir de 1 o 4. Fases:
 | F3 | Frases con huecos y relleno; inserción al cursor | SPEC-025 | Hecho (ccd231d, verificado en vivo) |
 | F4 | IA que complementa solo lo que las frases no dicen | — | Pendiente |
 | F5 | Reglas sugeridas desde Facts Found (FTS) | ISS-002 | **Hecha y desplegada**: `SPEC-027`, D-038, `244f436` (verificada en vivo) |
-| F6 | Cadena coherente, aviso de desfase y validar referencias tecleadas en Rules Applicable | ISS-010 | En curso: aviso de huecos (SPEC-026), validar referencias (SPEC-028) y aviso de desfase entre cajas (SPEC-029, D-040, `a2b1324`) hechos y verificados en vivo; falta la cadena en la IA (draft y texto fantasma ven las cajas anteriores) |
+| F6 | Cadena coherente, aviso de desfase y validar referencias tecleadas en Rules Applicable | ISS-010 | **Hecha y desplegada**: aviso de huecos (SPEC-026, D-037), referencias tecleadas (SPEC-028, D-039), desfase entre cajas (SPEC-029, D-040) y fantasma con las cajas anteriores (SPEC-030, D-041, `42dd98d`). Queda fuera el panel de borrador (sin montar) |
 
 Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
 
