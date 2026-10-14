@@ -1,3 +1,4 @@
+import type { BoxStamps } from './staleBoxes';
 import type {
   AttachmentExtraction,
   BoatRow,
@@ -123,6 +124,8 @@ export const api = {
   listCaseSummaries: () => request<CaseSummaryRow[]>('/cases/summary'),
   createCase: (data: Partial<CaseRow>) => post<CaseRow>('/cases', data),
   updateCase: (id: number, data: Partial<CaseRow>) => put<CaseRow>(`/cases/${id}`, data),
+  markBoxReviewed: (id: number, box: 'rules_applicable' | 'conclusion' | 'decision') =>
+    post<BoxStamps>(`/cases/${id}/box-reviewed`, { box }),
   deleteCase: (id: number) => del(`/cases/${id}`),
   getCaseFull: (id: number) => request<CaseFull>(`/cases/${id}/full`),
 

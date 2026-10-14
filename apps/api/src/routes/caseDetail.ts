@@ -5,7 +5,27 @@ import { db } from '../db/connection.js';
 // needs in a single request (event, parties, witnesses, jury, rule
 // citations, linked cases). Still plain CRUD data underneath — no AI,
 // no computation beyond joins.
+// SPEC-029: "Mark as reviewed" — stamps one chain box with now without touching
+// its text. The box is checked against a fixed list; the column name is ours.
+const REVIEWABLE: Record<string, string> = {
+  rules_applicable: 'rules_applicable_at',
+  conclusion: 'conclusion_at',
+  decision: 'decision_at',
+};
+
 export function registerCaseDetailRoute(app: FastifyInstance) {
+  app.post('/cases/:id/box-reviewed', (req, reply) => {
+    const { id } = req.params as { id: string };
+    const { box } = (req.body ?? {}) as { box?: unknown };
+    const column = typeof box === 'string' && Object.hasOwn(REVIEWABLE, box) ? REVIEWABLE[box] : null;
+    if (!column) return reply.code(400).send({ error: 'box must be rules_applicable, conclusion or decision' });
+    const result = db.prepare(`UPDATE protest_case SET ${column} = datetime('now') WHERE id = ?`).run(id);
+    if (result.changes === 0) return reply.code(404).send({ error: 'not found' });
+    return db
+      .prepare('SELECT facts_found_at, rules_applicable_at, conclusion_at, decision_at FROM protest_case WHERE id = ?')
+      .get(id);
+  });
+
   app.get('/cases/:id/full', (req, reply) => {
     const { id } = req.params as { id: string };
 

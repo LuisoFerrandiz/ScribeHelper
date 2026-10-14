@@ -62,6 +62,13 @@ export function registerRoutes(app: FastifyInstance) {
     ],
     touchUpdatedAt: true,
     skipDelete: true, // SPEC-015: dedicated route below instead
+    // SPEC-029: when each box of the chain was last changed (stale-box warning).
+    stampOnChange: {
+      facts_found: 'facts_found_at',
+      rules_applicable: 'rules_applicable_at',
+      conclusion: 'conclusion_at',
+      decision: 'decision_at',
+    },
   });
 
   registerCrud(app, 'parties', {

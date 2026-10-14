@@ -53,6 +53,12 @@ export interface CaseRow {
   conclusion: string;
   rules_applicable: string; // SPEC-023: free text next to the case_rule_citation registry
   decision: string;
+  // SPEC-029: when each box of the chain was last changed (server time, UTC);
+  // null = unknown (older data) or empty box.
+  facts_found_at: string | null;
+  rules_applicable_at: string | null;
+  conclusion_at: string | null;
+  decision_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -13,13 +13,17 @@ interface CrudOptions {
   // and is never edited: the generic POST/PUT would accept any rule_reference.
   skipCreate?: boolean;
   skipUpdate?: boolean;
+  // SPEC-029: { field: timestamp column }. On PUT, a field whose received value
+  // differs from the stored one stamps its column with now (NULL when the new
+  // value is empty). Column names come from code, never from the request.
+  stampOnChange?: Record<string, string>;
 }
 
 // Same CRUD shape for every entity in RULES.md/CONTEXT.md: person, event,
 // boat, and the case-scoped tables. One generic handler instead of eight
 // near-identical route files.
 export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOptions) {
-  const { table, fields, touchUpdatedAt, skipDelete, skipCreate, skipUpdate } = opts;
+  const { table, fields, touchUpdatedAt, skipDelete, skipCreate, skipUpdate, stampOnChange } = opts;
 
   app.get(`/${prefix}`, () => {
     return db.prepare(`SELECT * FROM ${table} ORDER BY id`).all();
@@ -65,7 +69,17 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
     if (cols.length === 0) return reply.code(400).send({ error: 'no valid fields' });
 
     const setClause = cols.map((c) => `${c} = ?`).join(', ');
-    const extra = touchUpdatedAt ? `, updated_at = datetime('now')` : '';
+    let extra = touchUpdatedAt ? `, updated_at = datetime('now')` : '';
+    if (stampOnChange) {
+      const old = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
+      if (!old) return reply.code(404).send({ error: 'not found' });
+      for (const [field, column] of Object.entries(stampOnChange)) {
+        if (!(field in body)) continue;
+        const next = String(body[field] ?? '');
+        if (String(old[field] ?? '') === next) continue;
+        extra += next === '' ? `, ${column} = NULL` : `, ${column} = datetime('now')`;
+      }
+    }
     try {
       db.prepare(`UPDATE ${table} SET ${setClause}${extra} WHERE id = ?`).run(
         ...cols.map((c) => body[c] as never),

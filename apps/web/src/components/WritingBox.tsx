@@ -5,6 +5,7 @@ interface Props {
   label: string;
   copyText: string;
   pendingText?: string; // text checked for unfilled gaps (SPEC-026); defaults to copyText
+  notes?: ReactNode; // SPEC-029: stale-box warning under the header
   copied: boolean;
   onCopied: () => void;
   textarea: ReactNode; // the ready-made GhostTextarea (rows, box, sailNumberRoles stay with the caller)
@@ -15,9 +16,9 @@ interface Props {
 // CaseForm.tsx. It paints ONLY CopyBox > div.box-body-split >
 // div.textarea-col + div.suggestions-col (SPEC-024 "Contrato de WritingBox");
 // CaseForm paints the surrounding div.tab-panel (R-4).
-export function WritingBox({ label, copyText, pendingText, copied, onCopied, textarea, side }: Props) {
+export function WritingBox({ label, copyText, pendingText, notes, copied, onCopied, textarea, side }: Props) {
   return (
-    <CopyBox label={label} text={copyText} pendingText={pendingText ?? copyText} copied={copied} onCopied={onCopied}>
+    <CopyBox label={label} text={copyText} pendingText={pendingText ?? copyText} notes={notes} copied={copied} onCopied={onCopied}>
       <div className="box-body-split">
         <div className="textarea-col">{textarea}</div>
         <div className="suggestions-col">{side}</div>

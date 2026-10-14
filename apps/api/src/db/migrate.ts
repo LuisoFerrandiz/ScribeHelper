@@ -42,6 +42,16 @@ if (!hasRulesApplicable) {
   console.log('Migration: added protest_case.rules_applicable');
 }
 
+// SPEC-029: when each box of the chain was last changed (stale-box warning).
+// NULL = unknown (existing data) or empty box; set by the server on PUT.
+const caseCols = (db.prepare(`PRAGMA table_info(protest_case)`).all() as { name: string }[]).map((c) => c.name);
+for (const col of ['facts_found_at', 'rules_applicable_at', 'conclusion_at', 'decision_at']) {
+  if (!caseCols.includes(col)) {
+    db.exec(`ALTER TABLE protest_case ADD COLUMN ${col} TEXT`);
+    console.log(`Migration: added protest_case.${col}`);
+  }
+}
+
 // SPEC-022 (D-034): resource.doc_type (nor | si | si_amendment, only for
 // layer 'event'; enforced by the server, not a CHECK, because the table cannot
 // widen a CHECK without being recreated) and sections_indexed_at (RF-014).

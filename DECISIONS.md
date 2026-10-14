@@ -1349,3 +1349,27 @@ listas, rangos y referencias con parte (`RRS Appendix B 44`) no se comprueban;
 solo los primeros 8000 caracteres; un documento de evento sin clasificar no
 resuelve NoR ni SI. Cargar un documento se refleja al reabrir la pestaña. Solo
 Rules Applicable, sin cambios de esquema.
+
+## D-040 · 2026-10-14 · accepted
+
+**Aviso de desfase entre cajas (SPEC-029, F6).** La decisión es una cadena
+(Facts Found → Rules Applicable → Conclusion → Decision). El servidor guarda
+cuándo cambió cada caja de la cadena: cuatro columnas aditivas
+`facts_found_at`, `rules_applicable_at`, `conclusion_at`, `decision_at` en
+`protest_case`, puestas por el PUT genérico de `cases` solo cuando el valor
+recibido difiere del guardado (`stampOnChange`), y a NULL si la caja se vacía.
+Una caja avisa ("X changed after this box was last edited") cuando una caja
+anterior de la cadena tiene una marca estrictamente posterior; "Mark as
+reviewed" (`POST /cases/:id/box-reviewed`) sube la marca sin tocar el texto.
+**Avisa, no bloquea**; solo cuenta lo guardado.
+
+**Alternatives considered:** una sola marca de Facts Found más una "revisada"
+por caja (rechazada: pierde las dependencias intermedias); comparar el texto
+en el cliente contra una copia al cargar (rechazada: no sabe el orden de
+edición entre sesiones); bloquear Download (rechazada, como D-037).
+
+**Consequences:** límites aceptados: las altas y bajas de citas registradas
+no mueven `rules_applicable_at`; un Save desde una pestaña con texto viejo
+marca esa caja como cambiada; falsos avisos por cambios menores se descartan
+con el botón; resolución de un segundo; los casos existentes no avisan hasta
+que se editan. Migración aditiva e idempotente.

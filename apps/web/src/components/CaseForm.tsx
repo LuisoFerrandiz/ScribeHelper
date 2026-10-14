@@ -22,6 +22,8 @@ import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
 import { caseSuggestionItems } from '../suggestionItems';
 import { describePending, pendingMarks } from '../pendingMarks';
+import { staleSources, type BoxStamps, type ChainBox } from '../staleBoxes';
+import { StaleNote } from './StaleNote';
 import type {
   AttachmentExtraction,
   BoatRow,
@@ -241,7 +243,7 @@ export function CaseForm({ caseId }: Props) {
   async function handleSaveAll() {
     setSavingAll(true);
     try {
-      await api.updateCase(caseId, {
+      const saved = await api.updateCase(caseId, {
         case_number: caseNumber.trim(),
         day: day.trim() || null,
         race: race.trim() || null,
@@ -254,6 +256,18 @@ export function CaseForm({ caseId }: Props) {
         rules_applicable: rulesApplicable,
         decision,
       });
+      // SPEC-029: the server stamped the chain boxes that changed; keep the texts in edit.
+      setCaseFull((prev) =>
+        prev
+          ? {
+              ...prev,
+              facts_found_at: saved.facts_found_at,
+              rules_applicable_at: saved.rules_applicable_at,
+              conclusion_at: saved.conclusion_at,
+              decision_at: saved.decision_at,
+            }
+          : prev,
+      );
 
       // SPEC-016: add/remove reconciliation per role, same pattern as
       // witnesses below — no inline edit of an already-saved party.
@@ -465,6 +479,24 @@ export function CaseForm({ caseId }: Props) {
   };
   const autoProceduralLines = formatAutoProceduralLines(liveCase);
 
+  // SPEC-029: stale-box warning, from the saved stamps (unsaved edits do not count).
+  const stamps: BoxStamps = {
+    facts_found_at: caseFull.facts_found_at,
+    rules_applicable_at: caseFull.rules_applicable_at,
+    conclusion_at: caseFull.conclusion_at,
+    decision_at: caseFull.decision_at,
+  };
+  async function handleReviewed(box: 'rules_applicable' | 'conclusion' | 'decision') {
+    const next = await api.markBoxReviewed(caseId, box);
+    setCaseFull((prev) => (prev ? { ...prev, ...next } : prev));
+  }
+  const staleNote = (box: 'rules_applicable' | 'conclusion' | 'decision') => (
+    <StaleNote
+      sources={staleSources(box as ChainBox, stamps)}
+      onReview={() => handleReviewed(box)}
+    />
+  );
+
   // SPEC-026: one line per writing box that still has gaps or X / Y labels.
   // Recomputed every render from the same texts the boxes show.
   const pendingLines = (
@@ -675,6 +707,7 @@ export function CaseForm({ caseId }: Props) {
         <WritingBox
           label="Conclusion"
           copyText={conclusion}
+          notes={staleNote('conclusion')}
           copied={!!copied.conclusion}
           onCopied={() => markCopied('conclusion')}
           textarea={
@@ -715,6 +748,7 @@ export function CaseForm({ caseId }: Props) {
           label="Rules Applicable"
           copyText={formatRulesApplicable(liveCase)}
           pendingText={rulesApplicable}
+          notes={staleNote('rules_applicable')}
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
           textarea={
@@ -764,6 +798,7 @@ export function CaseForm({ caseId }: Props) {
       <WritingBox
         label="Decision"
         copyText={decision}
+        notes={staleNote('decision')}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
         textarea={

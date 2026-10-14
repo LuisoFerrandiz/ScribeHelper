@@ -8,6 +8,7 @@ interface CopyBoxProps {
   onCopied: () => void;
   children: ReactNode;
   pendingText?: string; // SPEC-026: text checked for unfilled gaps; only the writing boxes pass it
+  notes?: ReactNode; // SPEC-029: extra notice under the header (stale-box warning), visible when collapsed
 }
 
 // One section of the decision form (RULES.md R-29: labels and order are
@@ -16,7 +17,7 @@ interface CopyBoxProps {
 // so a wide screen with several boxes open at once can be tidied down
 // to just the titles — collapsing never hides the Copy button, so a
 // box can still be copied without opening it.
-export function CopyBox({ label, text, copied, onCopied, children, pendingText }: CopyBoxProps) {
+export function CopyBox({ label, text, copied, onCopied, children, pendingText, notes }: CopyBoxProps) {
   const pending = pendingText === undefined ? null : pendingMarks(pendingText);
   const [failed, setFailed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -54,6 +55,7 @@ export function CopyBox({ label, text, copied, onCopied, children, pendingText }
         </div>
       </div>
       {pending && pending.count > 0 && <p className="pending-note">{describePending(pending)}</p>}
+      {notes}
       <div className="box-body" hidden={collapsed}>
         {children}
         {failed && <p className="error">Copy failed. Select and copy manually.</p>}
