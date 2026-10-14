@@ -16,6 +16,7 @@ import {
   formatFullDecisionHtml,
   formatRulesApplicable,
   missingCitations,
+  citationInText,
 } from '../format';
 import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
@@ -293,14 +294,16 @@ export function CaseForm({ caseId }: Props) {
     setWitnessDraft((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleAddRule(text: string) {
-    if (!text.trim() || !caseFull) return;
-    await api.createRuleCitation({
-      case_id: caseId,
-      rule_reference: text.trim(),
-      position: caseFull.ruleCitations.length,
-    });
+  // SPEC-022 RF-005: one click registers the citation (validated by the server)
+  // and writes it at the end of the Rules Applicable text. Errors propagate to
+  // RulesSuggestions, which shows the server's message.
+  async function handleAddRule(input: { text: string } | { section_id: number }) {
+    if (!caseFull) return;
+    const row = await api.addRuleCitation({ case_id: caseId, ...input });
     await refreshCasePart('ruleCitations');
+    setRulesApplicable((prev) =>
+      citationInText(prev, row.rule_reference) ? prev : prev ? `${prev}\n${row.rule_reference}` : row.rule_reference,
+    );
   }
 
   async function handleRemoveRule(id: number) {
@@ -671,6 +674,7 @@ export function CaseForm({ caseId }: Props) {
           }
           side={
             <RulesSuggestions
+              caseId={caseId}
               citations={caseFull.ruleCitations}
               missing={missingCitations(liveCase)}
               hasText={rulesApplicable.trim() !== ''}

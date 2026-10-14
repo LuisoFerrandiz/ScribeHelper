@@ -1,12 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/connection.js';
-import { readMarkdown } from '../resources/storage.js';
+import { formatCitation, parseCitation } from '../rules/citation.js';
+import type { ParsedCitation } from '../rules/citation.js';
+import { eventIdOfCase, sectionsForCitation } from '../rules/sectionQuery.js';
 
 export type DraftBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
 
 interface CaseRow {
   id: number;
   case_number: string;
+  event_id: number;
   case_type: 'protest' | 'redress';
   day: string | null;
   race: string | null;
@@ -67,10 +70,10 @@ export async function generateDraft(caseId: number, box: DraftBox, currentBoxTex
     .prepare('SELECT rule_reference FROM case_rule_citation WHERE case_id = ? ORDER BY position')
     .all(caseId) as { rule_reference: string }[];
 
-  const corpus = await loadAcceptedRuleCorpus();
+  const eventId = caseRow.event_id;
   const ruleExcerpts = ruleCitations.map((r) => ({
     reference: r.rule_reference,
-    excerpt: findExcerpt(corpus, r.rule_reference),
+    excerpt: findExcerpt(r.rule_reference, eventId),
   }));
 
   const prompt = buildPrompt(box, caseRow, parties, witnesses, ruleExcerpts, currentBoxText);
@@ -101,7 +104,7 @@ export async function generateDraft(caseId: number, box: DraftBox, currentBoxTex
     .join('\n')
     .trim();
 
-  const citations = validateCitations(extractCitations(text), corpus);
+  const citations = validateCitations(extractCitations(text), eventId);
   return { text, citations };
 }
 
@@ -187,56 +190,56 @@ function buildPrompt(
   return lines.join('\n');
 }
 
-// Matches "RRS 42.1(a)", "rule 18.2", "Rule C2.1", etc. Deliberately
-// requires the keyword so ordinary numbers (race numbers, dates) never
-// get treated as a citation.
-const CITATION_PATTERN = /\b(?:RRS|Rule)\s+([A-Z]?\d+(?:\.\d+)*(?:\([a-z]\))?)/gi;
+// Matches "RRS 42.1(a)", "rule 18.2", "NoR 1.9", "SI Addendum E 2.14", "RRS Appendix B 44".
+// Deliberately requires the keyword so ordinary numbers (race numbers, dates)
+// never get treated as a citation. NoR, CR and SI are matched in their canonical
+// form only, so the English word "si" or "cr" before a number does not count
+// (SPEC-022 RF-010). "Rule" is an input alias of RRS.
+const CITATION_PATTERN =
+  /\b(?:[Rr][Rr][Ss]|[Rr]ule|NoR|CR|SI)\s+(?:(?:Appendix|Addendum)\s+[A-Z]\d?\s+)?[A-Za-z]{0,2}\.?\d+(?:\.\d+)*(?:\([a-z]\))?/g;
 
-export function extractCitations(text: string): string[] {
-  const found = new Set<string>();
+export interface ExtractedCitation {
+  text: string; // as written by the model
+  citation: ParsedCitation;
+}
+
+export function extractCitations(text: string): ExtractedCitation[] {
+  const found = new Map<string, ExtractedCitation>();
   for (const match of text.matchAll(CITATION_PATTERN)) {
-    found.add(match[1]);
+    const citation = parseCitation(match[0]);
+    if (!citation) continue;
+    const key = formatCitation({ ...citation, prefix: citation.prefix ?? 'RRS' });
+    if (!found.has(key)) found.set(key, { text: match[0], citation });
   }
-  return [...found];
+  return [...found.values()];
 }
 
-// One read of the accepted rule corpus per draft request, shared by both
-// the excerpt lookup (grounds what the AI is told a rule says, D-024
-// follow-up) and the post-hoc citation check below.
-async function loadAcceptedRuleCorpus(): Promise<string> {
-  const acceptedRules = db
-    .prepare(`SELECT markdown_path FROM resource WHERE kind = 'rule' AND status = 'accepted'`)
-    .all() as { markdown_path: string | null }[];
-
-  const bodies = await Promise.all(
-    acceptedRules.map((r) => (r.markdown_path ? readMarkdown(r.markdown_path) : Promise.resolve(''))),
-  );
-  return bodies.join('\n\n');
+// Sections of the corpus a citation resolves to for this case's event, with the
+// suffix "(a)" required to appear in the section body (SPEC-022 RF-009).
+function resolveSections(citation: ParsedCitation, eventId: number | null) {
+  const resolved = { ...citation, prefix: citation.prefix ?? ('RRS' as const) };
+  const sections = sectionsForCitation(resolved, eventId);
+  const suffix = citation.suffix;
+  return suffix ? sections.filter((s) => s.body.toLowerCase().includes(suffix)) : sections;
 }
 
-// Pulls the text around a rule reference's first appearance in the
-// corpus, so the AI is grounded in what the rule actually says instead
-// of the bare number — the same substring approach as the citation
-// check below, for the same reason (FTS5 tokenizer punctuation gotcha).
-function findExcerpt(corpus: string, reference: string, contextChars = 500): string | null {
-  const idx = corpus.toLowerCase().indexOf(reference.toLowerCase());
-  if (idx === -1) return null;
-  const start = Math.max(0, idx - 100);
-  const end = Math.min(corpus.length, idx + contextChars);
-  return corpus.slice(start, end).trim();
+// The body of the rule's section (newest accepted document first), so the AI is
+// grounded in what the rule says instead of the bare number. Free-text
+// references that do not resolve get no excerpt: the prompt then says "text not
+// found" and the model must not guess.
+function findExcerpt(reference: string, eventId: number | null, maxChars = 1500): string | null {
+  const citation = parseCitation(reference);
+  if (!citation) return null;
+  const section = resolveSections(citation, eventId)[0];
+  return section ? section.body.slice(0, maxChars) : null;
 }
 
-// Checks each citation against the accepted rule corpus (D-020) — a rule
-// the AI mentions must actually appear in an uploaded, accepted rule
-// document, or it is flagged for the drafter to double-check. Plain
-// substring match on the converted markdown, not FTS5 MATCH: a rule
-// reference like "42.1(a)" has punctuation FTS5's tokenizer splits on,
-// so a phrase MATCH query would misbehave (same class of gotcha as
-// D-023's UNINDEXED-column bug).
-export function validateCitations(references: string[], corpus: string): CitationCheck[] {
-  const lowerCorpus = corpus.toLowerCase();
-  return references.map((reference) => ({
-    reference,
-    found: lowerCorpus.includes(reference.toLowerCase()),
+// Checks each citation the AI wrote against the rule index (D-020, D-034): it
+// must be a numbered rule of an accepted document of the prefix named, and for
+// NoR / SI of the case's event; matched on token boundaries so 4 is not 44.
+export function validateCitations(references: ExtractedCitation[], eventId: number | null): CitationCheck[] {
+  return references.map((r) => ({
+    reference: r.text,
+    found: resolveSections(r.citation, eventId).length > 0,
   }));
 }

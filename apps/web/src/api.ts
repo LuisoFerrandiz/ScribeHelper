@@ -23,8 +23,8 @@ import type {
   ResourceFull,
   ResourceKind,
   ResourceRow,
-  ResourceSearchHit,
   RuleCitationRow,
+  RuleSearchResult,
   SessionUser,
   UserRole,
   UserRow,
@@ -77,6 +77,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+// The `{"error": "..."}` body of a failed request, as plain text for the user.
+export function serverError(e: unknown): string {
+  const message = e instanceof Error ? e.message : String(e);
+  const json = message.indexOf('{');
+  if (json !== -1) {
+    try {
+      const parsed = JSON.parse(message.slice(json)) as { error?: string };
+      if (parsed.error) return parsed.error;
+    } catch {
+      /* not JSON: fall through */
+    }
+  }
+  return message;
+}
+
 const post = <T>(path: string, data: unknown) =>
   request<T>(path, { method: 'POST', body: JSON.stringify(data) });
 const put = <T>(path: string, data: unknown) =>
@@ -117,7 +132,12 @@ export const api = {
   createWitness: (data: Partial<WitnessRow>) => post<WitnessRow>('/witnesses', data),
   deleteWitness: (id: number) => del(`/witnesses/${id}`),
 
-  createRuleCitation: (data: Partial<RuleCitationRow>) => post<RuleCitationRow>('/rule-citations', data),
+  // SPEC-022: the server validates against the corpus (text or section_id) and
+  // answers 422 { error } for anything that cannot be cited.
+  addRuleCitation: (data: { case_id: number; text?: string; section_id?: number }) =>
+    post<RuleCitationRow>('/rule-citations', data),
+  searchRules: (q: string, caseId: number) =>
+    request<RuleSearchResult>(`/rules/search?q=${encodeURIComponent(q)}&case_id=${caseId}`),
   deleteRuleCitation: (id: number) => del(`/rule-citations/${id}`),
 
   createCaseLink: (data: CaseLinkRow) => post<CaseLinkRow>('/case-links', data),
@@ -154,11 +174,10 @@ export const api = {
   acceptResource: (id: number) => post<ResourceRow>(`/resources/${id}/accept`, {}),
   reclassifyResource: (
     id: number,
-    data: { kind: ResourceKind; layer?: string; scope?: string; event_id?: number },
+    data: { kind: ResourceKind; layer?: string; scope?: string; event_id?: number; doc_type?: string },
   ) => post<ResourceRow>(`/resources/${id}/reclassify`, data),
   rejectResource: (id: number) => request<void>(`/resources/${id}/reject`, { method: 'POST' }),
   deleteResource: (id: number) => del(`/resources/${id}`),
-  searchResources: (q: string) => request<ResourceSearchHit[]>(`/resources/search?q=${encodeURIComponent(q)}`),
 
   listPhrases: (box: PhraseBox) => request<PhraseRow[]>(`/phrases?box=${box}`),
   searchPhrases: (box: PhraseBox, q: string) =>

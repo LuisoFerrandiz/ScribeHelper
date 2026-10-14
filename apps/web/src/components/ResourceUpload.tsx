@@ -1,10 +1,35 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { api } from '../api';
-import type { ExampleScope, ResourceFull, ResourceKind, ResourceRow, RuleLayer } from '../types';
+import type { DocType, ExampleScope, ResourceFull, ResourceKind, ResourceRow, RuleLayer } from '../types';
 
 interface Props {
   kind: ResourceKind;
   eventId: number | null;
+}
+
+const DOC_TYPE_LABEL: Record<DocType, string> = {
+  nor: 'Notice of Race',
+  si: 'Sailing Instructions',
+  si_amendment: 'SI amendment',
+};
+
+// An event document must say what it is (SPEC-022 RF-001): it sets the citation prefix.
+interface QueuedFile {
+  file: File;
+  docType: DocType | '';
+}
+
+function DocTypeSelect({ value, onChange }: { value: DocType | ''; onChange: (v: DocType | '') => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as DocType | '')}>
+      <option value="">Document type…</option>
+      {(Object.keys(DOC_TYPE_LABEL) as DocType[]).map((t) => (
+        <option key={t} value={t}>
+          {DOC_TYPE_LABEL[t]}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 function titleFromFilename(filename: string): string {
@@ -23,7 +48,9 @@ export function ResourceUpload({ kind, eventId }: Props) {
   const [preview, setPreview] = useState<ResourceFull | null>(null);
   const [layer, setLayer] = useState<RuleLayer>('rrs');
   const [scope, setScope] = useState<ExampleScope>('own');
-  const [queued, setQueued] = useState<File[]>([]);
+  const [queued, setQueued] = useState<QueuedFile[]>([]);
+  const [reLayer, setReLayer] = useState<RuleLayer>('rrs');
+  const [reDocType, setReDocType] = useState<DocType | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
@@ -44,6 +71,14 @@ export function ResourceUpload({ kind, eventId }: Props) {
     }
   }
 
+  // The classification form follows the document being reviewed.
+  useEffect(() => {
+    if (preview?.layer) {
+      setReLayer(preview.layer);
+      setReDocType(preview.doc_type ?? '');
+    }
+  }, [preview?.id, preview?.layer, preview?.doc_type]);
+
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,7 +86,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
   function addFiles(list: FileList | null) {
     if (!list) return;
-    setQueued((prev) => [...prev, ...Array.from(list)]);
+    setQueued((prev) => [...prev, ...Array.from(list).map((file) => ({ file, docType: '' as const }))]);
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
@@ -64,8 +99,15 @@ export function ResourceUpload({ kind, eventId }: Props) {
     setQueued((prev) => prev.filter((_, i) => i !== index));
   }
 
+  const needsDocType = kind === 'rule' && layer === 'event';
+  const missingDocType = needsDocType && queued.some((q) => q.docType === '');
+
   async function handleUploadAll() {
     if (queued.length === 0) return;
+    if (missingDocType) {
+      setError('Choose the document type (NoR, SI or SI amendment) for every event file.');
+      return;
+    }
     if (kind === 'rule' && layer === 'event' && eventId === null) {
       setError('Pick a regatta on the Case tab first — event-layer rules belong to one.');
       return;
@@ -75,7 +117,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
     setUploadProgress({ done: 0, total: queued.length });
     let lastCreated: ResourceFull | null = null;
     try {
-      for (const [i, file] of queued.entries()) {
+      for (const [i, { file, docType }] of queued.entries()) {
         const form = new FormData();
         form.append('kind', kind);
         form.append('title', titleFromFilename(file.name));
@@ -83,6 +125,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
         if (kind === 'rule') {
           form.append('layer', layer);
           if (layer === 'event' && eventId !== null) form.append('event_id', String(eventId));
+          if (layer === 'event' && docType) form.append('doc_type', docType);
         } else {
           form.append('scope', scope);
         }
@@ -125,6 +168,31 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
   // Fixes a wrong pick at upload time (D-023) — moves the file and
   // updates the row without re-uploading/re-converting.
+  // Changes layer / regatta / document type of a rule document (SPEC-022 RF-001).
+  // The server rebuilds its rule index; citations already saved keep their text.
+  async function handleReclassify(r: ResourceFull) {
+    if (reLayer === 'event' && !r.event_id && eventId === null) {
+      setError('Pick a regatta on the Case tab first — event-layer rules belong to one.');
+      return;
+    }
+    if (reLayer === 'event' && reDocType === '') {
+      setError('Choose the document type (NoR, SI or SI amendment).');
+      return;
+    }
+    try {
+      await api.reclassifyResource(r.id, {
+        kind: 'rule',
+        layer: reLayer,
+        ...(reLayer === 'event' ? { event_id: r.event_id ?? eventId ?? undefined, doc_type: reDocType } : {}),
+      });
+      setPreview(await api.getResource(r.id));
+      await refresh();
+      setError(null);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   async function handleMoveToOtherKind(id: number) {
     const otherKind: ResourceKind = kind === 'rule' ? 'example' : 'rule';
     await api.reclassifyResource(id, otherKind === 'rule' ? { kind: 'rule', layer: 'rrs' } : { kind: 'example', scope: 'own' });
@@ -178,15 +246,23 @@ export function ResourceUpload({ kind, eventId }: Props) {
         <div className="box">
           <ul className="list">
             {queued.map((f, i) => (
-              <li key={`${f.name}-${i}`}>
-                {f.name}{' '}
+              <li key={`${f.file.name}-${i}`}>
+                {f.file.name}{' '}
+                {needsDocType && (
+                  <>
+                    <DocTypeSelect
+                      value={f.docType}
+                      onChange={(v) => setQueued((prev) => prev.map((q, j) => (j === i ? { ...q, docType: v } : q)))}
+                    />{' '}
+                  </>
+                )}
                 <button type="button" onClick={() => removeQueued(i)}>
                   Remove
                 </button>
               </li>
             ))}
           </ul>
-          <button type="button" onClick={handleUploadAll} disabled={uploading}>
+          <button type="button" onClick={handleUploadAll} disabled={uploading || missingDocType}>
             {uploadProgress ? `Uploading ${uploadProgress.done}/${uploadProgress.total}…` : `Upload ${queued.length}`}
           </button>
         </div>
@@ -232,6 +308,33 @@ export function ResourceUpload({ kind, eventId }: Props) {
           {!!preview.conversion_empty && (
             <p className="error">Conversion produced little or no text — this looks like a scanned document.</p>
           )}
+          {preview.kind === 'rule' && preview.sectionsPreview && (
+            <p className={preview.sectionsPreview.count === 0 ? 'error' : 'muted'}>
+              {preview.sectionsPreview.count === 0
+                ? 'No numbered rules detected; this document cannot be cited by number.'
+                : `${preview.sectionsPreview.count} rules detected (${preview.sectionsPreview.sample.join(', ')})`}
+            </p>
+          )}
+          {preview.kind === 'rule' && (
+            <p>
+              <select value={reLayer} onChange={(e) => setReLayer(e.target.value as RuleLayer)}>
+                <option value="rrs">RRS (permanent)</option>
+                <option value="class">Class rules (per season)</option>
+                <option value="event">Event (NoR/SIs/amendments)</option>
+              </select>{' '}
+              {reLayer === 'event' && <DocTypeSelect value={reDocType} onChange={setReDocType} />}{' '}
+              <button
+                type="button"
+                onClick={() => handleReclassify(preview)}
+                disabled={reLayer === preview.layer && (reLayer !== 'event' || reDocType === (preview.doc_type ?? ''))}
+              >
+                Apply
+              </button>
+              {preview.layer === 'event' && !preview.doc_type && (
+                <span className="error"> Classify this document so its rules can be cited.</span>
+              )}
+            </p>
+          )}
           <pre className="resource-preview">{preview.markdown || '(empty)'}</pre>
         </section>
       )}
@@ -245,6 +348,8 @@ export function ResourceUpload({ kind, eventId }: Props) {
                 {r.title}
               </button>
               {r.layer && <span className="muted"> — {r.layer}</span>}
+              {r.doc_type && <span className="muted"> ({DOC_TYPE_LABEL[r.doc_type]})</span>}
+              {r.layer === 'event' && !r.doc_type && <span className="error"> — not classified</span>}
               {r.scope && <span className="muted"> — {r.scope}</span>}{' '}
               <button
                 type="button"

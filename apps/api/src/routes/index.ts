@@ -8,6 +8,8 @@ import { registerCaseDeleteRoute } from './caseDelete.js';
 import { registerExtractAttachmentsRoute } from './extractAttachments.js';
 import { registerExtractNotesRoute } from './extractNotes.js';
 import { registerResourceRoutes } from './resources.js';
+import { registerRuleSearchRoute } from './rules.js';
+import { registerRuleCitationRoutes } from './ruleCitations.js';
 import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
 import { registerExampleSuggestionsRoute } from './exampleSuggestions.js';
@@ -75,7 +77,10 @@ export function registerRoutes(app: FastifyInstance) {
   registerCrud(app, 'rule-citations', {
     table: 'case_rule_citation',
     fields: ['case_id', 'rule_reference', 'position'],
+    skipCreate: true, // SPEC-022: validated add in registerRuleCitationRoutes
+    skipUpdate: true,
   });
+  registerRuleCitationRoutes(app);
 
   registerCaseLinkRoutes(app);
   registerCaseSummaryRoute(app);
@@ -85,6 +90,7 @@ export function registerRoutes(app: FastifyInstance) {
   registerExtractAttachmentsRoute(app);
   registerExtractNotesRoute(app);
   registerResourceRoutes(app);
+  registerRuleSearchRoute(app);
   registerPhraseRoutes(app);
   registerDraftRoute(app);
   registerExampleSuggestionsRoute(app);

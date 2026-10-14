@@ -9,13 +9,17 @@ interface CrudOptions {
   // guard + attachment file cleanup) — the generic one here would skip
   // both, so it's left unregistered for that prefix.
   skipDelete?: boolean;
+  // SPEC-022: 'rule-citations' is created by a validating route (routes/ruleCitations.ts)
+  // and is never edited: the generic POST/PUT would accept any rule_reference.
+  skipCreate?: boolean;
+  skipUpdate?: boolean;
 }
 
 // Same CRUD shape for every entity in RULES.md/CONTEXT.md: person, event,
 // boat, and the case-scoped tables. One generic handler instead of eight
 // near-identical route files.
 export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOptions) {
-  const { table, fields, touchUpdatedAt, skipDelete } = opts;
+  const { table, fields, touchUpdatedAt, skipDelete, skipCreate, skipUpdate } = opts;
 
   app.get(`/${prefix}`, () => {
     return db.prepare(`SELECT * FROM ${table} ORDER BY id`).all();
@@ -28,7 +32,7 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
     return row;
   });
 
-  app.post(`/${prefix}`, (req, reply) => {
+  if (!skipCreate) app.post(`/${prefix}`, (req, reply) => {
     const body = req.body as Record<string, unknown>;
     const cols = fields.filter((f) => f in body);
     if (cols.length === 0) return reply.code(400).send({ error: 'no valid fields' });
@@ -54,7 +58,7 @@ export function registerCrud(app: FastifyInstance, prefix: string, opts: CrudOpt
     reply.code(201).send(row);
   });
 
-  app.put(`/${prefix}/:id`, (req, reply) => {
+  if (!skipUpdate) app.put(`/${prefix}/:id`, (req, reply) => {
     const { id } = req.params as { id: string };
     const body = req.body as Record<string, unknown>;
     const cols = fields.filter((f) => f in body);

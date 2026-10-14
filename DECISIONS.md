@@ -1186,3 +1186,57 @@ sobre estado, solo a petición).
 verificación reutilizable para refactors sin tests: hash de `innerHTML` por
 pestaña sobre dos casos de prueba, más comprobaciones de comportamiento en
 vivo. La decisión de citas de SPEC-022 sigue siendo D-034.
+
+## D-034 · 2026-10-14 · accepted
+
+**Context:** ISS-002. Una cita nacía de texto libre sin validar y el buscador
+del corpus indexaba documentos enteros (un resultado era "RRS Parts +
+fragmento", sin número de regla ni botón). `draft.ts` validaba por subcadena
+(`4` pasaba si existía `44`). El dueño pidió que la cita nazca de elegir una
+regla del corpus, con siempre el mismo formato, y que no se pueda citar lo
+que no está en las reglas subidas (D-004).
+
+**Decision:** SPEC-022.
+- **Índice por regla:** tablas `rule_section` y `rule_section_fts` (id
+  `AUTOINCREMENT`). Un parser puro (`resources/ruleSections.ts`) parte el
+  Markdown de cada documento de reglas aceptado en secciones numeradas, con
+  dos estilos de cabecera (tabulador para el RRS, espacio para NoR/SI), filtros
+  de ruido, primera aparición gana por (número, parte) y noción de **parte**
+  (Appendix del RRS, Addendum de NoR/SI). Se indexa al aceptar, al
+  reclasificar y al arrancar (idempotente, por recurso, sin fallar nunca).
+- **Cita canónica** (un solo módulo, `rules/citation.ts`): `RRS 44.2`,
+  `CR …`, `NoR 1.9`, `SI 12`; con parte cuando haría falta (`SI Addendum E
+  2.14`, `RRS Appendix B 44`; los números nativos de un apéndice, `RRS A2.1`,
+  no la llevan). La etiqueta solo depende de los campos de la sección, nunca
+  del estado del corpus. `resource.doc_type` (`nor | si | si_amendment`, solo
+  capa `event`) fija el prefijo; se elige al subir y se cambia al
+  reclasificar (que gana capa, regata y tipo).
+- **Validación en el servidor:** `POST /rule-citations` es una ruta propia
+  (`text` o `section_id`); el `POST` y el `PUT` genéricos se desactivan
+  (`skipCreate`/`skipUpdate`, nuevos en `crud.ts`). Solo se acepta lo que
+  resuelve a una sección de un recurso aceptado y, para NoR/SI, del evento del
+  caso. Texto libre fuera del corpus: **rechazado**. Sin prefijo se asume RRS
+  solo si el número existe en el cuerpo principal del RRS. Duplicados por
+  forma canónica. El botón "Add" registra la cita **y** la escribe en el
+  cuadro de Rules Applicable (D-032) en un clic.
+- **`draft.ts`:** `extractCitations` reconoce `RRS|Rule|NoR|CR|SI` (los tres
+  últimos solo en forma canónica) con parte; `validateCitations` y el
+  excerpt consultan `rule_section` por prefijo, evento y número exacto.
+- **Citas antiguas:** no se migran ni se marcan. Las escribió el propio juez,
+  siguen en el documento y el borrador, sin texto en el corpus, dice "text not
+  found" sin inventar.
+
+**Alternatives considered:** solo número con comprobación (rechazada: no da
+botón ni formato único); bloquear los números repetidos de Appendix/Addendum
+(rechazada: se citan con la parte); primera aparición citable (rechazada:
+ambigua); texto libre con marca "unverified" (rechazada por el dueño: D-004
+estricto); migrar las citas viejas (rechazada por el dueño).
+
+**Consequences:** sustituye el diseño por documento de D-011/D-020 **en lo
+que respecta a citas** (el índice por documento sigue en `resource_fts` para
+documentos sin secciones). No edita D-004: lo cumple en el servidor. El
+arranque añade dos columnas a `resource` y rellena el índice, así que antes
+del redeploy conviene copiar `data/db`; después hay que reclasificar el NoR y
+las SI de París (subidos con capa `rrs`) a `event` con su tipo (ISS-013). El
+índice habilita F5 (reglas sugeridas desde Facts Found). Cases, Calls y
+apelaciones (capa 5) siguen sin capa ni cita.

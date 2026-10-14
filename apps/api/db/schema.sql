@@ -235,6 +235,32 @@ CREATE VIRTUAL TABLE IF NOT EXISTS resource_fts USING fts5(
   tokenize = 'porter unicode61'
 );
 
+-- SPEC-022 (D-034): one row per numbered rule, so a citation can be chosen
+-- from the corpus. `part` is 'Appendix X' / 'Addendum X' or NULL for the main
+-- body. The citation prefix is not stored: it is computed from the resource
+-- (layer + doc_type) at query time. AUTOINCREMENT so ids are never reused and
+-- an orphan FTS row can never point at another section. resource.doc_type and
+-- resource.sections_indexed_at are added by ALTER in migrate.ts, not here.
+CREATE TABLE IF NOT EXISTS rule_section (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  resource_id INTEGER NOT NULL REFERENCES resource(id) ON DELETE CASCADE,
+  number TEXT NOT NULL,
+  heading TEXT NOT NULL,
+  body TEXT NOT NULL,
+  part TEXT,
+  position INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rule_section_resource ON rule_section(resource_id);
+CREATE INDEX IF NOT EXISTS idx_rule_section_number ON rule_section(number);
+
+-- section_id is UNINDEXED: compare it with Number(...) (D-023).
+CREATE VIRTUAL TABLE IF NOT EXISTS rule_section_fts USING fts5(
+  heading,
+  body,
+  section_id UNINDEXED,
+  tokenize = 'unicode61'
+);
+
 -- Phase 5.5 (CONTEXT.md section 9, D-026): a single admin (seeded from
 -- ADMIN_USERNAME/ADMIN_PASSWORD, apps/api/src/db/seedAdmin.ts) is the
 -- only account allowed to create other users. Every other permission

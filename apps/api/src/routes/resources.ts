@@ -4,6 +4,13 @@ import { db } from '../db/connection.js';
 import { convertToMarkdown } from '../resources/convert.js';
 import { deleteStoredFiles, moveMarkdown, readMarkdown, storeUpload } from '../resources/storage.js';
 import type { ExampleScope, ResourceKind, RuleLayer } from '../resources/storage.js';
+import { deleteSectionsSync, indexResourceSections } from '../resources/sectionIndex.js';
+import { parseRuleSections } from '../resources/ruleSections.js';
+import { citationFor, prefixFor } from '../rules/citation.js';
+import type { DocType } from '../rules/citation.js';
+
+const DOC_TYPES: DocType[] = ['nor', 'si', 'si_amendment'];
+const isDocType = (v: unknown): v is DocType => DOC_TYPES.includes(v as DocType);
 
 interface ResourceRow {
   id: number;
@@ -19,6 +26,8 @@ interface ResourceRow {
   conversion_empty: 0 | 1;
   created_at: string;
   reviewed_at: string | null;
+  doc_type: DocType | null;
+  sections_indexed_at: string | null;
 }
 
 // Upload/review pipeline for rules and examples (CONTEXT.md sections 6-7,
@@ -47,7 +56,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(id) as ResourceRow | undefined;
     if (!row) return reply.code(404).send({ error: 'not found' });
     const markdown = row.markdown_path ? await readMarkdown(row.markdown_path) : '';
-    return { ...row, markdown };
+    return { ...row, markdown, sectionsPreview: row.kind === 'rule' ? sectionsPreview(row, markdown) : null };
   });
 
   app.post('/resources', { preHandler: requireAdmin }, async (req, reply) => {
@@ -85,6 +94,11 @@ export function registerResourceRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'event_id is required for event-layer rules' });
     }
     if (kind === 'example' && !scope) return reply.code(400).send({ error: 'scope is required for examples' });
+    // SPEC-022 RF-001: an event document must say what it is (NoR / SI / SI amendment).
+    const docType = kind === 'rule' && layer === 'event' ? fields.doc_type : null;
+    if (kind === 'rule' && layer === 'event' && !isDocType(docType)) {
+      return reply.code(400).send({ error: 'doc_type (nor, si or si_amendment) is required for event-layer rules' });
+    }
 
     let conversion;
     try {
@@ -97,8 +111,8 @@ export function registerResourceRoutes(app: FastifyInstance) {
 
     const result = db
       .prepare(
-        `INSERT INTO resource (kind, layer, event_id, scope, title, original_filename, original_path, markdown_path, conversion_empty)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO resource (kind, layer, event_id, scope, title, original_filename, original_path, markdown_path, conversion_empty, doc_type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         kind,
@@ -110,6 +124,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
         stored.originalPath,
         stored.markdownPath,
         conversion.empty ? 1 : 0,
+        docType,
       );
 
     const row = db.prepare('SELECT * FROM resource WHERE id = ?').get(result.lastInsertRowid) as unknown as ResourceRow;
@@ -134,6 +149,8 @@ export function registerResourceRoutes(app: FastifyInstance) {
         body,
         row.id,
       );
+      // SPEC-022: per-rule index, so the accepted document can be cited by number.
+      await indexResourceSections(row.id);
     }
 
     const updated = db.prepare('SELECT * FROM resource WHERE id = ?').get(id);
@@ -146,6 +163,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: 'not found' });
 
     await deleteStoredFiles({ originalPath: row.original_path, markdownPath: row.markdown_path });
+    deleteSectionsSync(Number(id));
     db.prepare('DELETE FROM resource WHERE id = ?').run(id);
     reply.code(204).send();
   });
@@ -162,6 +180,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     // coercion — a string '1' never matches a stored integer 1, so this
     // must be Number(id), not the raw string from req.params.
     db.prepare('DELETE FROM resource_fts WHERE resource_id = ?').run(Number(id));
+    deleteSectionsSync(Number(id));
     db.prepare('DELETE FROM resource WHERE id = ?').run(id);
     reply.code(204).send();
   });
@@ -175,7 +194,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     if (!row) return reply.code(404).send({ error: 'not found' });
     if (!row.markdown_path) return reply.code(409).send({ error: 'not converted yet' });
 
-    const body = req.body as { kind: ResourceKind; layer?: RuleLayer; scope?: ExampleScope; event_id?: number };
+    const body = req.body as { kind: ResourceKind; layer?: RuleLayer; scope?: ExampleScope; event_id?: number; doc_type?: string };
     const kind = body.kind;
     const layer = kind === 'rule' ? (body.layer ?? 'rrs') : null;
     const scope = kind === 'example' ? (body.scope ?? 'own') : null;
@@ -183,17 +202,17 @@ export function registerResourceRoutes(app: FastifyInstance) {
     if (kind === 'rule' && layer === 'event' && !eventId) {
       return reply.code(400).send({ error: 'event_id is required for event-layer rules' });
     }
+    // SPEC-022 RF-001: doc_type only exists on event rules; leaving event clears it.
+    const docType = kind === 'rule' && layer === 'event' ? (body.doc_type ?? row.doc_type) : null;
+    if (kind === 'rule' && layer === 'event' && !isDocType(docType)) {
+      return reply.code(400).send({ error: 'doc_type (nor, si or si_amendment) is required for event-layer rules' });
+    }
 
     const newMarkdownPath = await moveMarkdown(row.markdown_path, kind, (layer ?? scope)!);
 
-    db.prepare('UPDATE resource SET kind = ?, layer = ?, scope = ?, event_id = ?, markdown_path = ? WHERE id = ?').run(
-      kind,
-      layer,
-      scope,
-      eventId,
-      newMarkdownPath,
-      id,
-    );
+    db.prepare(
+      'UPDATE resource SET kind = ?, layer = ?, scope = ?, event_id = ?, doc_type = ?, markdown_path = ? WHERE id = ?',
+    ).run(kind, layer, scope, eventId, docType, newMarkdownPath, id);
 
     // Re-sync the FTS index: only accepted rules are searchable (D-020).
     db.prepare('DELETE FROM resource_fts WHERE resource_id = ?').run(Number(id));
@@ -205,6 +224,9 @@ export function registerResourceRoutes(app: FastifyInstance) {
         Number(id),
       );
     }
+    // SPEC-022: rebuild the per-rule index from the (possibly moved) .md; examples have none.
+    deleteSectionsSync(Number(id));
+    if (kind === 'rule' && row.status === 'accepted') await indexResourceSections(Number(id));
 
     const updated = db.prepare('SELECT * FROM resource WHERE id = ?').get(id);
     return updated;
@@ -223,4 +245,13 @@ export function registerResourceRoutes(app: FastifyInstance) {
       )
       .all(q.trim());
   });
+}
+
+// RF-013: what the parser finds in a document, computed in memory (nothing is
+// written) so the review screen can say "N rules detected".
+function sectionsPreview(row: ResourceRow, markdown: string) {
+  const sections = parseRuleSections(markdown);
+  const prefix = row.layer ? prefixFor(row.layer, row.doc_type) : null;
+  const cites = sections.map((x) => citationFor({ prefix, number: x.number, part: x.part }));
+  return { count: sections.length, sample: [...cites.slice(0, 5), ...cites.slice(-5)].filter((c, i, a) => a.indexOf(c) === i) };
 }

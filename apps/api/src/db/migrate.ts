@@ -3,6 +3,7 @@ import path from 'node:path';
 import { db } from './connection.js';
 import { seedBasePhrases } from './seedPhrases.js';
 import { seedAdminUser } from './seedAdmin.js';
+import { indexPendingSections } from '../resources/sectionIndex.js';
 
 const schemaPath = path.join(import.meta.dirname, '..', '..', 'db', 'schema.sql');
 const schema = readFileSync(schemaPath, 'utf-8');
@@ -40,6 +41,20 @@ if (!hasRulesApplicable) {
   db.exec(`ALTER TABLE protest_case ADD COLUMN rules_applicable TEXT NOT NULL DEFAULT ''`);
   console.log('Migration: added protest_case.rules_applicable');
 }
+
+// SPEC-022 (D-034): resource.doc_type (nor | si | si_amendment, only for
+// layer 'event'; enforced by the server, not a CHECK, because the table cannot
+// widen a CHECK without being recreated) and sections_indexed_at (RF-014).
+const resourceCols = (db.prepare(`PRAGMA table_info(resource)`).all() as { name: string }[]).map((c) => c.name);
+if (!resourceCols.includes('doc_type')) {
+  db.exec(`ALTER TABLE resource ADD COLUMN doc_type TEXT`);
+  console.log('Migration: added resource.doc_type');
+}
+if (!resourceCols.includes('sections_indexed_at')) {
+  db.exec(`ALTER TABLE resource ADD COLUMN sections_indexed_at TEXT`);
+  console.log('Migration: added resource.sections_indexed_at');
+}
+await indexPendingSections();
 
 await seedBasePhrases();
 seedAdminUser();

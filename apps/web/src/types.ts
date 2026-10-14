@@ -189,6 +189,8 @@ export interface UserRow {
 export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';
+// SPEC-022: what an event-layer rule document is; sets the citation prefix (NoR / SI).
+export type DocType = 'nor' | 'si' | 'si_amendment';
 
 export interface ResourceRow {
   id: number;
@@ -204,17 +206,33 @@ export interface ResourceRow {
   conversion_empty: 0 | 1;
   created_at: string;
   reviewed_at: string | null;
+  doc_type: DocType | null;
+  sections_indexed_at: string | null;
 }
 
 export interface ResourceFull extends ResourceRow {
   markdown: string;
+  // Rules the parser finds in a rule document (null for examples). SPEC-022 RF-013.
+  sectionsPreview: { count: number; sample: string[] } | null;
 }
 
-export interface ResourceSearchHit {
-  id: number;
-  title: string;
-  layer: RuleLayer;
+// SPEC-022: one numbered rule of the corpus, as returned by GET /rules/search.
+export interface RuleSearchHit {
+  section_id: number;
+  citation: string | null; // null: event document not classified yet
+  heading: string;
   snippet: string;
+  layer: RuleLayer;
+  doc_type: DocType | null;
+  part: string | null;
+  doc_title: string;
+  cited: boolean;
+  can_add: boolean;
+}
+
+export interface RuleSearchResult {
+  hits: RuleSearchHit[];
+  otherEvents: boolean;
 }
 
 // Entry screen (SPEC-001): one row per case, enough to render without a

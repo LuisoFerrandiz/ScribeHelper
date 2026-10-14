@@ -69,7 +69,7 @@ export function formatRulesApplicable(c: CaseFull): string {
 
 // Whole-token match (SPEC-023 RF-011): "RRS 44" is not found inside "RRS 44.2"
 // nor "RRS 144". Case-insensitive.
-function citationInText(text: string, reference: string): boolean {
+export function citationInText(text: string, reference: string): boolean {
   const escaped = reference.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (!escaped) return true;
   return new RegExp(`(^|[^A-Za-z0-9])${escaped}(?![A-Za-z0-9]|\\.\\d)`, 'i').test(text);
