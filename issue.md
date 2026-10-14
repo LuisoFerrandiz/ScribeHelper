@@ -370,13 +370,13 @@ Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
 ## ISS-013 — P3 NoR y SI de París 2024 subidos con la capa equivocada
 
 - **Estado:** **resuelto en producción (2026-10-14)**: reclasificados a
-  `event` (NoR → `nor`, SI → `si_amendment`, regata TEST). Queda la decisión
-  de versionar o ignorar los cuatro ficheros de `data/`.
+  `event` (NoR → `nor`, SI → `si_amendment`, regata TEST). Los cuatro
+  ficheros de `data/` no se versionan (decisión del dueño, 2026-10-14).
 - **Evidencia:** `data/rules/rrs/Paris-2024-Sailing-Notice-of-Race_…` y
   `…Sailing-Instructions…` (`.md` y PDF original en `data/originals/`) se
   subieron con capa `rrs`, y la pantalla de reclasificar no puede pasar a
   `event`. Sin versionar en Git.
 - **Qué hacer:** tras implementar SPEC-022 (reclasificar con capa, regata y
-  `doc_type`), pasarlos a `event` con `nor` y `si_amendment`. Decidir si se
-  versionan o se ignoran (son públicos, ISS-001). Sirvieron para ajustar el
+  `doc_type`), pasarlos a `event` con `nor` y `si_amendment`. No se versionan
+  (decisión del dueño). Sirvieron para ajustar el
   parser de SPEC-022 (estilo "número espacio texto", Addendums).
