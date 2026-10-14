@@ -801,37 +801,32 @@ export function CaseForm({ caseId }: Props) {
         </div>
       </section>
       {/* 7. Decision */}
-      <CopyBox
+      <WritingBox
         label="Decision"
-        text={decision}
+        copyText={decision}
         copied={!!copied.decision}
         onCopied={() => markCopied('decision')}
-      >
-        <div className="box-body-split">
-          <div className="textarea-col">
-            <GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />
+        textarea={<GhostTextarea caseId={caseId} box="decision" value={decision} onChange={setDecision} rows={4} />}
+        side={
+          <div className="suggestions-panel">
+            <PartyReference
+              initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+              respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+              race={race}
+              currentText={decision}
+            />
+            <SuggestionList
+              box="decision"
+              currentText={decision}
+              onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
+              items={caseSuggestionItems(
+                { paragraph: extraction?.decision_candidate },
+                { paragraph: notesExtraction?.decision_candidate },
+              )}
+            />
           </div>
-          <div className="suggestions-col">
-            <div className="suggestions-panel">
-              <PartyReference
-                initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-                respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-                race={race}
-                currentText={decision}
-              />
-              <SuggestionList
-                box="decision"
-                currentText={decision}
-                onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-                items={caseSuggestionItems(
-                  { paragraph: extraction?.decision_candidate },
-                  { paragraph: notesExtraction?.decision_candidate },
-                )}
-              />
-            </div>
-          </div>
-        </div>
-      </CopyBox>
+        }
+      />
         </div>
       )}
 
