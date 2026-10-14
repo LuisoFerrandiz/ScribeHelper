@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
+import { AttachmentsTab } from './AttachmentsTab';
 import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
 import { GeneralTab } from './GeneralTab';
@@ -494,58 +495,16 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'attachments' && (
         <div className="tab-panel">
-          <section className="box">
-            <h2>Protest Form(s)</h2>
-            <p className="muted">
-              Any file format — scan, photo, PDF. Converted to Markdown when possible for later
-              use; the original is always kept.
-            </p>
-            <ul className="list">
-              {caseFull.attachments.map((a) => (
-                <li key={a.id}>
-                  <a href={api.attachmentFileUrl(a.id)} download>
-                    {a.original_filename}
-                  </a>{' '}
-                  <span className="muted">{new Date(a.uploaded_at).toLocaleString()}</span>
-                  {!!a.conversion_empty && (
-                    <span className="error"> — empty conversion, check original</span>
-                  )}{' '}
-                  <button type="button" onClick={() => handleRemoveAttachment(a.id)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-              {caseFull.attachments.length === 0 && <li className="muted">No files uploaded yet.</li>}
-            </ul>
-            <input
-              ref={attachmentInputRef}
-              type="file"
-              onChange={handleUploadAttachment}
-              disabled={uploadingAttachment}
-              hidden
-            />
-            <button
-              type="button"
-              onClick={() => attachmentInputRef.current?.click()}
-              disabled={uploadingAttachment}
-            >
-              {uploadingAttachment ? 'Uploading…' : 'Upload file'}
-            </button>{' '}
-            <button
-              type="button"
-              onClick={handleProcessAttachments}
-              disabled={extracting || caseFull.attachments.length === 0}
-            >
-              {extracting ? 'Processing…' : 'Process'}
-            </button>
-            {extraction && (
-              <p className="muted">
-                Processed. Suggestions from it are offered on the General, Parties &amp; Witness,
-                Procedural Matters, Facts Found, Conclusion and Decision tabs — nothing was
-                inserted automatically.
-              </p>
-            )}
-          </section>
+          <AttachmentsTab
+            attachments={caseFull.attachments}
+            extraction={extraction}
+            extracting={extracting}
+            uploadingAttachment={uploadingAttachment}
+            attachmentInputRef={attachmentInputRef}
+            onUpload={handleUploadAttachment}
+            onRemove={handleRemoveAttachment}
+            onProcess={handleProcessAttachments}
+          />
         </div>
       )}
 
