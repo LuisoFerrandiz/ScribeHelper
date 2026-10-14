@@ -1439,3 +1439,22 @@ llamada de Sonnet por clic, acotada (hasta unos 17 000 caracteres de fuentes,
 pero eso no garantiza que sea el dato correcto para ese hueco. Datos de partes,
 testigos y formularios se envían al modelo como ya hacen la extracción de
 adjuntos y de notas. Sin cambios de esquema.
+
+## D-043 · 2026-10-14 · accepted
+
+**Enmienda 2 a la constitución y actualización de `CLAUDE.md` tras el cierre
+del replanteo.** Por orden del dueño, `CLAUDE.md` se actualiza en sitio (frases
+con huecos y su UX, huecos de datos con IA, fila 5.7 de fases cerrada y una
+sección "Ayudas a la coherencia de la cadena") y `constitution.md` recibe una
+segunda entrada en "Enmiendas" (append-only) que sustituye lo dicho sobre
+validar referencias tecleadas, precisa el principio de que la IA no decide
+(contexto de lectura en el fantasma; propuestas de valores para huecos de datos
+verificadas por el servidor) y registra "avisar, no bloquear" y las marcas de
+tiempo por caja. No se relaja ningún límite no negociable.
+
+**Alternatives considered:** dejar `CLAUDE.md` y la constitución sin tocar
+(rechazada: ya describían lo anterior como pendiente); editar los textos
+anteriores de la constitución (rechazada: es append-only).
+
+**Consequences:** `issue.md` queda cerrado en todo lo hecho (ISS-010 cerrado;
+abiertos solo ISS-007, aplazado, e ISS-008, falta prueba en vivo).

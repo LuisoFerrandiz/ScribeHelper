@@ -220,3 +220,27 @@ que se indica y no se editan los textos anteriores.
   caso se eligen al final de Review (D-031).
 - **Cuenta de decisiones:** `DECISIONS.md` llega a D-033 a fecha
   2026-10-14 (la sección anterior citaba D-001 a D-027).
+
+### Enmienda 2026-10-14 (2) — avisos, fantasma con contexto y huecos de datos con IA (`DECISIONS.md` D-036 a D-042)
+
+- **Sustituye** el último punto de la enmienda anterior ("validar las
+  referencias tecleadas queda para una fase posterior"): Rules Applicable
+  **avisa** ahora de las referencias del texto que no existen en el corpus
+  cargado (D-039). Es un aviso, no un bloqueo: lo que el juez teclea sigue sin
+  estar validado, y el límite de D-004 no se relaja (la IA tampoco escribe
+  números de regla; nada se cita por su cuenta).
+- **Precisa** el principio "la IA no decide": el texto fantasma de IA lee, solo
+  como datos de contexto, las cajas anteriores de la cadena (D-041, amplía
+  D-025). Para Rules Applicable se le quitan los dígitos y no puede nombrar
+  reglas. La IA puede **proponer valores para huecos de datos** de las frases
+  (`[##]`, `[date]`, `[time]`), nunca elegir entre alternativas ni escribir
+  texto fuera de los huecos; cada valor lleva su fuente y una cita literal que
+  el **servidor verifica** contra esa fuente (el prompt no es la defensa), y el
+  escribano acepta cada valor (D-042).
+- **Avisar, no bloquear:** los avisos de huecos sin rellenar (D-037), de
+  referencias sin resolver (D-039) y de desfase entre cajas (D-040) informan;
+  nunca impiden Copy ni Download ni modifican el texto del juez.
+- **Datos:** el servidor guarda cuándo cambió cada caja de la cadena
+  (columnas `*_at` de `protest_case`, aditivas, D-040). No cambia lo dicho en
+  *Seguridad y datos*.
+- **Cuenta de decisiones:** `DECISIONS.md` llega a D-043 a fecha 2026-10-14.

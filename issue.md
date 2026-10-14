@@ -36,12 +36,17 @@ anterior ni sin el visto bueno del dueño en los puntos **[DECISIÓN]**.
 Orden de riesgo: la fase 4 es la de mayor riesgo por D-004 (cita falsa convincente). El
 refactor va al final: sin tests, conviene que el formulario esté estable.
 
-Riesgos altos:
+Riesgos altos (ambos cerrados el 2026-10-14):
 
 - **ISS-002 — ALTO.** Una cita no verificada presentada como regla rompe un
-  límite no negociable (D-004). Latente hoy; se activa al conectar la UI.
+  límite no negociable (D-004). Cerrado por SPEC-022 (F1) y el replanteo.
 - **ISS-006 — MEDIO.** Refactor de 1125 líneas sin suite de tests: riesgo de
-  regresión silenciosa. Mitigar con pasos pequeños y verificación en vivo.
+  regresión silenciosa. Cerrado por SPEC-024.
+
+**Estado del plan (2026-10-14):** las fases 0-5 y el replanteo F1-F6 están
+hechos y desplegados. Siguen abiertos solo **ISS-007** (aplazado por decisión
+del dueño, sin fecha) e **ISS-008** (falta la prueba en vivo del borrado de
+casos con adjuntos). El resto de issues está cerrado o resuelto.
 
 ---
 
@@ -327,23 +332,31 @@ Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
 - `SPEC-023` (D-032): Rules Applicable como caja de redacción con campo
   `rules_applicable`, texto fantasma sin números de regla, aviso "Insert
   missing" y cuadro también en Review. `4acf5de`; el ajuste de columnas
-  (cuadro a la izquierda, sugerencias a la derecha) `4f24294` está
-  commiteado pero **sin push ni redeploy**.
+  (cuadro a la izquierda, sugerencias a la derecha) `4f24294`, ya desplegado.
+- `SPEC-024` (refactor de `CaseForm.tsx`, D-035) y `SPEC-025` a `SPEC-031`
+  (frases con huecos D-036, avisos D-037/D-039/D-040, reglas desde los hechos
+  D-038, fantasma con contexto D-041, huecos de datos con IA D-042): todos
+  desplegados y verificados en vivo.
 - D-031: se quitó la entrada "Jury" del menú superior. `4de41e5`.
 - Fix `client_max_body_size 50m` en nginx (las subidas de más de 1 MB
   daban 413). `1063cdf`.
 
-## ISS-010 — P2 Coherencia entre cajas (Facts → Rules → Conclusion → Decision)
+## ISS-010 — CERRADO Coherencia entre cajas (Facts → Rules → Conclusion → Decision)
 
-- **Estado:** abierto (fase F6).
-- **Evidencia:** `apps/api/src/ai/draft.ts` solo lee la caja inmediatamente
+- **Estado:** **cerrado (2026-10-14)**, fase F6 hecha y verificada en vivo:
+  `SPEC-026` (aviso de huecos sin rellenar, D-037, `53d0b58`), `SPEC-028`
+  (referencias tecleadas, D-039, `0e38425`), `SPEC-029` (desfase entre cajas con
+  marcas por caja, D-040, `a2b1324`) y `SPEC-030` (el fantasma ve las cajas
+  anteriores, D-041, `42dd98d`). `draft.ts` y el panel de borrador siguen sin
+  montar (SPEC-020) y quedan fuera.
+- **Evidencia original (histórica):** `apps/api/src/ai/draft.ts` solo lee la caja inmediatamente
   anterior (Decision ve Conclusion, no Facts ni reglas); su rama en el panel
   es código muerto para las 4 cajas. `complete.ts` (ghost text) ve solo los
   últimos 1500 caracteres, sin datos del caso. Si cambia un hecho probado,
   nada avisa de que la conclusión y la decisión pueden haber quedado
   desfasadas.
-- **Criterio de cierre:** spec aprobada; las cajas posteriores ven las
-  anteriores relevantes y la UI avisa del desfase.
+- **Criterio de cierre (cumplido):** spec aprobada; las cajas posteriores ven
+  las anteriores relevantes y la UI avisa del desfase.
 
 ## ISS-011 — CERRADO Ya no se puede quitar un juez del pool del evento
 

@@ -85,8 +85,38 @@ gratis, offline, incapaz de alucinar. No se construye en una pantalla
 aparte: el usuario **selecciona texto mientras redacta y lo guarda como
 frase**; la librería crece con el uso.
 
-Dos tipos de frase: **fija** (se inserta tal cual) y **con huecos** (la
-aplicación debe saber dónde colocar el cursor).
+Dos tipos de frase: **fija** (se inserta tal cual) y **con huecos**
+(`DECISIONS.md` D-036, D-042). Un hueco es un `[corchete]` balanceado y cada
+corchete es un hueco propio, también los pegados (`[injury] [serious damage]`:
+son alternativas que el escribano borra o deja). Una frase de la librería se
+inserta **en el cursor** y abre una sesión: el primer hueco queda
+seleccionado, Tab / Shift+Tab los recorren y Escape la cierra. `X` e `Y`
+(sueltas o `[X]`/`[Y]`) son etiquetas de parte, no huecos: una barra bajo el
+cuadro ofrece los barcos del caso y un clic las sustituye. El texto fantasma
+propone primero el resto de una frase de la librería por prefijo, después el
+número de vela y la IA. Los huecos **de datos** (`[##]`, `[race ##]`, `[date]`,
+`[time]`) pueden rellenarse con IA (botón "Fill data gaps with AI"): propone un
+valor con su fuente y una cita literal, que el servidor verifica contra la
+fuente; el escribano acepta cada valor. La IA nunca elige entre alternativas.
+
+### Ayudas a la coherencia de la cadena
+
+La decisión es una cadena: Hearing notes → Facts Found → Rules Applicable →
+Conclusion → Decision. Estas ayudas **avisan, no bloquean ni editan** el texto
+del juez:
+
+- **Huecos sin rellenar** (D-037): cada caja avisa si aún tiene `[huecos]` o
+  `X`/`Y`; Review los resume y Download pide confirmación.
+- **Desfase entre cajas** (D-040): el servidor guarda cuándo cambió cada caja
+  de la cadena (`facts_found_at`, `rules_applicable_at`, `conclusion_at`,
+  `decision_at`); una caja avisa si una anterior cambió después, con "Mark as
+  reviewed".
+- **Referencias tecleadas** (D-039): Rules Applicable avisa de las citas del
+  texto (`RRS 44.9`) que no existen en el corpus cargado.
+- **Reglas sugeridas desde Facts Found** (D-038): búsqueda de texto completo
+  determinista; Add reutiliza la alta validada de SPEC-022.
+- **Fantasma con contexto** (D-041): el texto fantasma de IA lee, solo como
+  datos, las cajas anteriores de la cadena; en Rules Applicable sin dígitos.
 
 ### Los tres almacenes de material, en detalle
 
@@ -189,7 +219,7 @@ detrás de algo que necesita red.
 | 5 | Autocompletado IA en línea | sí |
 | 5.5 | Despliegue al servidor doméstico, volumen, contraseña | — |
 | 5.6 | Asistencia IA en el formulario: extracción de adjuntos de caso, desglose de Facts Found, panel de sugerencias lateral | sí |
-| 5.7 | Replanteo (2026-10): lista única de sugerencias (SPEC-020), Rules Applicable como pestaña y caja de redacción propias (SPEC-021, SPEC-023), menú "Jury" quitado (D-031). Pendiente: F1 citas desde el corpus (SPEC-022), F3-F6 — ver `issue.md` | sí |
+| 5.7 | Replanteo (2026-10, cerrado): lista única de sugerencias (SPEC-020), Rules Applicable como pestaña y caja de redacción propias (SPEC-021, SPEC-023), menú "Jury" quitado (D-031), citas desde el corpus (SPEC-022), frases con huecos (SPEC-025), avisos de huecos sin rellenar, referencias tecleadas y desfase entre cajas (SPEC-026, 028, 029), reglas sugeridas desde Facts Found (SPEC-027), fantasma que ve las cajas anteriores (SPEC-030) y huecos de datos con IA (SPEC-031). Fases F1-F6 hechas — ver `issue.md` | sí |
 | 6 | Compartir, solicitudes de reparación (redress) | — |
 
 Principio de orden: todo lo que funciona offline y no puede fallar en
