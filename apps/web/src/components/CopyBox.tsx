@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { describePending, pendingMarks } from '../pendingMarks';
 
 interface CopyBoxProps {
   label: string;
@@ -6,6 +7,7 @@ interface CopyBoxProps {
   copied: boolean;
   onCopied: () => void;
   children: ReactNode;
+  pendingText?: string; // SPEC-026: text checked for unfilled gaps; only the writing boxes pass it
 }
 
 // One section of the decision form (RULES.md R-29: labels and order are
@@ -14,7 +16,8 @@ interface CopyBoxProps {
 // so a wide screen with several boxes open at once can be tidied down
 // to just the titles — collapsing never hides the Copy button, so a
 // box can still be copied without opening it.
-export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProps) {
+export function CopyBox({ label, text, copied, onCopied, children, pendingText }: CopyBoxProps) {
+  const pending = pendingText === undefined ? null : pendingMarks(pendingText);
   const [failed, setFailed] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -50,6 +53,7 @@ export function CopyBox({ label, text, copied, onCopied, children }: CopyBoxProp
           </button>
         </div>
       </div>
+      {pending && pending.count > 0 && <p className="pending-note">{describePending(pending)}</p>}
       <div className="box-body" hidden={collapsed}>
         {children}
         {failed && <p className="error">Copy failed. Select and copy manually.</p>}

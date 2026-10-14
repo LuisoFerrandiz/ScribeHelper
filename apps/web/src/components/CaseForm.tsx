@@ -21,6 +21,7 @@ import {
 import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
 import { caseSuggestionItems } from '../suggestionItems';
+import { describePending, pendingMarks } from '../pendingMarks';
 import type {
   AttachmentExtraction,
   BoatRow,
@@ -464,10 +465,27 @@ export function CaseForm({ caseId }: Props) {
   };
   const autoProceduralLines = formatAutoProceduralLines(liveCase);
 
+  // SPEC-026: one line per writing box that still has gaps or X / Y labels.
+  // Recomputed every render from the same texts the boxes show.
+  const pendingLines = (
+    [
+      ['Procedural Matters', proceduralMatters],
+      ['Facts Found', factsFound],
+      ['Conclusion', conclusion],
+      ['Rules Applicable', rulesApplicable],
+      ['Decision', decision],
+    ] as const
+  ).flatMap(([box, text]) => {
+    const p = pendingMarks(text);
+    return p.count > 0 ? [`${box}: ${describePending(p)}`] : [];
+  });
+
   // D-005 follow-up: single-click .html export of the full decision,
   // matching the source Word template's layout, built from the live
   // (possibly unsaved) case data — replaces the old "Copy all" button.
   function handleDownload() {
+    // SPEC-026: warn, never block — the drafter may want an unfinished draft.
+    if (pendingLines.length > 0 && !window.confirm(`${pendingLines.join('\n')}\n\nDownload anyway?`)) return;
     const html = formatFullDecisionHtml(liveCase);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -696,6 +714,7 @@ export function CaseForm({ caseId }: Props) {
         <WritingBox
           label="Rules Applicable"
           copyText={formatRulesApplicable(liveCase)}
+          pendingText={rulesApplicable}
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
           textarea={
@@ -803,6 +822,7 @@ export function CaseForm({ caseId }: Props) {
             jury={caseFull.jury}
             onJuryChange={() => refreshCasePart('jury')}
             findOrCreatePerson={findOrCreatePerson}
+            pending={pendingLines}
           />
         </div>
       )}

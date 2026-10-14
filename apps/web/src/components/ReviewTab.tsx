@@ -19,6 +19,7 @@ interface Props {
   jury: CaseFull['jury'];
   onJuryChange: () => Promise<void>; // refreshes ONLY caseFull.jury — never the text boxes
   findOrCreatePerson: (fullName: string) => Promise<number>;
+  pending: string[]; // SPEC-026: one line per box with unfilled gaps / X-Y labels
 }
 
 // SPEC-024 step 2a: the Review tab's content, moved verbatim out of
@@ -42,11 +43,17 @@ export function ReviewTab({
   jury,
   onJuryChange,
   findOrCreatePerson,
+  pending,
 }: Props) {
   return (
     <>
       <section className="box review-box">
         <h2>Review</h2>
+        {pending.map((line) => (
+          <p key={line} className="pending-note">
+            {line}
+          </p>
+        ))}
         <h3>Procedural Matters</h3>
         <textarea value={proceduralMatters} onChange={(e) => onProceduralMattersChange(e.target.value)} rows={4} />
         <h3>Facts Found</h3>

@@ -1277,3 +1277,23 @@ conocido, se aborda en F6 con un aviso). La inserción hecha por la aplicación
 no entra en el historial de deshacer del navegador. No se tocan el esquema ni
 la API. Sustituye en lo necesario el "frases con huecos" de `CLAUDE.md`, sin
 editarlo.
+
+## D-037 · 2026-10-14 · accepted
+
+**Aviso de huecos sin rellenar (SPEC-026, F6 primer trozo).** Cada caja de
+redacción muestra, bajo su cabecera (visible también colapsada), una línea
+"N gaps, M party labels (X/Y) still to fill" cuando el texto que escribió el
+juez aún tiene `[huecos]` o etiquetas `X`/`Y` (misma definición que SPEC-025, una
+sola función). El resumen aparece arriba de la pestaña Review y Download pide
+una confirmación con el recuento por caja. **Avisa, no bloquea**: el humano
+decide. Rules Applicable se analiza solo por el texto de su caja (la lista de
+citas viene del corpus); Parties no se analiza. Cierra la consecuencia abierta
+en D-036.
+
+**Alternatives considered:** bloquear Download con pendientes (rechazada: impide
+sacar un borrador a propósito); marcar los huecos dentro del cuadro (rechazada:
+complica el cuadro de texto plano); avisar solo al descargar (rechazada: Copy
+por caja es el camino más usado).
+
+**Consequences:** falsos positivos posibles (`[sic]`, una `X`/`Y` escrita a
+propósito) que solo informan. Solo cliente; sin cambios de API ni de datos.

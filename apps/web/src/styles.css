@@ -1002,6 +1002,12 @@ textarea:focus {
   font-size: 0.8em;
 }
 
+.pending-note {
+  margin: 4px 0 0;
+  font-size: 0.8em;
+  color: #8a5a00;
+}
+
 .party-bar {
   display: flex;
   flex-direction: column;
