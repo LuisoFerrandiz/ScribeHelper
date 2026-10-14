@@ -268,3 +268,10 @@ export interface CaseFull extends CaseRow {
   linkedCases: { id: number; case_number: string }[];
   attachments: CaseAttachmentRow[];
 }
+
+// SPEC-030: earlier boxes sent as read-only context to the AI ghost text.
+export interface ChainContext {
+  facts_found?: string;
+  rules_applicable?: string;
+  conclusion?: string;
+}

@@ -714,6 +714,7 @@ export function CaseForm({ caseId }: Props) {
             <GhostTextarea
               caseId={caseId}
               box="conclusion"
+              chain={{ facts_found: factsFound, rules_applicable: rulesApplicable }}
               value={conclusion}
               onChange={setConclusion}
               rows={4}
@@ -755,6 +756,7 @@ export function CaseForm({ caseId }: Props) {
             <GhostTextarea
               caseId={caseId}
               box="rules_applicable"
+              chain={{ facts_found: factsFound }}
               value={rulesApplicable}
               onChange={setRulesApplicable}
               rows={6}
@@ -805,6 +807,7 @@ export function CaseForm({ caseId }: Props) {
           <GhostTextarea
             caseId={caseId}
             box="decision"
+            chain={{ facts_found: factsFound, rules_applicable: rulesApplicable, conclusion }}
             value={decision}
             onChange={setDecision}
             rows={4}

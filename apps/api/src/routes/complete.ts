@@ -10,14 +10,14 @@ const VALID_BOXES: CompleteBox[] = ['procedural_matters', 'facts_found', 'conclu
 // rather than reusing the draft endpoint.
 export function registerCompleteRoute(app: FastifyInstance) {
   app.post('/cases/:id/complete', async (req, reply) => {
-    const { box, text } = req.body as { box?: string; text?: string };
+    const { box, text, context } = req.body as { box?: string; text?: string; context?: unknown };
     if (!box || !VALID_BOXES.includes(box as CompleteBox)) {
       return reply.code(400).send({ error: `box must be one of ${VALID_BOXES.join(', ')}` });
     }
     if (typeof text !== 'string') return reply.code(400).send({ error: 'text is required' });
 
     try {
-      const suggestion = await generateInlineCompletion(box as CompleteBox, text);
+      const suggestion = await generateInlineCompletion(box as CompleteBox, text, context);
       return { suggestion };
     } catch (e) {
       return reply.code(502).send({ error: (e as Error).message });

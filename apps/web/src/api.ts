@@ -1,5 +1,6 @@
 import type { BoxStamps } from './staleBoxes';
 import type {
+  ChainContext,
   AttachmentExtraction,
   BoatRow,
   CaseAttachmentRow,
@@ -196,8 +197,8 @@ export const api = {
     post<DraftResult>(`/cases/${caseId}/draft`, { box, currentText }),
   suggestPhrasesFromExamples: (box: ExampleSuggestionBox) =>
     request<ExampleSuggestions>(`/ai/example-suggestions/${box}`),
-  completeInline: (caseId: number, box: RulesBox, text: string) =>
-    post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text }),
+  completeInline: (caseId: number, box: RulesBox, text: string, context?: ChainContext) =>
+    post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text, ...(context ? { context } : {}) }),
 
   login: (username: string, password: string) => post<SessionUser>('/auth/login', { username, password }),
   logout: () => request<void>('/auth/logout', { method: 'POST' }),

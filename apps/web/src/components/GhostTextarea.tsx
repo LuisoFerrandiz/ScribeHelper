@@ -13,7 +13,7 @@ import { api } from '../api';
 import { nextGap, normalizePhraseText, phraseGaps, prevGap, replaceParty } from '../phraseGaps';
 import type { Range } from '../phraseGaps';
 import { usePhraseCompletions } from '../usePhraseCompletions';
-import type { PhraseBox, RulesBox } from '../types';
+import type { ChainContext, PhraseBox, RulesBox } from '../types';
 import { PartyBar } from './PartyBar';
 
 interface SailNumberRole {
@@ -37,6 +37,9 @@ interface Props {
   phraseRefreshKey?: number; // changes when the user saves a phrase
   // Boats of the case, for the X / Y buttons of the party bar (SPEC-025 RF-005).
   parties?: SailNumberRole[];
+  // SPEC-030: earlier boxes of the chain, read-only context for the AI ghost
+  // text. Read when the request fires, so a change never re-fires it by itself.
+  chain?: ChainContext;
 }
 
 export interface GhostTextareaHandle {
@@ -82,7 +85,7 @@ const CLOSING_INPUTS = ['insertFromPaste', 'deleteByCut', 'insertFromDrop', 'del
 // the inserted text ("zone"): the first gap is selected, Tab / Shift+Tab walk
 // the gaps, and X / Y labels are resolved with the party bar.
 export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function GhostTextarea(
-  { caseId, box, value, onChange, rows, sailNumberRoles, phraseBox, phraseRefreshKey, parties },
+  { caseId, box, value, onChange, rows, sailNumberRoles, phraseBox, phraseRefreshKey, parties, chain },
   ref,
 ) {
   const [suggestion, setSuggestion] = useState('');
@@ -97,6 +100,8 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
   const zoneRef = useRef<Range | null>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
+  const chainRef = useRef(chain);
+  chainRef.current = chain;
   const touched = useRef(false);
   const pendingSelection = useRef<Range | null>(null);
   const ignoreBlur = useRef(false);
@@ -200,7 +205,7 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
     const thisRequest = ++requestId.current;
     const handle = setTimeout(() => {
       api
-        .completeInline(caseId, box, value)
+        .completeInline(caseId, box, value, chainRef.current)
         .then((result) => {
           if (requestId.current === thisRequest) setSuggestion(result.suggestion);
         })

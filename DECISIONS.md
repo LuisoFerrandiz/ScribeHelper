@@ -1373,3 +1373,35 @@ no mueven `rules_applicable_at`; un Save desde una pestaña con texto viejo
 marca esa caja como cambiada; falsos avisos por cambios menores se descartan
 con el botón; resolución de un segundo; los casos existentes no avisan hasta
 que se editan. Migración aditiva e idempotente.
+
+## D-041 · 2026-10-14 · accepted
+
+**El texto fantasma de IA ve las cajas anteriores (SPEC-030, F6).** Amplía
+D-025, que solo daba al modelo el final de la caja que se escribe. Ahora
+`POST /cases/:id/complete` acepta `context` con las cajas anteriores de la
+cadena, solo como datos de lectura: Rules Applicable ve Facts Found;
+Conclusion ve Facts Found y Rules Applicable; Decision ve además Conclusion.
+El servidor aplica la tabla (ignora otras claves, valores no cadena y
+cualquier `context` que no sea un objeto simple), conserva los primeros 1500
+caracteres de cada caja de contexto, quita del contexto las marcas del mensaje
+y declara en el prompt que el contexto son datos y no instrucciones. Para Rules
+Applicable se quitan los **dígitos** de Facts Found antes de enviarlo y el
+prompt prohíbe nombrar reglas, en cifras o en palabras; el filtro de salida de
+dígitos y prefijos se mantiene (D-004). En Conclusion y Decision solo puede
+aparecer una referencia de regla que ya esté en las cajas anteriores o en el
+texto dado. El cliente lee el contexto de una referencia al disparar la
+petición, así que un cambio de contexto no relanza llamadas.
+
+**Alternatives considered:** dar al modelo los hechos del caso desde la base de
+datos (rechazada: ignora el texto sin guardar y obliga a leer la BD en cada
+pausa); contexto en todas las cajas, incluida Facts Found (rechazada: no hay
+cajas anteriores en la cadena); prompt caching del contexto (rechazada por
+ahora: el contexto cambia con cada edición); enviar el contexto completo sin
+tope (rechazada: coste en una llamada que se dispara al teclear).
+
+**Consequences:** más entrada por llamada (hasta 4 × 1500 caracteres en
+Decision) en un modelo barato (Haiku). Límites aceptados: una regla nombrada en
+palabras en Rules Applicable puede pasar el filtro (se acepta con Tab y no
+queda registrada); el fantasma ya visible puede quedar obsoleto si cambia una
+caja anterior; el contexto no se valida contra el corpus, pero SPEC-028 avisa
+de referencias que no existen. Sin cambios de esquema.
