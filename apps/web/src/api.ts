@@ -96,7 +96,6 @@ export const api = {
 
   listJuryMembers: () => request<JuryMemberRow[]>('/jury-members'),
   createJuryMember: (data: Partial<JuryMemberRow>) => post<JuryMemberRow>('/jury-members', data),
-  deleteJuryMember: (id: number) => del(`/jury-members/${id}`),
 
   listCaseJuryMembers: () => request<CaseJuryMemberRow[]>('/case-jury-members'),
   createCaseJuryMember: (data: Partial<CaseJuryMemberRow>) =>

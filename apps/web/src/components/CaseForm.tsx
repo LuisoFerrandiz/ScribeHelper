@@ -61,8 +61,9 @@ interface WitnessDraft {
 // split out of "General" into its own tab for the same reason
 // (General is a plain form, Parties & Witness is a document box —
 // mixing the two in one tab is what D-029 rule 1 forbids).
-// Per-case jury assignment (Jury Members) has no tab here any more —
-// pulled out 2026-10-05 to become its own top-level tab in a later spec.
+// Per-case jury assignment (Jury Members) is not a tab: JurySlots sits at
+// the bottom of the Review tab (the top-level "Jury" menu entry was
+// removed, D-031).
 export function CaseForm({ caseId }: Props) {
   const [caseFull, setCaseFull] = useState<CaseFull | null>(null);
   const [boats, setBoats] = useState<BoatRow[]>([]);
@@ -138,9 +139,8 @@ export function CaseForm({ caseId }: Props) {
 
   // UI grouping only — copy-all still walks the fixed CONTEXT.md box
   // order (formatFullDecision), unaffected by which tab is active.
-  // Per-case jury assignment used to live here as its own tab; pulled
-  // out (2026-10-05, user's call) to become its own top-level tab in a
-  // later spec instead of a CaseForm sub-tab.
+  // Per-case jury assignment is not a tab: JurySlots sits at the bottom of
+  // the Review tab (D-031).
   type CaseTab =
     | 'attachments'
     | 'general'
