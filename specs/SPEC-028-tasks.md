@@ -1,6 +1,6 @@
 # SPEC-028 — Tareas
 
-Estado (2026-10-14): tareas 0-5 hechas (build api y web, script OK); falta commit (6) y verificación en vivo.
+Estado (2026-10-14): todo hecho; desplegado `0e38425` y verificado en vivo (RRS 44.9 y SI 999 avisan; 18.2, 44.2(c), SI 12 no; vacío sin aviso).
 
 - [x] **0. `reviewer` sobre la spec** y ajustes.
 - [x] **1. `unresolvedRefs` y script `check_f6b.ts`.**
