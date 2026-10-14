@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { api } from '../api';
 import { AttachmentsTab } from './AttachmentsTab';
-import { CopyBox } from './CopyBox';
 import { GhostTextarea } from './GhostTextarea';
 import { GeneralTab } from './GeneralTab';
+import { PartiesTab } from './PartiesTab';
 import { PartyReference } from './PartyReference';
 import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
@@ -13,12 +13,9 @@ import { WritingBox } from './WritingBox';
 import {
   buildDecisionFilename,
   formatAutoProceduralLines,
-  formatBoat,
   formatFullDecisionHtml,
-  formatParties,
   formatRulesApplicable,
   missingCitations,
-  formatWitnesses,
 } from '../format';
 import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
@@ -533,122 +530,28 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'parties' && (
         <div className="tab-panel">
-          {/* Parties & Witness — one box, matching the fixed document
-              order (Parties, then Witness — format.ts's
-              formatFullDecision) both in the UI and in Copy. */}
-          <CopyBox
-            label="Parties & Witness"
-            text={`${formatParties(liveCase)}\n\n${formatWitnesses(liveCase)}`}
-            copied={!!copied.parties && !!copied.witness}
-            onCopied={() => {
-              markCopied('parties');
-              markCopied('witness');
-            }}
-          >
-            {(['initiator', 'respondent'] as PartyRole[]).map((role) => (
-              <div key={role}>
-                <h3>{role === 'initiator' ? 'Initiator(s)' : 'Respondent(s)'}</h3>
-                <ul className="list">
-                  {partyDrafts[role].map((p, i) => (
-                    <li key={`${p.id ?? 'new'}-${i}`}>
-                      {formatBoat({ sail_number: p.sailNumber || null, boat_name: p.boatName || null })}
-                      {p.representedBy ? `, represented by ${p.representedBy}` : ''}{' '}
-                      <button type="button" onClick={() => handleUnstageParty(role, i)}>
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                  {partyDrafts[role].length === 0 && (
-                    <li className="muted">No {role === 'initiator' ? 'initiators' : 'respondents'} yet.</li>
-                  )}
-                </ul>
-                {extraction?.parties[role] && (
-                  <p className="muted">
-                    Suggested:{' '}
-                    {formatBoat({
-                      sail_number: extraction.parties[role]?.sail_number ?? null,
-                      boat_name: extraction.parties[role]?.boat_name ?? null,
-                    })}{' '}
-                    <button type="button" onClick={() => addSuggestedParty(role)}>
-                      Add
-                    </button>
-                  </p>
-                )}
-                <form onSubmit={(e) => handleStageParty(role, e)} className="inline-form">
-                  <input
-                    list="boat-sail-numbers"
-                    placeholder="Sail number"
-                    value={partyForm[role].sailNumber}
-                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], sailNumber: e.target.value } }))}
-                  />
-                  <input
-                    list="boat-names"
-                    placeholder="Boat name"
-                    value={partyForm[role].boatName}
-                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], boatName: e.target.value } }))}
-                  />
-                  <input
-                    list="people-list"
-                    placeholder="Represented by"
-                    value={partyForm[role].representedBy}
-                    onChange={(e) => setPartyForm((prev) => ({ ...prev, [role]: { ...prev[role], representedBy: e.target.value } }))}
-                  />
-                  <button type="submit">Add</button>
-                </form>
-              </div>
-            ))}
-
-            <h3>Witness</h3>
-            <ul className="list">
-              {witnessDraft.map((w, i) => (
-                <li key={`${w.id ?? 'new'}-${i}`}>
-                  {w.fullName}
-                  {w.role ? ` — ${w.role}` : ''}{' '}
-                  <button type="button" onClick={() => handleUnstageWitness(i)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-              {witnessDraft.length === 0 && <li className="muted">No witnesses yet.</li>}
-            </ul>
-            {extraction && extraction.witnesses.length > 0 && (
-              <ul className="list">
-                {extraction.witnesses.map((w, i) => (
-                  <li key={i}>
-                    Suggested: {w.full_name}
-                    {w.role ? ` — ${w.role}` : ''}{' '}
-                    <button type="button" onClick={() => addSuggestedWitness(w)}>
-                      Add
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <form onSubmit={handleStageWitness} className="inline-form">
-              <input
-                list="people-list"
-                placeholder="Full name"
-                value={witnessName}
-                onChange={(e) => setWitnessName(e.target.value)}
-                required
-              />
-              <input placeholder="Role" value={witnessRole} onChange={(e) => setWitnessRole(e.target.value)} />
-              <button type="submit">Add</button>
-            </form>
-            <datalist id="boat-sail-numbers">
-              {boats.map((b) => (
-                <option key={b.id} value={b.sail_number} />
-              ))}
-            </datalist>
-            <datalist id="boat-names">
-              {boats.map((b) => b.boat_name && <option key={b.id} value={b.boat_name} />)}
-            </datalist>
-            <datalist id="people-list">
-              {people.map((p) => (
-                <option key={p.id} value={p.full_name} />
-              ))}
-            </datalist>
-          </CopyBox>
+          <PartiesTab
+            liveCase={liveCase}
+            partyDrafts={partyDrafts}
+            partyForm={partyForm}
+            setPartyForm={setPartyForm}
+            witnessDraft={witnessDraft}
+            witnessName={witnessName}
+            setWitnessName={setWitnessName}
+            witnessRole={witnessRole}
+            setWitnessRole={setWitnessRole}
+            extraction={extraction}
+            boats={boats}
+            people={people}
+            copied={copied}
+            markCopied={markCopied}
+            onUnstageParty={handleUnstageParty}
+            onStageParty={handleStageParty}
+            onAddSuggestedParty={addSuggestedParty}
+            onUnstageWitness={handleUnstageWitness}
+            onStageWitness={handleStageWitness}
+            onAddSuggestedWitness={addSuggestedWitness}
+          />
         </div>
       )}
 
