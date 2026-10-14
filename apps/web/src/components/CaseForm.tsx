@@ -18,6 +18,7 @@ import {
   formatWitnesses,
 } from '../format';
 import { type CaseTab } from '../caseTabs';
+import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
 import { caseSuggestionItems } from '../suggestionItems';
 import type {
   AttachmentExtraction,
@@ -31,25 +32,6 @@ import type {
 
 interface Props {
   caseId: number;
-}
-
-// SPEC-016: a case can have several initiators/several respondents —
-// mirrors WitnessDraft's own staging pattern (null id = not yet
-// persisted, created on Save; add/remove only, no inline edit of an
-// already-saved row, same as Witness).
-interface PartyDraft {
-  id: number | null;
-  sailNumber: string;
-  boatName: string;
-  representedBy: string;
-}
-
-const emptyPartyDraft: PartyDraft = { id: null, sailNumber: '', boatName: '', representedBy: '' };
-
-interface WitnessDraft {
-  id: number | null; // null = not yet persisted, created on Save
-  fullName: string;
-  role: string;
 }
 
 // The case form. Boxes in fixed form order for the official document
@@ -171,16 +153,9 @@ export function CaseForm({ caseId }: Props) {
       setRulesApplicable(full.rules_applicable ?? '');
       setDecision(full.decision);
 
-      setPartyDrafts({
-        initiator: full.parties
-          .filter((p) => p.role === 'initiator')
-          .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
-        respondent: full.parties
-          .filter((p) => p.role === 'respondent')
-          .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
-      });
+      setPartyDrafts(toPartyDrafts(full));
 
-      setWitnessDraft(full.witnesses.map((w) => ({ id: w.id, fullName: w.full_name, role: w.role ?? '' })));
+      setWitnessDraft(toWitnessDrafts(full));
 
       setError(null);
     } catch (e) {
@@ -228,15 +203,8 @@ export function CaseForm({ caseId }: Props) {
     const full = await api.getCaseFull(caseId);
     setCaseFull((prev) => (prev ? { ...prev, parties: full.parties, witnesses: full.witnesses } : full));
 
-    setPartyDrafts({
-      initiator: full.parties
-        .filter((p) => p.role === 'initiator')
-        .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
-      respondent: full.parties
-        .filter((p) => p.role === 'respondent')
-        .map((p) => ({ id: p.id, sailNumber: p.sail_number ?? '', boatName: p.boat_name ?? '', representedBy: p.represented_by ?? '' })),
-    });
-    setWitnessDraft(full.witnesses.map((w) => ({ id: w.id, fullName: w.full_name, role: w.role ?? '' })));
+    setPartyDrafts(toPartyDrafts(full));
+    setWitnessDraft(toWitnessDrafts(full));
   }
 
   useEffect(() => {
