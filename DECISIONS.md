@@ -1154,3 +1154,35 @@ dejar solo D-032 (rechazada: dejaba la documentación contradictoria).
 **Consequences:** `CLAUDE.md` y `constitution.md` coinciden con el código
 desplegado. La decisión de citas de SPEC-022 pasa a ser D-034. ISS-012 de
 `issue.md` queda resuelto.
+
+## D-035 · 2026-10-14 · accepted
+
+**Context:** ISS-006. `CaseForm.tsx` tenía 1091 líneas: estado del caso,
+carga, refrescos parciales, guardado, procesado de notas y adjuntos, y el
+JSX de nueve pestañas, sin suite de tests. Cada spec reciente lo tocaba y el
+riesgo de regresión crecía.
+
+**Decision:** refactor puro (SPEC-024), en pasos pequeños con un commit y un
+redeploy por paso, comparando el DOM renderizado antes y después. Reglas:
+sin cambio observable (mismo DOM, textos, clases y comentarios movidos tal
+cual); **el estado se queda en `CaseForm`**, incluido el estado efímero de
+los formularios inline y de subida (hoy sobrevive al cambio de pestaña);
+componentes a nivel de módulo (si no, se remontarían y romperían el texto
+fantasma y el foco); `CaseForm` pinta `div.tab-panel`; los refrescos
+parciales siguen siendo parciales. Resultado: `TabBar`/`caseTabs`,
+`caseDrafts`, `refreshCasePart`, `ReviewTab`, `GeneralTab`, `AttachmentsTab`,
+`PartiesTab` y `WritingBox` (compartido por las cinco cajas de redacción).
+`CaseForm.tsx`: 758 líneas.
+
+**Alternatives considered:** mover también el estado de formularios a cada
+pestaña (rechazada: cambiaba el comportamiento al cambiar de pestaña);
+extraer cada pestaña de redacción como componente propio (rechazada: lo único
+que comparten es `WritingBox`, y las diferencias se quedan en línea); hooks
+`useNotesExtraction`/`useCaseSave` (aplazada: riesgo alto por los cierres
+sobre estado, solo a petición).
+
+**Consequences:** SPEC-022 (F1) y futuras specs tocan `RulesSuggestions`,
+`WritingBox` o la pestaña concreta, no un fichero de 1000 líneas. Método de
+verificación reutilizable para refactors sin tests: hash de `innerHTML` por
+pestaña sobre dos casos de prueba, más comprobaciones de comportamiento en
+vivo. La decisión de citas de SPEC-022 sigue siendo D-034.

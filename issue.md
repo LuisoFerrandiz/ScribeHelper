@@ -207,11 +207,18 @@ Riesgos altos:
 - **Criterio de cierre:** los dos tipos son idénticos o están enlazados de
   forma explícita; `npm run typecheck` (web) y `npm run build` (api) pasan.
 
-## ISS-006 — P2 `CaseForm.tsx` concentra demasiada lógica
+## ISS-006 — CERRADO `CaseForm.tsx` concentra demasiada lógica
 
-- **Estado:** abierto. Actualizado 2026-10-14: `CaseForm.tsx` tiene ahora 1091
-  líneas (SPEC-020 y SPEC-023 sacaron lista de sugerencias y buscador a
-  `SuggestionList.tsx` y `RulesSuggestions.tsx`); F1 lo adelgazará más.
+- **Estado:** resuelto (2026-10-14) por `SPEC-024` (spec v2 revisada, 10 pasos
+  con un commit cada uno, de `57568d9` a `44cfca5`; desplegados y verificados
+  uno a uno). `CaseForm.tsx` pasó de **1091 a 758 líneas**. Se extrajeron
+  `TabBar`/`caseTabs`, `caseDrafts`, `refreshCasePart`, `ReviewTab`,
+  `GeneralTab`, `AttachmentsTab`, `WritingBox` (usado por las cinco cajas de
+  redacción) y `PartiesTab`. Sin cambio de comportamiento: 18 hashes de DOM
+  (9 pestañas × TEST-01 y TEST-02) idénticos en cada paso y comprobaciones de
+  comportamiento en vivo. Decisión: D-035.
+- **Pendiente opcional:** paso 5 de SPEC-024 (hooks `useNotesExtraction` y
+  `useCaseSave`), solo a petición del dueño (riesgo alto, ~550-600 líneas).
 - **Evidencia (2026-10-13):** `apps/web/src/components/CaseForm.tsx` tenía 1125 líneas;
   `CaseForm()` es el nodo más conectado del grafo (36 aristas, el siguiente
   tiene 19). La comunidad "CaseForm Core" tiene cohesión 0.068 (baja).
@@ -221,7 +228,7 @@ Riesgos altos:
   refactor con límites claros (qué se extrae, qué no cambia de
   comportamiento) y verificar en vivo tras cada extracción.
 - **Criterio de cierre:** spec aprobada; refactor hecho sin cambio de
-  comportamiento observable en `http://192.168.1.105:8086/`.
+  comportamiento observable en `http://192.168.1.105:8086/`. **Cumplido.**
 
 ## ISS-007 — P3 `conclusion_candidate` / `decision_candidate`: GAP obsoleto
 
