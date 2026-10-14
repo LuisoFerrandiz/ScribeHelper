@@ -316,7 +316,7 @@ Decision. Una cita solo puede venir de 1 o 4. Fases:
 | F1 | Rules Applicable: botón "Add" desde el corpus, cita canónica con parte, `doc_type`, índice por regla, validación por límites de token | ISS-002 | **Hecha y desplegada**: `SPEC-022`, D-034, `b26325c` |
 | F2 | Lista única de sugerencias, un clic copia al cuadro | ISS-006 (facilita) | **Hecha y desplegada**: `SPEC-020`, D-030 |
 | F3 | Frases con huecos y relleno; inserción al cursor | SPEC-025 | Hecho (ccd231d, verificado en vivo) |
-| F4 | IA que complementa solo lo que las frases no dicen | — | Pendiente |
+| F4 | IA que complementa solo lo que las frases no dicen | — | **Hecha y desplegada** (alcance: huecos de datos): `SPEC-031`, D-042, `bbf977e`, verificada en vivo |
 | F5 | Reglas sugeridas desde Facts Found (FTS) | ISS-002 | **Hecha y desplegada**: `SPEC-027`, D-038, `244f436` (verificada en vivo) |
 | F6 | Cadena coherente, aviso de desfase y validar referencias tecleadas en Rules Applicable | ISS-010 | **Hecha y desplegada**: aviso de huecos (SPEC-026, D-037), referencias tecleadas (SPEC-028, D-039), desfase entre cajas (SPEC-029, D-040) y fantasma con las cajas anteriores (SPEC-030, D-041, `42dd98d`). Queda fuera el panel de borrador (sin montar) |
 
