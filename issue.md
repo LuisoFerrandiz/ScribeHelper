@@ -52,11 +52,13 @@ reorganización de SPEC-033 (D-045): permanentes y de evento en dos cuadros, la
 SB20 migrada a evento como "Class rules" con 110 secciones, enmiendas citadas
 con el prefijo del documento enmendado.
 
+**Hecho el 2026-10-15:** persona de prueba "ZZ Refactor Test" (id 9, sin
+referencias) borrada de producción con `DELETE /api/people/9`; `graphify update .`
+y `graphify label` ejecutados (1304 nodos, 114 comunidades).
+
 **Pendientes (2026-10-15), sin issue propio:**
 
 - Opcional: `PRAGMA integrity_check` de una copia de `~/backups/scribe_helper/`.
-- Opcional: borrar la persona de prueba "ZZ Refactor Test" de producción (no
-  hay interfaz para ello) y `graphify label` para nombrar comunidades.
 - Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
   `AIDraftPanel`/`draft.ts`.
 ---
