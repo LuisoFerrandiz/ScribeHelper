@@ -20,3 +20,7 @@ Thumbs.db
 
 # graphify output (regenerable, machine-specific paths)
 graphify-out/
+
+# Paris 2024 NoR/SI used to tune the rules parser (owner decision: not versioned)
+data/originals/Paris-2024-*
+data/rules/event/Paris-2024-*

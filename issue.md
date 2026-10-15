@@ -51,17 +51,11 @@ ISS-008 e ISS-014 se cerraron el 2026-10-15; el resto está cerrado o resuelto.
 
 - Probar en vivo la subida de un fichero de reglas con el selector de tipo de
   documento (`doc_type`): necesita un fichero real del dueño.
-- Probar que `case_link` se borra en ambas direcciones al borrar un caso.
 - Opcional: `PRAGMA integrity_check` de una copia de `~/backups/scribe_helper/`.
-- Opcional: añadir los ficheros de París 2024 a `.gitignore`; borrar la persona
-  de prueba "ZZ Refactor Test" de producción (no hay interfaz para ello).
-- Opcional: `graphify update .` (sin LLM) y `graphify label` para nombrar
-  comunidades.
+- Opcional: borrar la persona de prueba "ZZ Refactor Test" de producción (no
+  hay interfaz para ello) y `graphify label` para nombrar comunidades.
 - Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
   `AIDraftPanel`/`draft.ts`.
-- Ideas aparcadas (micrófono en la audiencia, Deepgram y alternativas):
-  `specs/FUTURAS-SPECS.md`, FUT-001. Sin fecha.
-
 ---
 
 ## ISS-001 — CERRADO Datos de casos versionados en Git
@@ -285,7 +279,7 @@ ISS-008 e ISS-014 se cerraron el 2026-10-15; el resto está cerrado o resuelto.
 
 ## ISS-008 — CERRADO Limpieza de adjuntos al borrar un caso
 
-- **Estado:** **cerrado (2026-10-15)**, verificado en vivo: caso de prueba `ZZ-DEL` con adjunto, borrado con DELETE (204); caso, adjunto y lista dan 404/vacío y los dos ficheros (`.md` y original) desaparecen de `data/case_attachments/`. Sin comprobar aún que `case_link` se borra en ambas direcciones. Detalle de la verificación previa en código:
+- **Estado:** **cerrado (2026-10-15)**, verificado en vivo: caso de prueba `ZZ-DEL` con adjunto, borrado con DELETE (204); caso, adjunto y lista dan 404/vacío y los dos ficheros (`.md` y original) desaparecen de `data/case_attachments/`. `case_link` se borra en ambas direcciones (verificado después, ver más abajo). Detalle de la verificación previa en código:
   `apps/api/src/routes/caseDelete.ts` lee los `case_attachment` del caso,
   llama a `deleteAttachmentFiles` (`case-attachments/storage.ts`, `rm` con
   `force: true` del `.md` y del original) y luego borra la fila
@@ -294,7 +288,11 @@ ISS-008 e ISS-014 se cerraron el 2026-10-15; el resto está cerrado o resuelto.
   y la ruta exige admin (`requireAdmin`). Sin hueco de ficheros huérfanos.
   Observación menor: los ficheros se borran antes que las filas; si el
   borrado de la BD fallara, quedarían filas sin fichero. Probabilidad baja.
-  La prueba en vivo ya está hecha (ver Estado). Queda solo `case_link`.
+  La prueba en vivo ya está hecha (ver Estado). `case_link` también
+  verificado en vivo (2026-10-15): con dos casos enlazados `ZZ-LA`↔`ZZ-LB`, al
+  borrar `ZZ-LA` desaparecen las dos filas del enlace y `ZZ-LB` queda sin
+  enlaces; lo mismo al borrar el caso enlazado por el otro lado (`ZZ-LC`).
+  Casos de prueba borrados, `case_link` vacío.
 - **Evidencia:** la memoria de handoff del 2026-10-05 anotaba un hueco: el
   `DELETE /cases/:id` genérico no limpiaba ficheros de adjunto. `SPEC-015`
   (RF-004) lo cubre con un borrado de ficheros solo para admin.
