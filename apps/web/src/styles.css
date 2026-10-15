@@ -787,13 +787,16 @@ textarea:focus {
   margin-bottom: 8px;
 }
 
+/* Same width as the text box the scribe writes in: it sits in the textarea column and
+   each card takes the whole width. */
 .proposals-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .proposal-card {
+  width: 100%;
   text-align: left;
   font-size: 0.9em;
   white-space: pre-wrap;

@@ -21,9 +21,9 @@ interface Props {
 export function WritingBox({ label, copyText, pendingText, notes, below, copied, onCopied, textarea, side, tray }: Props) {
   return (
     <CopyBox label={label} text={copyText} pendingText={pendingText ?? copyText} notes={notes} copied={copied} onCopied={onCopied}>
-      {tray}
       <div className="box-body-split">
         <div className="textarea-col">
+          {tray}
           {textarea}
           {below}
         </div>

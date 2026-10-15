@@ -156,6 +156,9 @@ export interface ValidateInput {
   sources: Record<FillSource, string>;
   // Everything the model saw, to check numbers of a new text against.
   seenText: string;
+  // The same without the protest form: the form is one side's written account, so a
+  // text that only holds because of it must say whose account it is.
+  seenWithoutForm: string;
 }
 
 function applyFills(body: string, gaps: Candidate['gaps'], values: Map<number, string>): string {
@@ -200,7 +203,9 @@ export function isGrounded(text: string, seen: string): boolean {
 // A new text is accepted only if it carries no number the sources do not have,
 // no rule reference and no outcome word, is short, and every content word is in
 // the sources. (SPEC-034 RF-010.)
-function acceptableNewText(text: string, box: ProposalBox, seen: string): boolean {
+const ATTRIBUTION = /\b(states?|stated|claims?|claimed|alleges?|alleged|reports?|reported|says?|said|contends?|argues?|submits?|according to)\b/i;
+
+function acceptableNewText(text: string, box: ProposalBox, seen: string, seenWithoutForm: string): boolean {
   if (!NEW_TEXT_BOXES.includes(box)) return false;
   if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return false;
   if (CHATTER.test(text) || OUTCOME_WORDS.test(text)) return false;
@@ -208,7 +213,10 @@ function acceptableNewText(text: string, box: ProposalBox, seen: string): boolea
   const hay = norm(seen);
   const numbers = text.match(/\d[\d:.,/-]*\d|\d/g) ?? [];
   if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return false;
-  return isGrounded(text, seen);
+  if (!isGrounded(text, seen)) return false;
+  // Holds only thanks to the protest form: one side's account, never an established fact.
+  if (!isGrounded(text, seenWithoutForm) && !ATTRIBUTION.test(text)) return false;
+  return true;
 }
 
 export function validateProposals(raw: unknown, input: ValidateInput): Proposal[] {
@@ -244,7 +252,7 @@ export function validateProposals(raw: unknown, input: ValidateInput): Proposal[
       }
     } else if (kind === 'new' && typeof text === 'string') {
       const t = text.trim();
-      if (acceptableNewText(t, input.box, input.seenText)) result = { text: t, phrase_id: null };
+      if (acceptableNewText(t, input.box, input.seenText, input.seenWithoutForm)) result = { text: t, phrase_id: null };
     }
     if (!result) continue;
     const key = norm(result.text);
@@ -278,7 +286,9 @@ const NEW_ALLOWED =
   'detail, manoeuvre, position, tack, which boat did what, or cause that the source does not state ' +
   'literally, and do not draw conclusions. Attribute what a person says to that person ' +
   '("The witness states that…"); never present a claim as an established fact. If a statement is ' +
-  'not literally in the sources, leave it out.';
+  'not literally in the sources, leave it out. The protest_form source is the written account of ONE ' +
+  'side, not an established fact: if you use it, say whose account it is ("The initiator states ' +
+  'that…"), and never merge it with the notes into one statement of fact.';
 const NEW_FORBIDDEN = ' Do NOT return "new" texts for this box: only candidate phrases.';
 
 export async function generateProposals(args: {
@@ -302,7 +312,9 @@ export async function generateProposals(args: {
   const chainFacts = chain.find((e) => e.key === 'facts_found')?.text ?? '';
 
   const sources = await buildSources(caseId, extras ? `${notes}\n\n${extras}` : notes, box === 'facts_found' ? text : chainFacts);
+  const { protest_form: _form, ...withoutForm } = sources;
   const seenText = [text, ...chain.map((e) => e.text), ...Object.values(sources)].join('\n');
+  const seenWithoutForm = [text, ...chain.map((e) => e.text), ...Object.values(withoutForm)].join('\n');
 
   const prompt = [
     '=== CANDIDATE PHRASES (JSON) ===',
@@ -339,7 +351,7 @@ export async function generateProposals(args: {
       .map((b) => b.text)
       .join('\n')
       .trim();
-    const proposals = validateProposals(parseJson(raw), { box, currentText: text, candidates, sources, seenText });
+    const proposals = validateProposals(parseJson(raw), { box, currentText: text, candidates, sources, seenText, seenWithoutForm });
     return { proposals, ai: 'ok' };
   } catch (e) {
     console.warn('[proposals] AI call failed:', (e as Error).message);
