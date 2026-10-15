@@ -393,3 +393,18 @@ Trabajo añadido durante el replanteo, ya desplegado salvo lo indicado:
   `doc_type`), pasarlos a `event` con `nor` y `si_amendment`. No se versionan
   (decisión del dueño). Sirvieron para ajustar el
   parser de SPEC-022 (estilo "número espacio texto", Addendums).
+
+## ISS-014 — CERRADO "Suggest from examples" devolvía siempre 0 frases
+
+- **Estado:** **cerrado (2026-10-15)**, `8827c7b` y `44b4a88`, verificado en vivo.
+- **Evidencia:** al verificar la lista de pendientes, el botón respondía 200 con 0 frases
+  en todas las cajas tras ~12 s. La API de Claude funcionaba (Haiku y Sonnet OK con el token
+  nuevo); no se veia ningún error.
+- **Causa:** el JSON de la lista se cortaba en `max_tokens: 1536` y `parsePhrases` descartaba
+  una lista cortada sin avisar. Con el limite en 3000 y mas el rescate de frases completas, ya
+  devuelve 11-15 frases por caja.
+- **Cambios:** `max_tokens` 3000 y maximo 15 frases; `salvagePhrases` para respuestas cortadas;
+  502 con mensaje si la respuesta no se puede leer; log por llamada en el contenedor `api`
+  (`[example-suggestions] caja: examples=N in= out= stop_reason= phrases=`).
+- **Nota:** una primera llamada tras el redeploy dio 502 en 1,4 s (error transitorio de la
+  API, no reproducido); las siguientes fueron 200.
