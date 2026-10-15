@@ -127,17 +127,6 @@ export interface PartyPosition {
   decision?: string;
 }
 
-// SPEC-017 — "Process" result from this case's hearing notes (not an
-// uploaded protest form): candidates for the 4 writing boxes only.
-// Keep identical to NotesExtraction in apps/api/src/ai/extractNotes.ts —
-// two separate projects, tsc will not catch drift between them.
-export interface NotesExtraction {
-  procedural_matters_candidate: string;
-  facts_found_candidates: string[];
-  conclusion_candidate: string;
-  decision_candidate: string;
-}
-
 export type PhraseBox = 'procedural_matters' | 'facts_found' | 'conclusion' | 'decision';
 // SPEC-023: boxes with ghost text. Rules Applicable is a writing box, but not a
 // phrase box (the phrase table only knows the four above).

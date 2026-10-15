@@ -6,7 +6,6 @@ import { registerCaseSummaryRoute } from './caseSummary.js';
 import { registerCaseAttachmentRoutes } from './caseAttachments.js';
 import { registerCaseDeleteRoute } from './caseDelete.js';
 import { registerExtractAttachmentsRoute } from './extractAttachments.js';
-import { registerExtractNotesRoute } from './extractNotes.js';
 import { registerResourceRoutes } from './resources.js';
 import { registerRuleSearchRoute } from './rules.js';
 import { registerFillGapsRoute } from './fillGaps.js';
@@ -97,7 +96,6 @@ export function registerRoutes(app: FastifyInstance) {
   registerCaseAttachmentRoutes(app);
   registerCaseDeleteRoute(app);
   registerExtractAttachmentsRoute(app);
-  registerExtractNotesRoute(app);
   registerResourceRoutes(app);
   registerRuleSearchRoute(app);
   registerFillGapsRoute(app);

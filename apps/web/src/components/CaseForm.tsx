@@ -30,7 +30,6 @@ import type {
   BoatRow,
   CaseFull,
   CaseRow,
-  NotesExtraction,
   PartyRole,
   PersonRow,
 } from '../types';
@@ -81,16 +80,6 @@ export function CaseForm({ caseId }: Props) {
   // SPEC-017: free-form hearing notes, persisted with the rest of the
   // form but never exported — an AI source feeding the 4 writing boxes.
   const [notes, setNotes] = useState('');
-  const [notesExtraction, setNotesExtraction] = useState<NotesExtraction | null>(null);
-  const [notesProcessing, setNotesProcessing] = useState(false);
-  // Arms the auto-trigger (10e below) only once the user edits notes in
-  // THIS session — reload() seeds this to the already-saved value, not
-  // '', so opening a case and switching tabs never fires AI on its own.
-  const lastProcessedNotes = useRef('');
-  // Synchronous in-flight guard — notesProcessing (state) updates
-  // asynchronously, so two tab switches in the same tick could both
-  // still see it as false and both fire.
-  const processingRef = useRef(false);
 
   // SPEC-016: several initiators/several respondents — one staged list
   // per role, same add/remove pattern as witnessDraft below.
@@ -160,7 +149,6 @@ export function CaseForm({ caseId }: Props) {
       setInformedAt(full.informed_at ?? '');
       setWithCaseNote(full.with_case_note ?? '');
       setNotes(full.notes ?? '');
-      lastProcessedNotes.current = full.notes ?? '';
       setProceduralMatters(full.procedural_matters);
       setFactsFound(full.facts_found);
       setConclusion(full.conclusion);
@@ -389,38 +377,6 @@ export function CaseForm({ caseId }: Props) {
     }
   }
 
-  // SPEC-017: manual "Process" trigger for hearing notes, also fired
-  // automatically (see the useEffect below) when switching into a
-  // writing-box tab if the notes changed since the last run. Never
-  // writes to the case — same click-to-insert pattern as everything
-  // else in SuggestionList.
-  async function handleProcessNotes() {
-    if (!notes.trim() || processingRef.current) return;
-    processingRef.current = true;
-    setNotesProcessing(true);
-    try {
-      setNotesExtraction(await api.extractNotes(caseId, notes));
-      lastProcessedNotes.current = notes;
-      setError(null);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      processingRef.current = false;
-      setNotesProcessing(false);
-    }
-  }
-
-  // Auto-trigger: entering a writing-box tab re-processes the notes if
-  // they changed (in this session) since the last run — never on mount
-  // (lastProcessedNotes starts equal to the loaded value, see reload()).
-  useEffect(() => {
-    const writingTabs: CaseTab[] = ['procedural', 'facts', 'conclusion', 'decision'];
-    if (writingTabs.includes(caseTab) && notes.trim() && notes !== lastProcessedNotes.current) {
-      handleProcessNotes();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseTab]);
-
   // SPEC-016: adds a new entry to that role's list instead of
   // overwriting a single slot — same spirit as addSuggestedWitness
   // below.
@@ -550,9 +506,6 @@ export function CaseForm({ caseId }: Props) {
       <section className="box hearing-notes-box">
         <h2>Hearing notes</h2>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-        <button type="button" onClick={handleProcessNotes} disabled={notesProcessing || !notes.trim()}>
-          {notesProcessing ? 'Processing…' : 'Process'}
-        </button>
       </section>
 
       <div className="tab-bar-row">
