@@ -711,13 +711,6 @@ textarea:focus {
   flex: 0 0 280px;
 }
 
-/* PartyReference + the single suggestion list (SPEC-020). */
-.suggestions-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 /* SPEC-006 RF-006 — always visible, not a collapsible section like the
    rest of the panel; just highlights as the drafter types. */
 .party-reference {
@@ -749,35 +742,18 @@ textarea:focus {
   font-size: 0.9em;
 }
 
-.suggestion-actions {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.suggestion-actions button {
-  font-size: 0.85em;
-}
-
-.suggestion-actions button[aria-pressed="true"] {
-  background: var(--accent-soft);
-}
-
 .suggestion-items {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* SPEC-020 RF-003 — long text clipped to 3 lines; the full text is the
-   tooltip and is what gets inserted. */
+/* Rules Applicable only (the phrase boxes use .proposal-card). SPEC-034 RF-020: no clamp. */
 .suggestion-item {
   text-align: left;
   font-size: 0.85em;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* SPEC-034 — proposals above the writing box: whole text, no origin, no tag. The
@@ -793,6 +769,48 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* SPEC-034 — the "More" menu: one popover under the bar, only while open. */
+.more-menu-wrap {
+  position: relative;
+}
+
+.more-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  width: min(620px, 90vw);
+  max-height: 65vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  font-size: 1.1em;
+}
+
+.more-menu-actions,
+.more-menu-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.more-menu-save input {
+  flex: 1 1 140px;
+}
+
+.more-menu-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .proposals-strip.reserve .proposals-cards {
@@ -819,18 +837,6 @@ textarea:focus {
 .proposals-bar button {
   padding: 0 6px;
   font-size: 1em;
-}
-
-/* SPEC-032 — label of a party's claim (the only suggestion that shows its origin). */
-.suggestion-tag {
-  display: inline-block;
-  margin-right: 6px;
-  padding: 0 5px;
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  background: var(--accent-soft);
-  font-size: 0.8em;
-  font-weight: 600;
 }
 
 .rule-picker {

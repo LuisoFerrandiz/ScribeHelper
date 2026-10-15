@@ -7,7 +7,6 @@ import { PartiesTab } from './PartiesTab';
 import { PartyReference } from './PartyReference';
 import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
-import { SuggestionList } from './SuggestionList';
 import { ProposalsTray } from './ProposalsTray';
 import { TabBar } from './TabBar';
 import { WritingBox } from './WritingBox';
@@ -21,8 +20,7 @@ import {
 } from '../format';
 import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
-import { caseSuggestionItems } from '../suggestionItems';
-import { partyPositionContext, partyPositionItems } from '../partyPosition';
+import { partyPositionContext } from '../partyPosition';
 import { describePending, pendingMarks } from '../pendingMarks';
 import { staleSources, type BoxStamps, type ChainBox } from '../staleBoxes';
 import { StaleNote } from './StaleNote';
@@ -649,6 +647,8 @@ export function CaseForm({ caseId }: Props) {
             instantLines={autoProceduralLines}
             refreshKey={phraseRefresh}
             onInsert={(text) => proceduralBoxRef.current?.insertAtCaret(text)}
+            getSelectedText={() => proceduralBoxRef.current?.getSelectedText() ?? ''}
+            onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
           />
         }
         textarea={
@@ -662,19 +662,6 @@ export function CaseForm({ caseId }: Props) {
             phraseBox="procedural_matters"
             phraseRefreshKey={phraseRefresh}
             parties={sailNumberRoles}
-          />
-        }
-        side={
-          <SuggestionList
-            box="procedural_matters"
-            currentText={proceduralMatters}
-            onInsert={(text) => setProceduralMatters((prev) => (prev ? `${prev}\n\n${text}` : text))}
-            onInsertPhrase={(text) => proceduralBoxRef.current?.insertAtCaret(text)}
-            onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-            items={caseSuggestionItems(
-              { lines: autoProceduralLines, paragraph: extraction?.procedural_matters_candidate },
-              { paragraph: notesExtraction?.procedural_matters_candidate },
-            )}
           />
         }
       />
@@ -698,6 +685,8 @@ export function CaseForm({ caseId }: Props) {
             notes={notes}
             refreshKey={phraseRefresh}
             onInsert={(text) => factsBoxRef.current?.insertAtCaret(text)}
+            getSelectedText={() => factsBoxRef.current?.getSelectedText() ?? ''}
+            onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
           />
         }
         textarea={
@@ -714,25 +703,12 @@ export function CaseForm({ caseId }: Props) {
             parties={sailNumberRoles}
           />
         }
-        side={
-          <div className="suggestions-panel">
-            <PartyReference
-              initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-              respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-              currentText={factsFound}
-            />
-            <SuggestionList
-              box="facts_found"
-              currentText={factsFound}
-              onInsert={(text) => setFactsFound((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              onInsertPhrase={(text) => factsBoxRef.current?.insertAtCaret(text)}
-              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-              items={caseSuggestionItems(
-                { lines: extraction?.facts_found_candidates },
-                { lines: notesExtraction?.facts_found_candidates },
-              )}
-            />
-          </div>
+        reference={
+          <PartyReference
+            initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+            respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+            currentText={factsFound}
+          />
         }
       />
         </div>
@@ -757,6 +733,8 @@ export function CaseForm({ caseId }: Props) {
               chain={{ facts_found: factsFound, rules_applicable: rulesApplicable }}
               refreshKey={phraseRefresh}
               onInsert={(text) => conclusionBoxRef.current?.insertAtCaret(text)}
+              getSelectedText={() => conclusionBoxRef.current?.getSelectedText() ?? ''}
+              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
             />
           }
           textarea={
@@ -775,19 +753,6 @@ export function CaseForm({ caseId }: Props) {
               phraseBox="conclusion"
               phraseRefreshKey={phraseRefresh}
               parties={sailNumberRoles}
-            />
-          }
-          side={
-            <SuggestionList
-              box="conclusion"
-              currentText={conclusion}
-              onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              onInsertPhrase={(text) => conclusionBoxRef.current?.insertAtCaret(text)}
-              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-              items={[
-                ...partyPositionItems(extraction, 'conclusion'),
-                ...caseSuggestionItems({}, { paragraph: notesExtraction?.conclusion_candidate }),
-              ]}
             />
           }
         />
@@ -866,6 +831,8 @@ export function CaseForm({ caseId }: Props) {
             chain={{ facts_found: factsFound, rules_applicable: rulesApplicable, conclusion }}
             refreshKey={phraseRefresh}
             onInsert={(text) => decisionBoxRef.current?.insertAtCaret(text)}
+            getSelectedText={() => decisionBoxRef.current?.getSelectedText() ?? ''}
+            onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
           />
         }
         textarea={
@@ -887,26 +854,13 @@ export function CaseForm({ caseId }: Props) {
             parties={sailNumberRoles}
           />
         }
-        side={
-          <div className="suggestions-panel">
-            <PartyReference
-              initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-              respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
-              race={race}
-              currentText={decision}
-            />
-            <SuggestionList
-              box="decision"
-              currentText={decision}
-              onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              onInsertPhrase={(text) => decisionBoxRef.current?.insertAtCaret(text)}
-              onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-              items={[
-                ...partyPositionItems(extraction, 'decision'),
-                ...caseSuggestionItems({}, { paragraph: notesExtraction?.decision_candidate }),
-              ]}
-            />
-          </div>
+        reference={
+          <PartyReference
+            initiators={partyDrafts.initiator.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+            respondents={partyDrafts.respondent.map((p) => ({ sailNumber: p.sailNumber, boatName: p.boatName }))}
+            race={race}
+            currentText={decision}
+          />
         }
       />
         </div>
