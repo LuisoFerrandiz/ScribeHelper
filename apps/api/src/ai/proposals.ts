@@ -240,11 +240,34 @@ function cleanNewText(
   const numbers = text.match(/\d[\d:.,/-]*\d|\d/g) ?? [];
   if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return null;
   const ownHay = norm(seenOwn);
-  const identifiers = numbers.filter((n) => /\d{3,}/.test(n));
-  if (identifiers.some((n) => !ownHay.includes(n.toLowerCase())) && POSITION_WORDS.test(text)) return null;
+  // A sail number the scribe never wrote, next to a position word: the model deciding which
+  // boat was where. That sentence is left out (the others stay).
+  const inventsBoatPosition = (s: string) =>
+    (s.match(/\d[\d:.,/-]*\d|\d/g) ?? []).some((n) => /\d{3,}/.test(n) && !ownHay.includes(n.toLowerCase())) &&
+    POSITION_WORDS.test(s);
+
+  // A sentence that only restates what the notes attribute to someone ("Witness Anna states
+  // that she saw the boats touch") without naming that someone turns a claim into a fact.
+  const noteSentences = sentencesOf(seenOwn);
+  const stems = (s: string) =>
+    new Set((s.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => !GLUE_WORDS.has(w)).map(stem));
+  const restatesAttributedClaim = (s: string) => {
+    if (ATTRIBUTION.test(s)) return false;
+    const mine = stems(s);
+    if (mine.size === 0) return false;
+    const matches = noteSentences.filter((n) => {
+      const theirs = stems(n);
+      let hit = 0;
+      for (const w of mine) if (theirs.has(w)) hit++;
+      return hit / mine.size >= 0.8;
+    });
+    return matches.length > 0 && matches.every((n) => ATTRIBUTION.test(n));
+  };
 
   const ownPairsRoleAndPosition = sentencesOf(seenOwn).some((s) => ROLE_WORDS.test(s) && POSITION_WORDS.test(s));
   const kept = sentencesOf(text).filter((s) => {
+    if (inventsBoatPosition(s)) return false;
+    if (restatesAttributedClaim(s)) return false;
     if (!isGrounded(s, seen)) return false;
     if (!isGrounded(s, seenWithoutForm) && !ATTRIBUTION.test(s)) return false;
     if (ROLE_WORDS.test(s) && POSITION_WORDS.test(s) && !ownPairsRoleAndPosition && !ATTRIBUTION.test(s)) return false;
@@ -318,6 +341,8 @@ const SYSTEM =
   'whether a protest is valid or any outcome. If nothing fits or you are unsure, return fewer ' +
   'proposals or {"proposals":[]}. Write in English. No markdown fence, no explanation.';
 const NEW_ALLOWED =
+  ' Refer to the boats as "the initiator" and "the respondent", as the notes do: never by sail ' +
+  'number or boat name, and never say which boat was on which tack unless the notes say it. ' +
   ' A "new" text is allowed: one short sentence (at most 400 characters) that RESTATES what one ' +
   'source sentence says, using the source\'s own words. Do not combine sentences, do not add any ' +
   'detail, manoeuvre, position, tack, which boat did what, or cause that the source does not state ' +
@@ -390,7 +415,10 @@ export async function generateProposals(args: {
       .map((b) => b.text)
       .join('\n')
       .trim();
-    const proposals = validateProposals(parseJson(raw), { box, currentText: text, candidates, sources, seenText, seenWithoutForm, seenOwn });
+    const parsed = parseJson(raw);
+    const proposals = validateProposals(parsed, { box, currentText: text, candidates, sources, seenText, seenWithoutForm, seenOwn });
+    // PROPOSALS_DEBUG=1: what the model said versus what survived the checks.
+    if (process.env.PROPOSALS_DEBUG) console.log('[proposals] raw:', raw.slice(0, 1500), '\n[proposals] kept:', JSON.stringify(proposals));
     return { proposals, ai: 'ok' };
   } catch (e) {
     console.warn('[proposals] AI call failed:', (e as Error).message);
