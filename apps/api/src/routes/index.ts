@@ -15,6 +15,7 @@ import { registerPhraseRoutes } from './phrases.js';
 import { registerDraftRoute } from './draft.js';
 import { registerExampleSuggestionsRoute } from './exampleSuggestions.js';
 import { registerCompleteRoute } from './complete.js';
+import { registerProposalsRoute } from './proposals.js';
 import { registerAuthRoutes } from './auth.js';
 import { registerUserRoutes } from './users.js';
 
@@ -104,4 +105,5 @@ export function registerRoutes(app: FastifyInstance) {
   registerDraftRoute(app);
   registerExampleSuggestionsRoute(app);
   registerCompleteRoute(app);
+  registerProposalsRoute(app);
 }

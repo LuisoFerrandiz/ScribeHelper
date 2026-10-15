@@ -25,19 +25,24 @@ export function registerPhraseRoutes(app: FastifyInstance) {
   app.get('/phrases/search', (req) => {
     const { q, box } = req.query as { q?: string; box?: string };
     if (!q?.trim()) return [];
-    const rows = db
-      .prepare(
-        `SELECT p.id, p.box, p.label, p.body, p.origin,
-                snippet(phrase_fts, 1, '[', ']', '…', 12) AS snippet
-         FROM phrase_fts
-         JOIN phrase p ON p.id = phrase_fts.phrase_id
-         WHERE phrase_fts MATCH ?
-           AND (? IS NULL OR p.box = ?)
-         ORDER BY rank
-         LIMIT 25`,
-      )
-      .all(q.trim(), box ?? null, box ?? null) as unknown as (PhraseRow & { snippet: string })[];
-    return rows;
+    // SPEC-034 RF-016: free text with punctuation or FTS operators makes MATCH throw;
+    // a query that cannot be parsed is simply "no matches".
+    try {
+      return db
+        .prepare(
+          `SELECT p.id, p.box, p.label, p.body, p.origin,
+                  snippet(phrase_fts, 1, '[', ']', '…', 12) AS snippet
+           FROM phrase_fts
+           JOIN phrase p ON p.id = phrase_fts.phrase_id
+           WHERE phrase_fts MATCH ?
+             AND (? IS NULL OR p.box = ?)
+           ORDER BY rank
+           LIMIT 25`,
+        )
+        .all(q.trim(), box ?? null, box ?? null) as unknown as (PhraseRow & { snippet: string })[];
+    } catch {
+      return [];
+    }
   });
 
   app.post('/phrases', (req, reply) => {

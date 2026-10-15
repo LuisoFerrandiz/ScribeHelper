@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/connection.js';
 import { readMarkdown } from '../resources/storage.js';
 import { explicitRefs } from '../rules/factsQuery.js';
+import { parseJson } from './json.js';
 
 // SPEC-031: the AI proposes values for the DATA gaps of a phrase ([##],
 // [race ##], [date], [time]…). Alternatives and wording gaps are the drafter's
@@ -167,22 +168,6 @@ const SYSTEM =
   'reference as a value. Write in English. Return ONLY a JSON object ' +
   '{"fills":[{"id":number,"value":string,"source":"notes"|"facts_found"|"protest_form"|"case_data","quote":string}]}, ' +
   'no markdown fence, no explanation.';
-
-function parseJson(text: string): unknown {
-  const unfenced = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-  try {
-    return JSON.parse(unfenced);
-  } catch {
-    const start = unfenced.indexOf('{');
-    const end = unfenced.lastIndexOf('}');
-    if (start === -1 || end <= start) throw new Error('the model did not return valid JSON');
-    try {
-      return JSON.parse(unfenced.slice(start, end + 1));
-    } catch {
-      throw new Error('the model did not return valid JSON');
-    }
-  }
-}
 
 export async function fillGaps(
   caseId: number,

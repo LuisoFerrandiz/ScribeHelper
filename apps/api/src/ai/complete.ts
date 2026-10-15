@@ -21,7 +21,7 @@ const NO_CHATTER =
 
 // Assistant chatter, not a continuation: first-person replies, questions to the
 // drafter, apologies, offers of help.
-const CHATTER =
+export const CHATTER =
   /^(I\b|I['’]m\b|I['’]ll\b|I['’]d\b|I['’]ve\b|my\b|sorry\b|apolog|unfortunately\b|sure\b|certainly\b|of course\b|please\b|could you\b|can you\b|would you\b|it looks like\b|it seems\b|here is\b|here['’]s\b|there is no\b|there['’]s no\b|no (text|context|content)\b|the (text|content) (provided|given|you)\b)/i;
 
 // Rules Applicable: prose only. The model must never write a rule number,
