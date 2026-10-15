@@ -233,6 +233,7 @@ function cleanNewText(
   seen: string,
   seenWithoutForm: string,
   seenOwn: string,
+  currentText: string,
 ): string | null {
   if (!NEW_TEXT_BOXES.includes(box)) return null;
   if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return null;
@@ -266,9 +267,22 @@ function cleanNewText(
     return matches.length > 0 && matches.every((n) => ATTRIBUTION.test(n));
   };
 
+  // A sentence that mostly repeats what the box already says is a rewording, not new content
+  // (and it is how the model would settle for the scribe which party an "X"/"Y" label is).
+  const currentStems = stems(currentText);
+  const restatesCurrent = (s: string) => {
+    if (currentStems.size === 0) return false;
+    const mine = stems(s);
+    if (mine.size === 0) return false;
+    let hit = 0;
+    for (const w of mine) if (currentStems.has(w)) hit++;
+    return hit / mine.size >= 0.7;
+  };
+
   const ownPairsRoleAndPosition = sentencesOf(seenOwn).some((s) => ROLE_WORDS.test(s) && POSITION_WORDS.test(s));
   const kept = sentencesOf(text).filter((s) => {
     if (inventsBoatPosition(s)) return false;
+    if (restatesCurrent(s)) return false;
     if (restatesAttributedClaim(s)) return false;
     if (!isGrounded(s, seen)) return false;
     if (!isGrounded(s, seenWithoutForm) && !ATTRIBUTION.test(s)) return false;
@@ -313,7 +327,7 @@ export function validateProposals(raw: unknown, input: ValidateInput): Proposal[
       }
     } else if (kind === 'new' && typeof text === 'string') {
       const t = text.trim();
-      const cleaned = cleanNewText(t, input.box, input.seenText, input.seenWithoutForm, input.seenOwn);
+      const cleaned = cleanNewText(t, input.box, input.seenText, input.seenWithoutForm, input.seenOwn, input.currentText);
       if (cleaned) result = { text: cleaned, phrase_id: null };
     }
     if (!result) continue;
