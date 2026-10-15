@@ -21,6 +21,7 @@ import {
 import { type CaseTab } from '../caseTabs';
 import { emptyPartyDraft, toPartyDrafts, toWitnessDrafts, type PartyDraft, type WitnessDraft } from '../caseDrafts';
 import { caseSuggestionItems } from '../suggestionItems';
+import { partyPositionContext, partyPositionItems } from '../partyPosition';
 import { describePending, pendingMarks } from '../pendingMarks';
 import { staleSources, type BoxStamps, type ChainBox } from '../staleBoxes';
 import { StaleNote } from './StaleNote';
@@ -729,7 +730,11 @@ export function CaseForm({ caseId }: Props) {
             <GhostTextarea
               caseId={caseId}
               box="conclusion"
-              chain={{ facts_found: factsFound, rules_applicable: rulesApplicable }}
+              chain={{
+                facts_found: factsFound,
+                rules_applicable: rulesApplicable,
+                party_position: partyPositionContext(extraction),
+              }}
               value={conclusion}
               onChange={setConclusion}
               rows={4}
@@ -746,10 +751,10 @@ export function CaseForm({ caseId }: Props) {
               onInsert={(text) => setConclusion((prev) => (prev ? `${prev}\n\n${text}` : text))}
               onInsertPhrase={(text) => conclusionBoxRef.current?.insertAtCaret(text)}
               onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-              items={caseSuggestionItems(
-                { paragraph: extraction?.conclusion_candidate },
-                { paragraph: notesExtraction?.conclusion_candidate },
-              )}
+              items={[
+                ...partyPositionItems(extraction, 'conclusion'),
+                ...caseSuggestionItems({}, { paragraph: notesExtraction?.conclusion_candidate }),
+              ]}
             />
           }
         />
@@ -823,7 +828,12 @@ export function CaseForm({ caseId }: Props) {
           <GhostTextarea
             caseId={caseId}
             box="decision"
-            chain={{ facts_found: factsFound, rules_applicable: rulesApplicable, conclusion }}
+            chain={{
+              facts_found: factsFound,
+              rules_applicable: rulesApplicable,
+              conclusion,
+              party_position: partyPositionContext(extraction),
+            }}
             value={decision}
             onChange={setDecision}
             rows={4}
@@ -847,10 +857,10 @@ export function CaseForm({ caseId }: Props) {
               onInsert={(text) => setDecision((prev) => (prev ? `${prev}\n\n${text}` : text))}
               onInsertPhrase={(text) => decisionBoxRef.current?.insertAtCaret(text)}
               onPhraseSaved={() => setPhraseRefresh((n) => n + 1)}
-              items={caseSuggestionItems(
-                { paragraph: extraction?.decision_candidate },
-                { paragraph: notesExtraction?.decision_candidate },
-              )}
+              items={[
+                ...partyPositionItems(extraction, 'decision'),
+                ...caseSuggestionItems({}, { paragraph: notesExtraction?.decision_candidate }),
+              ]}
             />
           </div>
         }

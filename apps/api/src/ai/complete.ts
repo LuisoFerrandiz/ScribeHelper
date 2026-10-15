@@ -48,41 +48,49 @@ const MAX_CONTEXT_CHARS = 1500;
 // drafter has already committed to, it does not draft new content.
 // SPEC-030: earlier boxes of the chain, read-only context. Which boxes each box
 // may see is decided here (the server applies the table, not just the client).
-export type ChainContext = Partial<Record<'facts_found' | 'rules_applicable' | 'conclusion', string>>;
+// SPEC-032: party_position is ONE side's claim from the protest form (not a box):
+// only Conclusion and Decision read it, always as the last block.
+export type ChainContext = Partial<
+  Record<'facts_found' | 'rules_applicable' | 'conclusion' | 'party_position', string>
+>;
 
 const CONTEXT_BOXES: Record<CompleteBox, (keyof ChainContext)[]> = {
   procedural_matters: [],
   facts_found: [],
   rules_applicable: ['facts_found'],
-  conclusion: ['facts_found', 'rules_applicable'],
-  decision: ['facts_found', 'rules_applicable', 'conclusion'],
+  conclusion: ['facts_found', 'rules_applicable', 'party_position'],
+  decision: ['facts_found', 'rules_applicable', 'conclusion', 'party_position'],
 };
 
 const CONTEXT_LABEL: Record<keyof ChainContext, string> = {
   facts_found: 'Facts Found',
   rules_applicable: 'Rules Applicable',
   conclusion: 'Conclusion',
+  party_position: "Party position (one side's claim, not final)",
 };
 
 const MAX_CONTEXT_BOX_CHARS = 1500;
 // Marker strings of the message: removed from the context so text inside an
 // earlier box cannot fake the separation.
-const MARKERS = /END OF EARLIER BOXES|EARLIER BOXES|CONTINUE FROM THIS TEXT/gi;
+const MARKERS = /END OF EARLIER BOXES|EARLIER BOXES|CONTINUE FROM THIS TEXT|Party position/gi;
 
 // Reads the untrusted request `context`: not a plain object -> none; only the
 // keys this box may see; strings only; first 1500 characters; markers removed;
 // for Rules Applicable the digits of the facts are dropped (no rule number can
 // be copied from them, D-004); blank -> skipped.
-export function chainContextFor(box: CompleteBox, raw: unknown): { label: string; text: string }[] {
+export function chainContextFor(
+  box: CompleteBox,
+  raw: unknown,
+): { key: keyof ChainContext; label: string; text: string }[] {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return [];
-  const out: { label: string; text: string }[] = [];
+  const out: { key: keyof ChainContext; label: string; text: string }[] = [];
   for (const key of CONTEXT_BOXES[box]) {
     const value = (raw as Record<string, unknown>)[key];
     if (typeof value !== 'string') continue;
     let text = value.slice(0, MAX_CONTEXT_BOX_CHARS).replace(MARKERS, ' ');
     if (box === 'rules_applicable') text = text.replace(/\d+/g, ' ');
     text = text.trim();
-    if (text) out.push({ label: CONTEXT_LABEL[key], text });
+    if (text) out.push({ key, label: CONTEXT_LABEL[key], text });
   }
   return out;
 }
@@ -95,7 +103,36 @@ const CONTEXT_SYSTEM =
 const CONTEXT_SYSTEM_RULES =
   ' Never name any rule, in digits or in words, even if the earlier boxes do.';
 const CONTEXT_SYSTEM_OTHERS =
-  ' A rule reference may appear only if it is already in the earlier boxes or in the text to continue.';
+  ' A rule reference may appear only if it is already in the Facts Found, Rules Applicable or ' +
+  'Conclusion boxes or in the text to continue — never one that appears only in the party position.';
+// SPEC-032: added only when a party position is present.
+const CONTEXT_SYSTEM_PARTY =
+  ' The party position is the claim of one side, not a fact and not the committee\'s decision. ' +
+  'The two sides may contradict each other: take no side. Do not repeat it or present it as ' +
+  'proved; rely on the Facts Found.';
+
+// SPEC-032 RF-010. A rule citation: a prefix (RRS, CR, NoR, SI) or the word rule(s)
+// followed by a number or letter-number (44.1, C.6.1, A2, 10).
+const RULE_REF = /\b(?:RRS|CR|NoR|SI|rules?)\s*((?:[A-Z]\.?)?\d+(?:\.\d+)*[a-z]?(?:\([a-z0-9]+\))?)/gi;
+
+function normalizeRef(ref: string): string {
+  return ref.replace(/\s+/g, '').toLowerCase();
+}
+
+export function extractRuleRefs(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(RULE_REF)) out.push(normalizeRef(m[1]));
+  return out;
+}
+
+// True when the suggestion cites a rule that is in none of the allowed texts.
+// The party position is never an allowed text.
+export function citesDisallowedRule(suggestion: string, allowedTexts: string[]): boolean {
+  const refs = extractRuleRefs(suggestion);
+  if (refs.length === 0) return false;
+  const allowed = new Set(allowedTexts.flatMap(extractRuleRefs));
+  return refs.some((r) => !allowed.has(r));
+}
 
 export async function generateInlineCompletion(
   box: CompleteBox,
@@ -118,8 +155,13 @@ export async function generateInlineCompletion(
           'CONTINUE FROM THIS TEXT',
           tail,
         ].join('\n');
+  const hasParty = earlier.some((e) => e.key === 'party_position');
   const contextSystem =
-    earlier.length === 0 ? '' : CONTEXT_SYSTEM + (box === 'rules_applicable' ? CONTEXT_SYSTEM_RULES : CONTEXT_SYSTEM_OTHERS);
+    earlier.length === 0
+      ? ''
+      : CONTEXT_SYSTEM +
+        (box === 'rules_applicable' ? CONTEXT_SYSTEM_RULES : CONTEXT_SYSTEM_OTHERS) +
+        (hasParty ? CONTEXT_SYSTEM_PARTY : '');
 
   const anthropic = new Anthropic({ apiKey });
   const message = await anthropic.messages.create({
@@ -147,5 +189,11 @@ export async function generateInlineCompletion(
   // suggestion that mentions a digit or a rule prefix is dropped (D-004).
   if (CHATTER.test(suggestion)) return '';
   if (box === 'rules_applicable' && /\d|\b(RRS|NoR|SI|CR)\b/i.test(suggestion)) return '';
+  // SPEC-032 RF-010: Conclusion/Decision may cite a rule only if it is already in the
+  // earlier boxes or in the text being continued — never one found only in the party position.
+  if (box === 'conclusion' || box === 'decision') {
+    const allowed = [text, ...earlier.filter((e) => e.key !== 'party_position').map((e) => e.text)];
+    if (citesDisallowedRule(suggestion, allowed)) return '';
+  }
   return suggestion;
 }

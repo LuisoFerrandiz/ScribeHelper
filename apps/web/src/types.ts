@@ -116,9 +116,15 @@ export interface AttachmentExtraction {
   procedural_matters_candidate: string;
   facts_found_candidate: string;
   facts_found_candidates: string[];
-  conclusion_candidate: string;
-  decision_candidate: string;
+  // SPEC-032: optional here so an older API answer (without it) is tolerated.
+  party_position?: { initiator?: PartyPosition; respondent?: PartyPosition };
   rule_citations_candidate: string[];
+}
+
+// SPEC-032: one side's claim from the protest form, never the committee's.
+export interface PartyPosition {
+  conclusion?: string;
+  decision?: string;
 }
 
 // SPEC-017 — "Process" result from this case's hearing notes (not an
@@ -274,6 +280,8 @@ export interface ChainContext {
   facts_found?: string;
   rules_applicable?: string;
   conclusion?: string;
+  // SPEC-032: one side's claim from the protest form (Conclusion and Decision only).
+  party_position?: string;
 }
 
 // SPEC-031: a value the AI proposes for a data gap, with the source and the literal quote.

@@ -1,11 +1,13 @@
-export type SuggestionSource = 'protest_form' | 'hearing_notes' | 'phrase' | 'example';
+export type SuggestionSource = 'protest_form' | 'hearing_notes' | 'phrase' | 'example' | 'party_position';
 
 // SPEC-020: one uniform entry of the suggestion list. `source` is internal
-// data only (never shown in the UI).
+// data only (never shown in the UI). SPEC-032 exception (D-044): `tag` is a short
+// visible label, used only for a party's claim, never part of the inserted text.
 export interface SuggestionItem {
   id: string;
   text: string;
   source: SuggestionSource;
+  tag?: string;
 }
 
 interface CaseSuggestions {

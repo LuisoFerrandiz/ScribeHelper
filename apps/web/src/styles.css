@@ -780,6 +780,18 @@ textarea:focus {
   overflow: hidden;
 }
 
+/* SPEC-032 — label of a party's claim (the only suggestion that shows its origin). */
+.suggestion-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--accent-soft);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
 .rule-picker {
   margin-top: 8px;
   padding-top: 8px;

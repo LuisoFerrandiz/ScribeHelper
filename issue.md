@@ -43,10 +43,23 @@ Riesgos altos (ambos cerrados el 2026-10-14):
 - **ISS-006 — MEDIO.** Refactor de 1125 líneas sin suite de tests: riesgo de
   regresión silenciosa. Cerrado por SPEC-024.
 
-**Estado del plan (2026-10-14):** las fases 0-5 y el replanteo F1-F6 están
-hechos y desplegados. Siguen abiertos solo **ISS-007** (aplazado por decisión
-del dueño, sin fecha) e **ISS-008** (falta la prueba en vivo del borrado de
-casos con adjuntos). El resto de issues está cerrado o resuelto.
+**Estado del plan (2026-10-15):** las fases 0-5 y el replanteo F1-F6 están
+hechos y desplegados. Sigue abierto solo **ISS-007** (aplazado por decisión
+del dueño, sin fecha). El resto de issues está cerrado o resuelto
+(ISS-008 e ISS-014 cerrados el 2026-10-15).
+
+**Pendientes (2026-10-15), sin issue propio:**
+
+- Probar en vivo la subida de un fichero de reglas con el selector de tipo de
+  documento (`doc_type`): necesita un fichero real del dueño.
+- Probar que `case_link` se borra en ambas direcciones al borrar un caso.
+- Opcional: `PRAGMA integrity_check` de una copia de `~/backups/scribe_helper/`.
+- Opcional: añadir los ficheros de París 2024 a `.gitignore`; borrar la persona
+  de prueba "ZZ Refactor Test" de producción (no hay interfaz para ello).
+- Opcional: `graphify update .` (sin LLM) y `graphify label` para nombrar
+  comunidades.
+- Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
+  `AIDraftPanel`/`draft.ts`.
 
 ---
 
@@ -273,9 +286,7 @@ casos con adjuntos). El resto de issues está cerrado o resuelto.
   y la ruta exige admin (`requireAdmin`). Sin hueco de ficheros huérfanos.
   Observación menor: los ficheros se borran antes que las filas; si el
   borrado de la BD fallara, quedarían filas sin fichero. Probabilidad baja.
-  Pendiente: probar en vivo en `http://192.168.1.105:8086/` con un caso de
-  prueba y comprobar que desaparecen los ficheros de `data/case_attachments/`.
-  Sin comprobar aún que `case_link` se borra en ambas direcciones.
+  La prueba en vivo ya está hecha (ver Estado). Queda solo `case_link`.
 - **Evidencia:** la memoria de handoff del 2026-10-05 anotaba un hueco: el
   `DELETE /cases/:id` genérico no limpiaba ficheros de adjunto. `SPEC-015`
   (RF-004) lo cubre con un borrado de ficheros solo para admin.

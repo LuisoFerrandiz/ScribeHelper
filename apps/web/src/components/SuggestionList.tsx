@@ -20,6 +20,7 @@ interface Entry {
   text: string; // inserted in full
   title: string; // tooltip
   isPhrase: boolean; // library phrase (SPEC-025)
+  tag?: string; // SPEC-032: visible label, not part of the inserted text
 }
 
 function matches(text: string, q: string): boolean {
@@ -88,7 +89,7 @@ export function SuggestionList({ box, currentText, onInsert, items, onInsertPhra
 
   const caseEntries: Entry[] = items
     .filter((it) => !q || matches(it.text, q))
-    .map((it) => ({ key: it.id, text: it.text, title: it.text, isPhrase: false }));
+    .map((it) => ({ key: it.id, text: it.text, title: it.text, isPhrase: false, tag: it.tag }));
   const phraseRows: PhraseRow[] = q ? hits : browsing ? browse : [];
   const phraseEntries = phraseRows.map(phraseEntry);
   const exampleEntries: Entry[] = (examples.phrases ?? [])
@@ -132,6 +133,7 @@ export function SuggestionList({ box, currentText, onInsert, items, onInsertPhra
             onMouseDown={(ev) => ev.preventDefault()}
             onClick={() => (e.isPhrase && onInsertPhrase ? onInsertPhrase(e.text) : onInsert(e.text))}
           >
+            {e.tag && <span className="suggestion-tag">{e.tag}</span>}
             {e.text}
           </button>
         ))}

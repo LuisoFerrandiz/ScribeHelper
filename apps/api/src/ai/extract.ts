@@ -15,9 +15,15 @@ export interface AttachmentExtraction {
   procedural_matters_candidate: string;
   facts_found_candidate: string;
   facts_found_candidates: string[]; // discrete, one-per-entry, click-to-insert facts
-  conclusion_candidate: string;
-  decision_candidate: string;
+  party_position: { initiator?: PartyPosition; respondent?: PartyPosition };
   rule_citations_candidate: string[];
+}
+
+// SPEC-032: what ONE party states and asks, as written in the form. Never the
+// committee's conclusion or decision (those come after the hearing).
+export interface PartyPosition {
+  conclusion?: string;
+  decision?: string;
 }
 
 interface AttachmentRow {
@@ -69,8 +75,13 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
         procedural_matters_candidate: 'string',
         facts_found_candidate: 'string',
         facts_found_candidates: ['string'],
-        conclusion_candidate: 'string',
-        decision_candidate: 'string',
+        party_position: {
+          initiator: {
+            conclusion: 'what the protestor states happened and which rule they say was broken, worded as the protestor\'s claim',
+            decision: 'what the protestor asks the committee to do, worded as the protestor\'s request',
+          },
+          respondent: { conclusion: 'same, only if the form records the respondent\'s own position', decision: 'same' },
+        },
         rule_citations_candidate: ['string'],
       },
       null,
@@ -120,9 +131,15 @@ export async function extractFromAttachments(caseId: number): Promise<Attachment
       'language. Order entries roughly as the form reports them, not reordered by ' +
       'importance. Same grounding rule as everywhere else: never invent a fact not in the ' +
       'form. ' +
-      'conclusion_candidate and decision_candidate are almost always empty, since a protest ' +
-      'form is filed before the hearing, not after — only fill them if the form itself ' +
-      'already documents a conclusion or decision (e.g. a re-submitted or annotated form). ' +
+      'party_position is the position of ONE side as the form states it — never the ' +
+      'committee\'s conclusion or decision (a form is filed before the hearing). For the ' +
+      'initiator (and for the respondent only if the form records their own position) give ' +
+      '"conclusion" (what that party says happened and which rule they say was broken) and ' +
+      '"decision" (what that party asks the committee to do, e.g. a disqualification). ' +
+      'ALWAYS word each one as that party\'s claim, naming the party: "The protestor states ' +
+      'that ...", "The protestor requests that ...", "The respondent states that ...". One or ' +
+      'two sentences each. Keep sail numbers, rule references and numbers exactly as the form ' +
+      'gives them. Omit any field or party the form does not state — never invent. ' +
       'Return ONLY the JSON object, no markdown code fence, no explanation.',
     messages: [{ role: 'user', content: prompt }],
   });
@@ -166,8 +183,30 @@ function parseExtraction(text: string): AttachmentExtraction {
     procedural_matters_candidate: parsed.procedural_matters_candidate ?? '',
     facts_found_candidate: parsed.facts_found_candidate ?? '',
     facts_found_candidates: parsed.facts_found_candidates ?? [],
-    conclusion_candidate: parsed.conclusion_candidate ?? '',
-    decision_candidate: parsed.decision_candidate ?? '',
+    party_position: normalizePartyPosition(parsed.party_position),
     rule_citations_candidate: parsed.rule_citations_candidate ?? [],
   };
+}
+
+// SPEC-032 RF-005: a text is kept only if it names the party (so it can never
+// read as the committee's own wording), capped in length, empty parties dropped.
+const NAMES_A_PARTY = /\b(protest(?:or|er|ee|ant)|initiator|respondent|appellant|party)\b/i;
+const MAX_POSITION_CHARS = 600;
+
+export function normalizePartyPosition(raw: unknown): AttachmentExtraction['party_position'] {
+  const out: AttachmentExtraction['party_position'] = {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+  for (const side of ['initiator', 'respondent'] as const) {
+    const part = (raw as Record<string, unknown>)[side];
+    if (typeof part !== 'object' || part === null || Array.isArray(part)) continue;
+    const clean: PartyPosition = {};
+    for (const field of ['conclusion', 'decision'] as const) {
+      const value = (part as Record<string, unknown>)[field];
+      if (typeof value !== 'string') continue;
+      const text = value.trim().slice(0, MAX_POSITION_CHARS).trim();
+      if (text && NAMES_A_PARTY.test(text)) clean[field] = text;
+    }
+    if (clean.conclusion || clean.decision) out[side] = clean;
+  }
+  return out;
 }
