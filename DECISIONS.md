@@ -1547,3 +1547,66 @@ SI). Los índices de un PDF sin puntos guía ni número final al estilo
 ficheros ni las filas FTS de sus documentos de evento (ya era así para la NoR y
 las SI). `CLAUDE.md` y `constitution.md` siguen hablando de la capa `class`
 como permanente: se actualizan solo cuando el dueño lo ordene.
+
+## D-046 · 2026-10-15 · accepted
+
+**Propuestas vivas encima del cuadro; la columna de sugerencias desaparece
+(SPEC-034).** Sustituye la presentación y la ubicación de D-030 y de SPEC-020
+(columna derecha de 280 px, lista única con texto recortado a 3 líneas,
+`SuggestionList`), el layout "cuadro a la izquierda, sugerencias a la derecha" de
+SPEC-023 y del contrato de `WritingBox` de SPEC-024, la etiqueta visible "Party
+claim — not final" y las posturas de parte como tarjeta insertable de D-044
+(SPEC-032), los candidatos de las hearing notes (SPEC-017/018) y el botón "Process".
+Lo que no cambia: el filtro `citesDisallowedRule` del servidor y la postura de parte
+como contexto de solo lectura del texto fantasma.
+
+El dueño describió su flujo real: el juez escribe o toma las hearing notes y el
+sistema ofrece 2-3 frases que un clic inserta en el cursor, que se renuevan solas al
+dejar de teclear; le da igual de dónde vienen y quiere verlas completas, a todo el
+ancho del cuadro donde escribe. Resultado:
+
+- **Franja de propuestas** (`ProposalsStrip`/`useProposals`) sobre el cuadro en
+  Procedural, Facts, Conclusion y Decision: hasta 3 tarjetas con el texto entero, sin
+  etiqueta ni indicador de origen. Capa instantánea en el navegador (frases guardadas
+  ordenadas por palabras compartidas con el texto y las notas; sin red) y capa de IA
+  (`POST /cases/:id/proposals`, Haiku 4.5, una llamada ≈1,5 s tras dejar de teclear, una
+  petición en vuelo). La IA nunca recibe como fuente los candidatos de otra extracción.
+- **Validación determinista en el servidor** (el prompt solo no basta): una frase de la
+  librería se reconstruye desde el cuerpo guardado y solo se sustituyen los huecos de datos
+  con valor citado y verificado (`validateFills`); la redacción nueva solo se permite en
+  Procedural y Facts y se valida **frase por frase** (palabras de contenido ancladas a las
+  fuentes; lo que solo sostiene el formulario de protesta necesita atribución; sin vínculo
+  número de vela + posición que el escribano no escribió; sin pares rol + posición que sus
+  notas no emparejan; sin reformular lo que ya está en la caja ni presentar como hecho lo que
+  las notas atribuyen a alguien; sin referencias de regla ni vocabulario de resultado; ≥ 6
+  palabras). En Decision no se ofrecen frases con vocabulario de resultado (upheld,
+  dismissed, DSQ…) y en Conclusion/Decision se exigen 3 palabras compartidas.
+- **Menú "More"** con buscar frases (saneado contra la sintaxis FTS), Browse, Suggest from
+  examples y Save as phrase (guarda la selección o, si no la hay, la caja entera).
+- **Insertar nunca reemplaza** una selección (`insertAtCaret` inserta en `selectionEnd` y
+  añade un espacio si el texto quedaría pegado a una palabra).
+- **Rules Applicable**: sin propuestas de IA (D-004). Bandeja encima del editor con citas
+  registradas, alta, "Suggest from Facts Found" y buscador del corpus; los avisos de
+  huecos/citas faltantes y de referencias no halladas salen bajo la cabecera y la consulta de
+  referencias vive en `useRuleRefCheck` dentro de `CaseForm`.
+- **Hearing notes**: el botón "Process", su disparo automático, la ruta `extract-notes` y
+  `ai/extractNotes.ts` se eliminan (sin consumidor).
+
+**Alternatives considered:** mover la misma lista a una bandeja superior (rechazada: seguía
+siendo una lista larga y confusa); un diálogo con buscador (rechazada: esconde las
+sugerencias); columna con pestañas (rechazada: seguía estrecha); mantener la extracción de
+notas como entrada del motor (probada y rechazada: otra IA que inventaba "JPN … on port tack"
+blanqueaba su error como si fuera de las notas); redacción nueva de la IA en Conclusion y
+Decision (rechazada por el dueño: "la herramienta no decide"); mantener la etiqueta "Party
+claim" (el dueño: una vez asumida la sugerencia por el comité, da igual de dónde sale);
+mostrar en Decision cualquier frase por coincidencia de palabras (rechazada: ofrecería "The
+protest is upheld" por compartir "penalty").
+
+**Consequences:** el filtro es léxico y por frase: no detecta un hecho plausible sin
+dígitos que no esté en las fuentes ni reordenaciones que cambien el sentido; el texto
+insertado es siempre editable y cada inserción es un clic del juez. Una llamada de IA por
+pausa y caja (Haiku, tope de tokens). Con la IA caída la franja degrada a las frases
+guardadas y a la nota "AI proposals unavailable". En Facts, con solo 3 frases en la
+librería, casi todo depende de la redacción nueva. Las propuestas de Decision serán pocas a
+propósito. La clave `ANTHROPIC_API_KEY` debe estar en las variables del stack de Portainer
+(`.env` no viaja por GitOps). Registro de depuración `PROPOSALS_DEBUG=1` en el servidor.

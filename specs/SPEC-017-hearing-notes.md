@@ -1,5 +1,10 @@
 # SPEC-017 — Notas de audiencia
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) eliminó el botón "Process", su disparo automático,
+> la ruta `extract-notes` y `ai/extractNotes.ts`: sus candidatos ya no se mostraban en
+> ningún sitio. Las hearing notes siguen existiendo, se guardan con el caso y son una de
+> las fuentes de las propuestas vivas. Lo demás de esta spec es histórico.
+
 Estado: draft.
 
 Relacionado: `CLAUDE.md` (Los dos mecanismos de sugerencia — este es

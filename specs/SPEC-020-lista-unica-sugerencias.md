@@ -1,5 +1,11 @@
 # SPEC-020 — Lista única de sugerencias en las cuatro cajas de redacción
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) sustituye la presentación de esta spec: la
+> columna derecha con la lista única, el recorte a 3 líneas (RF-003) y el componente
+> `SuggestionList` desaparecen. Ahora hay hasta 3 propuestas vivas encima del cuadro, a su
+> ancho, y un menú "More" con buscar, Browse, ejemplos y guardar frase. Se mantiene la idea
+> de que el origen de una sugerencia no se muestra.
+
 Estado: **implementada, desplegada y verificada en vivo (2026-10-13/14)**
 en `8a06e43`. Las 4 preguntas abiertas las resolvió el dueño; el
 `reviewer` dio 19 hallazgos, aceptados e incorporados. Verificación en

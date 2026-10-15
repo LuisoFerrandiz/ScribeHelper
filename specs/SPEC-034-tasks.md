@@ -1,21 +1,26 @@
 # SPEC-034 — Tareas
 
-- [ ] T1 `ai/json.ts` con `parseJson` compartido; `fillGaps.ts` y `extractNotes.ts` lo usan. Exportar de `fillGaps.ts` y `complete.ts` lo que reutiliza el motor.
-- [ ] T2 `ai/proposals.ts`: topes de entrada, marcadores propios, prompt, llamada Haiku 4.5 con `max_tokens` 1200 y `stop_reason`, salida JSON, fallback.
-- [ ] T3 Validación: `kind:'phrase'` reconstruido desde el cuerpo en BD con `validateFills` (alternativas y X/Y intactas); `kind:'new'` solo Procedural/Facts con filtro de dígitos, reglas, vocabulario de resultado, 400 caracteres y `CHATTER`; `citesDisallowedRule` en cuatro cajas con el texto completo de las cajas.
-- [ ] T4 `routes/proposals.ts` y registro en `routes/index.ts`: 404, 400, sin clave → `ai:'unavailable'`. `routes/phrases.ts`: capturar error de FTS → `[]`.
-- [ ] T5 Script local sobre copia de la BD (scratchpad): JSON truncado, sin clave, inyección en notas y cuerpo de frase, hueco con cita falsa, `new` con número inventado/regla/resultado, `new` en Conclusion, `[a] [b]` y X/Y, candidatas vacías, duplicado normalizado.
-- [ ] T6 `GhostTextarea.tsx`: `insertAtCaret` inserta en `selectionEnd` sin borrar la selección (final del texto o caja sin tocar → `\n\n`); método de lectura de selección en el handle.
-- [ ] T7 `types.ts`/`api.ts`: `Proposal`, `postProposals`. `proposalRanking.ts` (palabras de contenido, solapamiento, desempate propias antes que base y `id`).
-- [ ] T8 `useProposals.ts`: capa instantánea, IA a ~1500 ms, "sucio", `requestId`, congelar con puntero encima, Refresh, nota de IA no disponible.
-- [ ] T9 `ProposalsStrip.tsx`: hasta 3 tarjetas completas, altura reservada, claves estables, `data-gap-ui` y `preventDefault`. Piloto en Facts Found con la columna aún presente.
-- [ ] T10 `npm run build` (api) y `npm run typecheck` (web); probar en local la franja y la inserción sin reemplazo.
-- [ ] T11 Preguntar commit (T1-T10). El dueño redeploya y responde "Commit: <hash>".
-- [ ] T12 Verificación en vivo del piloto en TEST-02 sin Save: caja vacía con notas, renovación al teclear, clic inserta en el cursor sin borrar selección, huecos verificados, nota de IA no disponible. Anotar tokens y tasa de descarte; decidir Haiku vs Sonnet.
-- [ ] T13 Procedural, Conclusion y Decision con la franja; `autoProceduralLines` como tarjetas deterministas; entradas del caso (`notes_extraction`, formulario) al motor; sin postura de parte.
-- [ ] T14 `MoreMenu.tsx`: buscador (saneado), Browse, Suggest from examples, Save as phrase (selección o caja entera); Escape global, foco, `aria-expanded`; inputs con `data-gap-ui`.
-- [ ] T15 Retirar la columna (`.box-body-split`, `.textarea-col`, `.suggestions-col`, `.suggestions-panel`, `.suggestion-actions`), el `line-clamp` y el `@media`; editor a ancho completo; `PartyBar`, `GapFillPanel`, `PartyReference`, pista de huecos al pie.
-- [ ] T16 `npm run build` y `typecheck`; preguntar commit; verificación en vivo en las cuatro cajas.
-- [ ] T17 Rules Applicable: hook de referencias tecleadas en `CaseForm` (solo pestaña Rules, cancelación de respuestas viejas), avisos bajo la cabecera y bandeja simple (`.suggestion-row` se conserva).
-- [ ] T18 `npm run build` y `typecheck`; preguntar commit; verificación en vivo de Rules (Add, Remove, Insert missing, "Not found" con bandeja visible).
-- [ ] T19 Docs: `D-046`, notas de superación en SPEC-017/020/023/024/031/032, `issue.md`, `CLAUDE.md` alineado y memoria de traspaso. Preguntar commit.
+Estado (2026-10-15): **todas hechas, desplegadas y verificadas en vivo** (TEST-02 sin Save). Commits:
+`6244a99` (T1-T5), `8bf83b9` (T6-T10), `32acc76` `1fe25d9` `bdfdd31` `6d47813` `e371d7b` `36bd9e2`
+`1b4d42f` (ajustes del filtro tras probar en prod), `3b5c2f3` (T13), `1792b7f` (T14-T15),
+`17e7de1` (extracción de notas eliminada), `f207c59` (T17).
+
+- [x] T1 `ai/json.ts` con `parseJson` compartido (solo `fillGaps.ts` y el motor nuevo lo usan; `extract.ts` y `exampleSuggestions.ts` mantienen su parser).
+- [x] T2 `ai/proposals.ts`: topes de entrada, marcadores propios, prompt, Haiku 4.5, `max_tokens` 1200, `stop_reason`, fallback.
+- [x] T3 Validación: huecos verificados, redacción nueva solo en Procedural/Facts y frase por frase (ver D-046).
+- [x] T4 `routes/proposals.ts` y registro; `GET /phrases/search` devuelve `[]` si el FTS falla.
+- [x] T5 Script local sobre copia de la BD (scratchpad) con casos de JSON truncado, inyección, huecos, redacción nueva, etc.
+- [x] T6 `GhostTextarea`: `insertAtCaret` sin reemplazar la selección y con espacio; `getSelectedText`.
+- [x] T7 `types.ts`/`api.ts` y `proposalRanking.ts`.
+- [x] T8 `useProposals.ts`.
+- [x] T9 `ProposalsStrip.tsx` y `ProposalsTray.tsx`; piloto en Facts.
+- [x] T10 Build y typecheck.
+- [x] T11 Commit y redeploy.
+- [x] T12 Verificación del piloto en vivo (ancho del textarea, renovación, selección, atribución).
+- [x] T13 Procedural, Conclusion y Decision (líneas del caso como tarjetas deterministas; solo frases en Conclusion/Decision; sin frases de resultado en Decision).
+- [x] T14 `MoreMenu.tsx` y `ftsQuery.ts`.
+- [x] T15 Columna retirada de las cuatro cajas de frases; `SuggestionList` y `suggestionItems` eliminados.
+- [x] T16 Build, typecheck y verificación en vivo de las cuatro cajas.
+- [x] T17 Rules Applicable: bandeja encima del editor, `RulesWarnings` bajo la cabecera, `useRuleRefCheck` en `CaseForm`.
+- [x] T18 Verificación en local (alta, corpus, Remove, Insert missing, aviso de no halladas) y en vivo.
+- [x] T19 Docs: D-046, notas en SPEC-017/020/023/024/031/032, `issue.md`, `CLAUDE.md`, memoria de traspaso.

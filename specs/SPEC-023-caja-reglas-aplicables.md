@@ -1,5 +1,10 @@
 # SPEC-023 — Rules Applicable como caja de redacción
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) cambia el layout "cuadro a la izquierda,
+> sugerencias a la derecha": la bandeja de citas va encima del editor, a su ancho, y los
+> avisos de citas faltantes y de referencias no halladas salen bajo la cabecera de la caja
+> (`RulesWarnings`, `useRuleRefCheck`). Sin propuestas de IA (D-004). Lo demás sigue vigente.
+
 Estado: implementada en local (draft v2 confirmado por el dueño, 2026-10-14). Pedida por el dueño (2026-10-14): Rules Applicable
 tiene, como las otras cuatro cajas, **sugerencias del sistema y un
 cuadro de texto** (orden inicial pedido: sugerencias a la izquierda; corregido

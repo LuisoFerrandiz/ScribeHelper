@@ -1,5 +1,11 @@
 # SPEC-031 — Rellenar con IA los huecos de datos de las frases
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) reutiliza `validateFills` en las propuestas: la
+> tarjeta llega con los huecos de datos ya rellenados solo si el servidor verificó el valor
+> con una cita de las fuentes; si no, queda el `[hueco]`. Ahí no hay aceptación valor a valor
+> (excepción a D-042 para las propuestas). El panel "Fill data gaps with AI" de esta spec se
+> mantiene tal cual bajo el cuadro.
+
 Fase F4 del replanteo (`issue.md`). Estado: v2 (tras `reviewer`: 3 bloqueantes,
 6 importantes, 5 menores; y tras medir la librería real). Decisiones del dueño
 (2026-10-14): alcance **solo rellenar huecos**; aceptar **uno a uno con vista

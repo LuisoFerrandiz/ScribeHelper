@@ -1,5 +1,11 @@
 # SPEC-032 — Postura de parte del formulario de protesta
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) retira la tarjeta insertable "Party claim — not
+> final" y su etiqueta: la postura de parte ya no se ofrece como sugerencia. Se mantiene
+> la extracción `party_position`, su uso como contexto de solo lectura del texto fantasma y el
+> filtro `citesDisallowedRule` del servidor. La postura de la parte nunca es fuente de las
+> propuestas.
+
 Levanta el aplazamiento de `issue.md` ISS-007 y lo cierra al terminar. Estado:
 v2 (tras `reviewer`: 2 bloqueantes y varios importantes recogidos; el dueño
 decidió filtro de reglas en servidor y etiqueta visible).

@@ -58,6 +58,16 @@ y `graphify label` ejecutados (1304 nodos, 114 comunidades). Backup
 `scribe_helper-20261015-1218.sqlite` comprobado en solo lectura:
 `integrity_check` ok y `foreign_key_check` vacío.
 
+**Hecho el 2026-10-15 (SPEC-034, D-046):** el desorden de la columna derecha de las cajas
+de redacción se resolvió con una franja de hasta 3 propuestas vivas encima del cuadro (a su
+ancho), un menú "More", la columna retirada, Rules Applicable con bandeja y avisos bajo la
+cabecera, y el botón "Process" de las hearing notes eliminado. Verificado en vivo en TEST-02
+sin Save. Límites conocidos: el filtro de la redacción nueva es léxico y por frase (no ve un
+hecho plausible sin dígitos que no esté en las fuentes, ni reordenaciones que cambien el
+sentido); en Facts la librería solo tiene 3 frases, así que casi todo depende de la IA; en
+Decision las propuestas serán pocas a propósito; la clave `ANTHROPIC_API_KEY` debe estar en
+las variables del stack de Portainer.
+
 **Pendientes (2026-10-15), sin issue propio:**
 
 - Solo si el dueño lo pide: volver a montar `AIDraftPanel`/`draft.ts`.

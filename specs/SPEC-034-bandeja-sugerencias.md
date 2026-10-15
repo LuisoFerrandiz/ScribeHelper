@@ -1,6 +1,17 @@
 # SPEC-034 — Propuestas vivas encima del cuadro de redacción
 
-Estado: **draft v4** (2026-10-15). Sustituye a v1-v3. v4 incorpora la segunda revisión del
+Estado: **IMPLEMENTADA, desplegada y verificada en vivo (2026-10-15)**, ver D-046 y
+`SPEC-034-tasks.md`. **Desviaciones respecto a esta v4, decididas con el dueño al probar:**
+(1) RF-007: el motor **no** recibe como fuente `NotesExtraction` ni otros candidatos; esa
+extracción (botón "Process", ruta `extract-notes`) se eliminó. (2) RF-010 se ampliaron:
+validación frase por frase, anclaje de palabras a las fuentes, atribución obligatoria de lo que
+solo sostiene el formulario, sin vínculo número de vela + posición ni par rol + posición no
+escritos por el escribano, sin reformular la caja ni presentar como hecho lo que las notas
+atribuyen a alguien, ≥ 6 palabras. (3) En Decision no se ofrecen frases con vocabulario de
+resultado y en Conclusion/Decision se exigen 3 palabras compartidas. (4) RF-005: `More` es un
+menú desplegable con un único scroll; las tarjetas se apilan a todo el ancho (no en cuadrícula).
+(5) El texto insertado en medio de una palabra añade un espacio. Texto original: draft v4,
+sustituye a v1-v3. v4 incorpora la segunda revisión del
 `reviewer` (4 bloqueos, 11 importantes, 7 menores) y 4 decisiones del dueño. Pendiente de
 aprobación antes de plan y tareas.
 

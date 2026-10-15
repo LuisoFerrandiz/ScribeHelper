@@ -1,5 +1,10 @@
 # SPEC-024 — Refactor de `CaseForm.tsx` (ISS-006)
 
+> **Nota (2026-10-15):** SPEC-034 (D-046) sustituye el "contrato de `WritingBox`"
+> (`CopyBox > .box-body-split > .textarea-col + .suggestions-col`): `WritingBox` es ahora una
+> sola columna (franja o bandeja, referencia de partes, cuadro y lo que va debajo) y esas
+> clases ya no existen.
+
 Estado: **CERRADA (2026-10-15)**: pasos 1a a 4 hechos; el paso 5 (hooks) queda
 descartado por el dueño (riesgo alto, ~200 líneas de ganancia). Antes: draft v2,
 aprobado el plan por el dueño (2026-10-14). v2

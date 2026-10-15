@@ -51,8 +51,8 @@ capas:
   redacción (texto fantasma): Procedural Matters, Facts Found,
   Conclusion, Rules Applicable y Decision. **Cuatro de ellas**
   (Procedural Matters, Facts Found, Conclusion, Decision) usan además la
-  librería de frases, la lista única de sugerencias y las sugerencias
-  desde ejemplos. **Rules Applicable es un
+  librería de frases, la franja de propuestas y el menú "More" (buscar y
+  explorar frases, ejemplos, guardar frase). **Rules Applicable es un
   híbrido** (`DECISIONS.md` D-032): una caja de texto (`rules_applicable`,
   se guarda con Save) junto a un **registro de citas** validado
   (`case_rule_citation`, alta y baja instantáneas, respaldado por el
@@ -63,14 +63,22 @@ capas:
 
 ### Los mecanismos de sugerencia
 
-Son sistemas separados, no dos modos del mismo sistema. Además, cada caja
-de redacción tiene a su lado una **lista única de sugerencias**
-(`SuggestionList`, `DECISIONS.md` D-030): lo derivado del caso
-(formulario de protesta y hearing notes) por defecto; frases por búsqueda
-o "Browse phrases"; ejemplos con "Suggest from examples". Un clic inserta;
-nada se inserta solo, y no se muestra de qué origen viene cada
-sugerencia. En Rules Applicable la lista es `RulesSuggestions` (citas
-registradas, alta manual y buscador del corpus).
+Son sistemas separados, no dos modos del mismo sistema. Además, las cuatro
+cajas de frases (Procedural Matters, Facts Found, Conclusion, Decision)
+tienen encima, al ancho del cuadro donde se escribe, una **franja de hasta
+3 propuestas vivas** (`ProposalsStrip`, `DECISIONS.md` D-046, SPEC-034):
+frases guardadas que encajan con lo escrito y las hearing notes (al instante,
+en el navegador) y, a ~1,5 s de dejar de teclear, propuestas de la IA
+validadas en el servidor (huecos de datos solo con valor citado y verificado;
+redacción nueva solo en Procedural y Facts, frase por frase y anclada a las
+fuentes; en Conclusion y Decision solo frases guardadas, sin frases de
+resultado en Decision). Un clic inserta en el cursor sin reemplazar la
+selección; nada se inserta solo y no se muestra de qué origen viene cada
+propuesta. Buscar y explorar frases, "Suggest from examples" y "Save as
+phrase" (la selección o la caja entera) viven en el menú "More". En Rules
+Applicable no hay propuestas de IA: encima del cuadro está la bandeja
+`RulesSuggestions` (citas registradas, alta manual y buscador del corpus) y los
+avisos bajo la cabecera.
 
 | | Autocompletado en línea | Panel de borrador alternativo |
 |---|---|---|
@@ -223,6 +231,7 @@ detrás de algo que necesita red.
 | 5.5 | Despliegue al servidor doméstico, volumen, contraseña | — |
 | 5.6 | Asistencia IA en el formulario: extracción de adjuntos de caso, desglose de Facts Found, panel de sugerencias lateral | sí |
 | 5.7 | Replanteo (2026-10, cerrado): lista única de sugerencias (SPEC-020), Rules Applicable como pestaña y caja de redacción propias (SPEC-021, SPEC-023), menú "Jury" quitado (D-031), citas desde el corpus (SPEC-022), frases con huecos (SPEC-025), avisos de huecos sin rellenar, referencias tecleadas y desfase entre cajas (SPEC-026, 028, 029), reglas sugeridas desde Facts Found (SPEC-027), fantasma que ve las cajas anteriores (SPEC-030) y huecos de datos con IA (SPEC-031). Fases F1-F6 hechas — ver `issue.md` | sí |
+| 5.8 | Propuestas vivas (2026-10, cerrado, SPEC-034, D-046): franja de hasta 3 propuestas sobre el cuadro, menú "More", sin columna lateral, Rules Applicable con bandeja y avisos bajo la cabecera, sin "Process" de hearing notes | sí |
 | 6 | Compartir, solicitudes de reparación (redress) | — |
 
 Principio de orden: todo lo que funciona offline y no puede fallar en
