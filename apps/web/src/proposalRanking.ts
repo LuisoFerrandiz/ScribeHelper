@@ -21,7 +21,12 @@ export function contentWords(text: string): Set<string> {
   return out;
 }
 
-const MIN_SHARED_WORDS = 2;
+// SPEC-034: the tool never decides. In the Decision box a phrase that states an outcome
+// is not offered by word overlap (the scribe finds it by searching or browsing).
+export const OUTCOME_PHRASE = /\b(upheld|dismiss\w*|disqualif\w*|DSQ|DNE|withdrawn|redress|penali[sz]\w*)\b/i;
+
+// The Conclusion and Decision phrases are long and generic: two shared words prove little.
+const MIN_SHARED: Partial<Record<PhraseRow['box'], number>> = { conclusion: 3, decision: 3 };
 
 // Phrases of the box ordered by shared content words with `text` + `notes`
 // (best first); ties: own before base, then lowest id. Nothing written and no
@@ -33,9 +38,10 @@ export function rankPhrases(phrases: PhraseRow[], text: string, notes: string, m
   for (const phrase of phrases) {
     const body = normalizePhraseText(phrase.body);
     if (alreadyIn(text, body)) continue;
+    if (phrase.box === 'decision' && OUTCOME_PHRASE.test(body)) continue;
     let score = 0;
     for (const w of contentWords(body)) if (source.has(w)) score++;
-    if (score >= MIN_SHARED_WORDS) scored.push({ phrase, score });
+    if (score >= (MIN_SHARED[phrase.box] ?? 2)) scored.push({ phrase, score });
   }
   scored.sort(
     (a, b) =>

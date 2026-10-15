@@ -142,6 +142,8 @@ export function loadCandidates(box: ProposalBox, ids: number[]): Candidate[] {
     if (!row) continue;
     const body = row.body.replace(/\r\n/g, '\n');
     if (body.length > MAX_CANDIDATE_CHARS) continue;
+    // Same rule as the browser: a Decision phrase that states an outcome is never offered.
+    if (box === 'decision' && OUTCOME_WORDS.test(body)) continue;
     out.push({ id: row.id, body, gaps: dataGapsOf(body).map((data) => ({ gapId: next++, data })) });
   }
   return out;

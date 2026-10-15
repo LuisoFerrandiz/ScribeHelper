@@ -640,6 +640,17 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.procedural_matters}
         below={gapPanel(proceduralMatters, proceduralBoxRef, setProceduralMatters)}
         onCopied={() => markCopied('procedural_matters')}
+        tray={
+          <ProposalsTray
+            caseId={caseId}
+            box="procedural_matters"
+            text={proceduralMatters}
+            notes={notes}
+            instantLines={autoProceduralLines}
+            refreshKey={phraseRefresh}
+            onInsert={(text) => proceduralBoxRef.current?.insertAtCaret(text)}
+          />
+        }
         textarea={
           <GhostTextarea
             caseId={caseId}
@@ -737,6 +748,17 @@ export function CaseForm({ caseId }: Props) {
           copied={!!copied.conclusion}
           below={gapPanel(conclusion, conclusionBoxRef, setConclusion)}
           onCopied={() => markCopied('conclusion')}
+          tray={
+            <ProposalsTray
+              caseId={caseId}
+              box="conclusion"
+              text={conclusion}
+              notes={notes}
+              chain={{ facts_found: factsFound, rules_applicable: rulesApplicable }}
+              refreshKey={phraseRefresh}
+              onInsert={(text) => conclusionBoxRef.current?.insertAtCaret(text)}
+            />
+          }
           textarea={
             <GhostTextarea
               caseId={caseId}
@@ -835,6 +857,17 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.decision}
         below={gapPanel(decision, decisionBoxRef, setDecision)}
         onCopied={() => markCopied('decision')}
+        tray={
+          <ProposalsTray
+            caseId={caseId}
+            box="decision"
+            text={decision}
+            notes={notes}
+            chain={{ facts_found: factsFound, rules_applicable: rulesApplicable, conclusion }}
+            refreshKey={phraseRefresh}
+            onInsert={(text) => decisionBoxRef.current?.insertAtCaret(text)}
+          />
+        }
         textarea={
           <GhostTextarea
             caseId={caseId}
