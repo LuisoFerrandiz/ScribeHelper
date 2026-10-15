@@ -46,7 +46,8 @@ export function suggestTerms(text: string): string[] {
 
 // "RRS 18.2", "rule 14", "NoR 1.9", "SI 12", "CR C6.1": prefix in capitals
 // (except Rule / rule), no final dot. A bare number is not a reference here.
-const EXPLICIT_REF = /\b(?:RRS|CR|NoR|SI|[Rr]ule)\s+[A-Z]?\d+(?:\.\d+)*(?:\([A-Za-z0-9]+\))*/g;
+// SPEC-033: also the class-rules style `CR C.1.1` (letter, dot, number).
+const EXPLICIT_REF = /\b(?:RRS|CR|NoR|SI|[Rr]ule)\s+(?:[A-Z]\.)?[A-Z]?\d+(?:\.\d+)*(?:\([A-Za-z0-9]+\))*/g;
 
 export function explicitRefs(text: string): string[] {
   return text.match(EXPLICIT_REF) ?? [];

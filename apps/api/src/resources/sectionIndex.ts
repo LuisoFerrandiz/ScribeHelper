@@ -1,7 +1,7 @@
 import { db } from '../db/connection.js';
 import { inTransaction } from '../db/transaction.js';
 import { readMarkdown } from './storage.js';
-import { parseRuleSections } from './ruleSections.js';
+import { parseRuleSections, RULE_PARSER_VERSION } from './ruleSections.js';
 
 // SPEC-022 RF-002/RF-014: per-rule index of an accepted rule document.
 
@@ -41,6 +41,25 @@ export async function indexResourceSections(resourceId: number): Promise<number>
     db.prepare(`UPDATE resource SET sections_indexed_at = datetime('now') WHERE id = ?`).run(resourceId);
   });
   return sections.length;
+}
+
+// SPEC-033 RF-012: when the rule parser changed (RULE_PARSER_VERSION), every accepted
+// rule document is reindexed once. The stored version is app_meta.rule_index_version;
+// with it up to date nothing is touched. Citations saved on cases are text, so they
+// are not affected (section ids do change; nothing stores them).
+export async function reindexIfParserChanged(): Promise<void> {
+  const row = db.prepare(`SELECT value FROM app_meta WHERE key = 'rule_index_version'`).get() as { value: string } | undefined;
+  const stored = row ? Number(row.value) : 0;
+  if (stored >= RULE_PARSER_VERSION) return;
+  const res = db
+    .prepare(`UPDATE resource SET sections_indexed_at = NULL WHERE kind = 'rule' AND status = 'accepted'`)
+    .run();
+  console.log(`Rule parser v${RULE_PARSER_VERSION} (was ${stored || 'none'}): reindexing ${res.changes} rule document(s)`);
+  await indexPendingSections();
+  db.prepare(
+    `INSERT INTO app_meta (key, value) VALUES ('rule_index_version', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+  ).run(String(RULE_PARSER_VERSION));
 }
 
 // Startup (RF-014): index accepted rules not indexed yet, one at a time. An

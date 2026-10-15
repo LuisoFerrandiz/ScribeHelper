@@ -1,35 +1,75 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { api } from '../api';
-import type { DocType, ExampleScope, ResourceFull, ResourceKind, ResourceRow, RuleLayer } from '../types';
+import type { DocType, ExampleScope, ResourceFull, ResourceKind, ResourceRow } from '../types';
+import { DOC_KINDS, DOC_KIND_LABEL, composeDocType, docTypeLabel, splitDocType, type DocKind } from '../docTypes';
 
 interface Props {
   kind: ResourceKind;
   eventId: number | null;
 }
 
-const DOC_TYPE_LABEL: Record<DocType, string> = {
-  nor: 'Notice of Race',
-  si: 'Sailing Instructions',
-  si_amendment: 'SI amendment',
-};
+// SPEC-033: rules are permanent ('rrs') or of an event. The legacy layer 'class'
+// only shows up on a row the server has not migrated yet.
+type Group = 'rrs' | 'event';
 
-// An event document must say what it is (SPEC-022 RF-001): it sets the citation prefix.
+// An event document must say what it is (SPEC-022 RF-001, SPEC-033): it sets the citation prefix.
 interface QueuedFile {
   file: File;
   docType: DocType | '';
 }
 
-function DocTypeSelect({ value, onChange }: { value: DocType | ''; onChange: (v: DocType | '') => void }) {
+// Kind (class rules / NoR / SI) plus an "Amendment" box; the stored doc_type composes both.
+function DocTypePicker({ value, onChange }: { value: DocType | ''; onChange: (v: DocType | '') => void }) {
+  const current = value ? splitDocType(value) : null;
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value as DocType | '')}>
-      <option value="">Document type…</option>
-      {(Object.keys(DOC_TYPE_LABEL) as DocType[]).map((t) => (
-        <option key={t} value={t}>
-          {DOC_TYPE_LABEL[t]}
-        </option>
-      ))}
+    <>
+      <select
+        value={current?.kind ?? ''}
+        onChange={(e) => {
+          const k = e.target.value as DocKind | '';
+          onChange(k ? composeDocType(k, current?.amendment ?? false) : '');
+        }}
+      >
+        <option value="">Document type…</option>
+        {DOC_KINDS.map((k) => (
+          <option key={k} value={k}>
+            {DOC_KIND_LABEL[k]}
+          </option>
+        ))}
+      </select>{' '}
+      <label>
+        <input
+          type="checkbox"
+          checked={current?.amendment ?? false}
+          disabled={!current}
+          onChange={(e) => current && onChange(composeDocType(current.kind, e.target.checked))}
+        />{' '}
+        Amendment
+      </label>
+    </>
+  );
+}
+
+const GROUP_LABEL: Record<Group, string> = {
+  rrs: 'Permanent (RRS, appendices and RRS amendments)',
+  event: 'Event (class rules, NoR, SI and their amendments)',
+};
+
+function GroupSelect({ value, onChange }: { value: Group; onChange: (v: Group) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as Group)}>
+      <option value="rrs">{GROUP_LABEL.rrs}</option>
+      <option value="event">{GROUP_LABEL.event}</option>
     </select>
   );
+}
+
+// What a rule document is, in words: "RRS" for permanent, "Class rules", "SI amendment"…
+function kindLabel(r: ResourceRow): string {
+  if (r.layer === 'rrs') return 'Permanent';
+  if (r.layer === 'class') return 'legacy class rules — assign to an event';
+  if (r.layer === 'event') return r.doc_type ? docTypeLabel(r.doc_type) : 'Event — not classified';
+  return '';
 }
 
 function titleFromFilename(filename: string): string {
@@ -46,10 +86,10 @@ export function ResourceUpload({ kind, eventId }: Props) {
   const [pending, setPending] = useState<ResourceRow[]>([]);
   const [accepted, setAccepted] = useState<ResourceRow[]>([]);
   const [preview, setPreview] = useState<ResourceFull | null>(null);
-  const [layer, setLayer] = useState<RuleLayer>('rrs');
+  const [layer, setLayer] = useState<Group>('rrs');
   const [scope, setScope] = useState<ExampleScope>('own');
   const [queued, setQueued] = useState<QueuedFile[]>([]);
-  const [reLayer, setReLayer] = useState<RuleLayer>('rrs');
+  const [reLayer, setReLayer] = useState<Group>('rrs');
   const [reDocType, setReDocType] = useState<DocType | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -74,8 +114,9 @@ export function ResourceUpload({ kind, eventId }: Props) {
   // The classification form follows the document being reviewed.
   useEffect(() => {
     if (preview?.layer) {
-      setReLayer(preview.layer);
-      setReDocType(preview.doc_type ?? '');
+      // A legacy 'class' row is shown as an event document of type Class rules.
+      setReLayer(preview.layer === 'rrs' ? 'rrs' : 'event');
+      setReDocType(preview.layer === 'class' ? 'class' : (preview.doc_type ?? ''));
     }
   }, [preview?.id, preview?.layer, preview?.doc_type]);
 
@@ -105,7 +146,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
   async function handleUploadAll() {
     if (queued.length === 0) return;
     if (missingDocType) {
-      setError('Choose the document type (NoR, SI or SI amendment) for every event file.');
+      setError('Choose the document type (class rules, NoR or SI) for every event file.');
       return;
     }
     if (kind === 'rule' && layer === 'event' && eventId === null) {
@@ -176,7 +217,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
       return;
     }
     if (reLayer === 'event' && reDocType === '') {
-      setError('Choose the document type (NoR, SI or SI amendment).');
+      setError('Choose the document type (class rules, NoR or SI).');
       return;
     }
     try {
@@ -200,6 +241,33 @@ export function ResourceUpload({ kind, eventId }: Props) {
     await refresh();
   }
 
+  // SPEC-033: two groups of accepted rule documents. The legacy layer 'class' (not
+  // migrated yet) is listed under Permanent with its own note so it never hides.
+  const permanent = accepted.filter((r) => r.layer === 'rrs' || r.layer === 'class');
+  const eventDocs = accepted.filter((r) => r.layer === 'event' && r.event_id === eventId);
+  const otherEventCount = accepted.filter((r) => r.layer === 'event' && r.event_id !== eventId).length;
+
+  function renderAccepted(r: ResourceRow) {
+    return (
+      <li key={r.id}>
+        <button type="button" className="resource-title" onClick={() => openPreview(r.id)}>
+          {r.title}
+        </button>
+        {r.layer && kind === 'rule' && <span className="muted"> — {kindLabel(r)}</span>}
+        {r.scope && <span className="muted"> — {r.scope}</span>}{' '}
+        <button
+          type="button"
+          className="icon-button"
+          title="Delete"
+          aria-label="Delete"
+          onClick={() => handleDelete(r.id)}
+        >
+          🗑
+        </button>
+      </li>
+    );
+  }
+
   return (
     <div className="page">
       <h2>{kind === 'rule' ? 'Upload rules' : 'Upload examples'}</h2>
@@ -207,11 +275,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
       <div className="upload-controls">
         {kind === 'rule' ? (
-          <select value={layer} onChange={(e) => setLayer(e.target.value as RuleLayer)}>
-            <option value="rrs">RRS (permanent)</option>
-            <option value="class">Class rules (per season)</option>
-            <option value="event">Event (NoR/SIs/amendments)</option>
-          </select>
+          <GroupSelect value={layer} onChange={setLayer} />
         ) : (
           <select value={scope} onChange={(e) => setScope(e.target.value as ExampleScope)}>
             <option value="own">Own</option>
@@ -250,7 +314,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
                 {f.file.name}{' '}
                 {needsDocType && (
                   <>
-                    <DocTypeSelect
+                    <DocTypePicker
                       value={f.docType}
                       onChange={(v) => setQueued((prev) => prev.map((q, j) => (j === i ? { ...q, docType: v } : q)))}
                     />{' '}
@@ -276,7 +340,7 @@ export function ResourceUpload({ kind, eventId }: Props) {
               <button type="button" onClick={() => openPreview(r.id)}>
                 {r.title}
               </button>
-              {r.layer && <span className="muted"> — {r.layer}</span>}
+              {r.layer && <span className="muted"> — {kindLabel(r)}</span>}
               {r.scope && <span className="muted"> — {r.scope}</span>}
               {!!r.conversion_empty && <span className="error"> — empty conversion, check original</span>}
             </li>
@@ -317,16 +381,16 @@ export function ResourceUpload({ kind, eventId }: Props) {
           )}
           {preview.kind === 'rule' && (
             <p>
-              <select value={reLayer} onChange={(e) => setReLayer(e.target.value as RuleLayer)}>
-                <option value="rrs">RRS (permanent)</option>
-                <option value="class">Class rules (per season)</option>
-                <option value="event">Event (NoR/SIs/amendments)</option>
-              </select>{' '}
-              {reLayer === 'event' && <DocTypeSelect value={reDocType} onChange={setReDocType} />}{' '}
+              <GroupSelect value={reLayer} onChange={setReLayer} />{' '}
+              {reLayer === 'event' && <DocTypePicker value={reDocType} onChange={setReDocType} />}{' '}
               <button
                 type="button"
                 onClick={() => handleReclassify(preview)}
-                disabled={reLayer === preview.layer && (reLayer !== 'event' || reDocType === (preview.doc_type ?? ''))}
+                disabled={
+                  preview.layer !== 'class' &&
+                  reLayer === preview.layer &&
+                  (reLayer !== 'event' || reDocType === (preview.doc_type ?? ''))
+                }
               >
                 Apply
               </button>
@@ -341,29 +405,42 @@ export function ResourceUpload({ kind, eventId }: Props) {
 
       <section>
         <h3>Accepted</h3>
-        <ul className="list resource-grid">
-          {accepted.map((r) => (
-            <li key={r.id}>
-              <button type="button" className="resource-title" onClick={() => openPreview(r.id)}>
-                {r.title}
-              </button>
-              {r.layer && <span className="muted"> — {r.layer}</span>}
-              {r.doc_type && <span className="muted"> ({DOC_TYPE_LABEL[r.doc_type]})</span>}
-              {r.layer === 'event' && !r.doc_type && <span className="error"> — not classified</span>}
-              {r.scope && <span className="muted"> — {r.scope}</span>}{' '}
-              <button
-                type="button"
-                className="icon-button"
-                title="Delete"
-                aria-label="Delete"
-                onClick={() => handleDelete(r.id)}
-              >
-                🗑
-              </button>
-            </li>
-          ))}
-          {accepted.length === 0 && <li className="muted">Nothing accepted yet.</li>}
-        </ul>
+        {kind === 'rule' ? (
+          <>
+            <div className="box">
+              <h4>Permanent</h4>
+              <p className="muted">The rules of sailing, their appendices and amendments. They apply to every event.</p>
+              <ul className="list resource-grid">
+                {permanent.map(renderAccepted)}
+                {permanent.length === 0 && <li className="muted">Nothing accepted yet.</li>}
+              </ul>
+            </div>
+            <div className="box">
+              <h4>Event</h4>
+              <p className="muted">
+                Class rules, Notice of Race, Sailing Instructions and their amendments, for the event picked on the Case tab.
+              </p>
+              {eventId === null ? (
+                <p className="muted">Pick a regatta on the Case tab to see and upload its documents.</p>
+              ) : (
+                <ul className="list resource-grid">
+                  {eventDocs.map(renderAccepted)}
+                  {eventDocs.length === 0 && <li className="muted">Nothing accepted for this event yet.</li>}
+                </ul>
+              )}
+              {otherEventCount > 0 && (
+                <p className="muted">
+                  {otherEventCount} document{otherEventCount === 1 ? '' : 's'} of other events not shown.
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <ul className="list resource-grid">
+            {accepted.map(renderAccepted)}
+            {accepted.length === 0 && <li className="muted">Nothing accepted yet.</li>}
+          </ul>
+        )}
       </section>
     </div>
   );

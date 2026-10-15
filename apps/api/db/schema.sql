@@ -275,3 +275,10 @@ CREATE TABLE IF NOT EXISTS app_user (
   role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- SPEC-033: small key/value store for the server's own bookkeeping (e.g. the version of
+-- the rule parser that built the section index, so a parser change reindexes once).
+CREATE TABLE IF NOT EXISTS app_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);

@@ -9,8 +9,13 @@ import { parseRuleSections } from '../resources/ruleSections.js';
 import { citationFor, prefixFor } from '../rules/citation.js';
 import type { DocType } from '../rules/citation.js';
 
-const DOC_TYPES: DocType[] = ['nor', 'si', 'si_amendment'];
+const DOC_TYPES: DocType[] = ['class', 'nor', 'si', 'class_amendment', 'nor_amendment', 'si_amendment'];
 const isDocType = (v: unknown): v is DocType => DOC_TYPES.includes(v as DocType);
+const DOC_TYPE_MESSAGE =
+  'doc_type (class, nor, si, class_amendment, nor_amendment or si_amendment) is required for event rules';
+// SPEC-033 RF-001: rules are permanent ('rrs') or of an event. The legacy layer
+// 'class' is only ever produced by the migration, never accepted from a client.
+const isNewLayer = (v: unknown): v is RuleLayer => v === 'rrs' || v === 'event';
 
 interface ResourceRow {
   id: number;
@@ -89,7 +94,9 @@ export function registerResourceRoutes(app: FastifyInstance) {
     const scope = kind === 'example' ? (fields.scope as ExampleScope) : null;
     const eventId = fields.event_id ? Number(fields.event_id) : null;
 
-    if (kind === 'rule' && !layer) return reply.code(400).send({ error: 'layer is required for rules' });
+    if (kind === 'rule' && !isNewLayer(layer)) {
+      return reply.code(400).send({ error: "layer must be 'rrs' (permanent) or 'event' for rules" });
+    }
     if (kind === 'rule' && layer === 'event' && !eventId) {
       return reply.code(400).send({ error: 'event_id is required for event-layer rules' });
     }
@@ -97,7 +104,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     // SPEC-022 RF-001: an event document must say what it is (NoR / SI / SI amendment).
     const docType = kind === 'rule' && layer === 'event' ? fields.doc_type : null;
     if (kind === 'rule' && layer === 'event' && !isDocType(docType)) {
-      return reply.code(400).send({ error: 'doc_type (nor, si or si_amendment) is required for event-layer rules' });
+      return reply.code(400).send({ error: DOC_TYPE_MESSAGE });
     }
 
     let conversion;
@@ -196,7 +203,10 @@ export function registerResourceRoutes(app: FastifyInstance) {
 
     const body = req.body as { kind: ResourceKind; layer?: RuleLayer; scope?: ExampleScope; event_id?: number; doc_type?: string };
     const kind = body.kind;
-    const layer = kind === 'rule' ? (body.layer ?? 'rrs') : null;
+    const layer = kind === 'rule' ? (body.layer ?? null) : null;
+    if (kind === 'rule' && !isNewLayer(layer)) {
+      return reply.code(400).send({ error: "layer must be 'rrs' (permanent) or 'event' for rules" });
+    }
     const scope = kind === 'example' ? (body.scope ?? 'own') : null;
     const eventId = kind === 'rule' && layer === 'event' ? (body.event_id ?? row.event_id) : null;
     if (kind === 'rule' && layer === 'event' && !eventId) {
@@ -205,7 +215,7 @@ export function registerResourceRoutes(app: FastifyInstance) {
     // SPEC-022 RF-001: doc_type only exists on event rules; leaving event clears it.
     const docType = kind === 'rule' && layer === 'event' ? (body.doc_type ?? row.doc_type) : null;
     if (kind === 'rule' && layer === 'event' && !isDocType(docType)) {
-      return reply.code(400).send({ error: 'doc_type (nor, si or si_amendment) is required for event-layer rules' });
+      return reply.code(400).send({ error: DOC_TYPE_MESSAGE });
     }
 
     const newMarkdownPath = await moveMarkdown(row.markdown_path, kind, (layer ?? scope)!);

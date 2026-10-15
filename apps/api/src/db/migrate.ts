@@ -3,7 +3,8 @@ import path from 'node:path';
 import { db } from './connection.js';
 import { seedBasePhrases } from './seedPhrases.js';
 import { seedAdminUser } from './seedAdmin.js';
-import { indexPendingSections } from '../resources/sectionIndex.js';
+import { indexPendingSections, reindexIfParserChanged } from '../resources/sectionIndex.js';
+import { migrateClassRules } from '../resources/migrateClassRules.js';
 
 const schemaPath = path.join(import.meta.dirname, '..', '..', 'db', 'schema.sql');
 const schema = readFileSync(schemaPath, 'utf-8');
@@ -64,7 +65,11 @@ if (!resourceCols.includes('sections_indexed_at')) {
   db.exec(`ALTER TABLE resource ADD COLUMN sections_indexed_at TEXT`);
   console.log('Migration: added resource.sections_indexed_at');
 }
+// SPEC-033: class rules become event documents (before indexing, which then picks
+// the migrated rows up), then a parser change reindexes everything once.
+await migrateClassRules();
 await indexPendingSections();
+await reindexIfParserChanged();
 
 await seedBasePhrases();
 seedAdminUser();

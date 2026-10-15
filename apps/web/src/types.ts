@@ -202,7 +202,7 @@ export type ResourceKind = 'rule' | 'example';
 export type RuleLayer = 'rrs' | 'class' | 'event';
 export type ExampleScope = 'base' | 'own';
 // SPEC-022: what an event-layer rule document is; sets the citation prefix (NoR / SI).
-export type DocType = 'nor' | 'si' | 'si_amendment';
+export type DocType = 'class' | 'nor' | 'si' | 'class_amendment' | 'nor_amendment' | 'si_amendment';
 
 export interface ResourceRow {
   id: number;

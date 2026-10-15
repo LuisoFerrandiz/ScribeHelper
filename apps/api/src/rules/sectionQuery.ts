@@ -33,6 +33,8 @@ const SECTION_SELECT = `
 // One bind parameter: the case's event id (NULL = no event rules).
 export const ELIGIBLE_SQL = `r.kind = 'rule' AND r.status = 'accepted'
   AND (r.layer IN ('rrs', 'class') OR (r.layer = 'event' AND r.event_id = ?))`;
+// SPEC-033: 'class' is a legacy layer (class rules are now event documents, doc_type
+// 'class'); it stays eligible only so a row not yet migrated never vanishes silently.
 
 export function eventIdOfCase(caseId: number | null): number | null {
   if (!caseId) return null;

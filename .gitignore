@@ -24,3 +24,8 @@ graphify-out/
 # Paris 2024 NoR/SI used to tune the rules parser (owner decision: not versioned)
 data/originals/Paris-2024-*
 data/rules/event/Paris-2024-*
+
+# SB20 class rules used to test the parser and the class-rules migration (not versioned)
+data/originals/2024-Class-rules-*
+data/rules/class/2024-Class-rules-*
+data/rules/event/2024-Class-rules-*

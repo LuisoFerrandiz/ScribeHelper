@@ -4,7 +4,9 @@ import type { RuleLayer } from '../resources/storage.js';
 // citations. No other module concatenates a prefix and a number.
 
 export type CitationPrefix = 'RRS' | 'CR' | 'NoR' | 'SI';
-export type DocType = 'nor' | 'si' | 'si_amendment';
+// SPEC-033: event documents. Class rules are an event document too (CR); an
+// amendment is cited with the prefix of the document it amends.
+export type DocType = 'class' | 'nor' | 'si' | 'class_amendment' | 'nor_amendment' | 'si_amendment';
 
 export interface ParsedCitation {
   prefix: CitationPrefix | null; // null = no explicit prefix
@@ -20,8 +22,10 @@ export function canonicalNumber(raw: string): string {
 
 export function prefixFor(layer: RuleLayer, docType: DocType | null): CitationPrefix | null {
   if (layer === 'rrs') return 'RRS';
+  // Legacy layer 'class' (before SPEC-033): kept citable until the migration moves it to an event.
   if (layer === 'class') return 'CR';
-  if (docType === 'nor') return 'NoR';
+  if (docType === 'class' || docType === 'class_amendment') return 'CR';
+  if (docType === 'nor' || docType === 'nor_amendment') return 'NoR';
   if (docType === 'si' || docType === 'si_amendment') return 'SI';
   return null; // event document not classified yet
 }
