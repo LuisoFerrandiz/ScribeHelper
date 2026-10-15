@@ -174,8 +174,15 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
         start = current.length + separator.length;
         next = current + separator + text;
       } else {
-        start = textarea.selectionEnd;
-        next = current.slice(0, start) + text + current.slice(start);
+        // In the middle of the text: a blank is added where the insert would glue itself
+        // to a word ("race 1.two boats"). The scribe can edit it afterwards.
+        const at = textarea.selectionEnd;
+        const before = current[at - 1] ?? '';
+        const after = current[at] ?? '';
+        const prefix = before && !/\s/.test(before) && /\S/.test(text[0] ?? '') ? ' ' : '';
+        const suffix = after && !/\s/.test(after) && /\S/.test(text[text.length - 1] ?? '') ? ' ' : '';
+        start = at + prefix.length;
+        next = current.slice(0, at) + prefix + text + suffix + current.slice(at);
       }
       setSuggestion('');
       openZone(start, text);

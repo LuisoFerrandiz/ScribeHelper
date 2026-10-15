@@ -18,10 +18,14 @@ export function ProposalsStrip({ cards, aiState, onInsert, onRefresh }: Props) {
   const frozen = useRef<ProposalCard[]>([]);
   if (!hovering) frozen.current = cards;
   const shown = hovering ? frozen.current : cards;
+  // Once the strip has shown a card, its place stays reserved (one card of height) so the
+  // text box below does not jump when the next answer is empty.
+  const hadCards = useRef(false);
+  if (shown.length > 0) hadCards.current = true;
 
   return (
     <div
-      className="proposals-strip"
+      className={hadCards.current ? 'proposals-strip reserve' : 'proposals-strip'}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >

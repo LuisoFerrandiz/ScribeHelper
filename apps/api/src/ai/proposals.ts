@@ -159,6 +159,9 @@ export interface ValidateInput {
   // The same without the protest form: the form is one side's written account, so a
   // text that only holds because of it must say whose account it is.
   seenWithoutForm: string;
+  // What the scribe herself provided: the box text, the earlier boxes and the hearing
+  // notes. Not the case data nor the protest form.
+  seenOwn: string;
 }
 
 function applyFills(body: string, gaps: Candidate['gaps'], values: Map<number, string>): string {
@@ -205,7 +208,19 @@ export function isGrounded(text: string, seen: string): boolean {
 // the sources. (SPEC-034 RF-010.)
 const ATTRIBUTION = /\b(states?|stated|claims?|claimed|alleges?|alleged|reports?|reported|says?|said|contends?|argues?|submits?|according to)\b/i;
 
-function acceptableNewText(text: string, box: ProposalBox, seen: string, seenWithoutForm: string): boolean {
+// Position and manoeuvre words. A boat identifier that the scribe never wrote, next to
+// one of these, is the model deciding which boat was where: dropped. (The scribe can
+// still edit anything she inserts; this only avoids offering an invented link.)
+const POSITION_WORDS =
+  /\b(tack|tacked|tacking|starboard|port|windward|leeward|overlap\w*|clear ahead|astern|luff\w*|bear\w*|gybe\w*|gybing|close.hauled|zone|layline|room|inside|outside)\b/i;
+
+function acceptableNewText(
+  text: string,
+  box: ProposalBox,
+  seen: string,
+  seenWithoutForm: string,
+  seenOwn: string,
+): boolean {
   if (!NEW_TEXT_BOXES.includes(box)) return false;
   if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return false;
   if (CHATTER.test(text) || OUTCOME_WORDS.test(text)) return false;
@@ -213,6 +228,9 @@ function acceptableNewText(text: string, box: ProposalBox, seen: string, seenWit
   const hay = norm(seen);
   const numbers = text.match(/\d[\d:.,/-]*\d|\d/g) ?? [];
   if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return false;
+  const ownHay = norm(seenOwn);
+  const identifiers = numbers.filter((n) => /\d{3,}/.test(n));
+  if (identifiers.some((n) => !ownHay.includes(n.toLowerCase())) && POSITION_WORDS.test(text)) return false;
   if (!isGrounded(text, seen)) return false;
   // Holds only thanks to the protest form: one side's account, never an established fact.
   if (!isGrounded(text, seenWithoutForm) && !ATTRIBUTION.test(text)) return false;
@@ -252,7 +270,9 @@ export function validateProposals(raw: unknown, input: ValidateInput): Proposal[
       }
     } else if (kind === 'new' && typeof text === 'string') {
       const t = text.trim();
-      if (acceptableNewText(t, input.box, input.seenText, input.seenWithoutForm)) result = { text: t, phrase_id: null };
+      if (acceptableNewText(t, input.box, input.seenText, input.seenWithoutForm, input.seenOwn)) {
+        result = { text: t, phrase_id: null };
+      }
     }
     if (!result) continue;
     const key = norm(result.text);
@@ -315,6 +335,7 @@ export async function generateProposals(args: {
   const { protest_form: _form, ...withoutForm } = sources;
   const seenText = [text, ...chain.map((e) => e.text), ...Object.values(sources)].join('\n');
   const seenWithoutForm = [text, ...chain.map((e) => e.text), ...Object.values(withoutForm)].join('\n');
+  const seenOwn = [text, ...chain.map((e) => e.text), sources.notes, sources.facts_found].join('\n');
 
   const prompt = [
     '=== CANDIDATE PHRASES (JSON) ===',
@@ -351,7 +372,7 @@ export async function generateProposals(args: {
       .map((b) => b.text)
       .join('\n')
       .trim();
-    const proposals = validateProposals(parseJson(raw), { box, currentText: text, candidates, sources, seenText, seenWithoutForm });
+    const proposals = validateProposals(parseJson(raw), { box, currentText: text, candidates, sources, seenText, seenWithoutForm, seenOwn });
     return { proposals, ai: 'ok' };
   } catch (e) {
     console.warn('[proposals] AI call failed:', (e as Error).message);

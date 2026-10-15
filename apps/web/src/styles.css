@@ -795,6 +795,10 @@ textarea:focus {
   gap: 8px;
 }
 
+.proposals-strip.reserve .proposals-cards {
+  min-height: 4.5em;
+}
+
 .proposal-card {
   width: 100%;
   text-align: left;
