@@ -167,8 +167,39 @@ function applyFills(body: string, gaps: Candidate['gaps'], values: Map<number, s
   return text;
 }
 
+// Words that carry no fact: allowed in a new text even if the sources lack them.
+const GLUE_WORDS = new Set(
+  (
+    'that this these those with from into onto upon about after before during while which when where ' +
+    'what whom whose their there then than also have has had been being were was are for and the not ' +
+    'but its his her him she they them did does done will would should could may might can per one ' +
+    'two both each other same such only just very more most some any all out over under between ' +
+    'states stated said says stating according'
+  ).split(' '),
+);
+
+// Grounding: every content word of a new text (>= 4 letters, compared by its first 5
+// letters so "touch"/"touched" match) must appear in what the model was shown. One
+// unknown word is tolerated (a connective the sources lack); more means the model
+// added content: that text is dropped. This is what stops "UAE tacked onto starboard
+// inside the zone" when the notes only say the boats were on port and starboard tack.
+const MAX_UNGROUNDED_WORDS = 1;
+function stem(w: string): string {
+  return w.slice(0, 5);
+}
+export function isGrounded(text: string, seen: string): boolean {
+  const known = new Set((seen.toLowerCase().match(/[a-z]{4,}/g) ?? []).map(stem));
+  let unknown = 0;
+  for (const w of text.toLowerCase().match(/[a-z]{4,}/g) ?? []) {
+    if (GLUE_WORDS.has(w) || known.has(stem(w))) continue;
+    if (++unknown > MAX_UNGROUNDED_WORDS) return false;
+  }
+  return true;
+}
+
 // A new text is accepted only if it carries no number the sources do not have,
-// no rule reference and no outcome word, and is short. (SPEC-034 RF-010.)
+// no rule reference and no outcome word, is short, and every content word is in
+// the sources. (SPEC-034 RF-010.)
 function acceptableNewText(text: string, box: ProposalBox, seen: string): boolean {
   if (!NEW_TEXT_BOXES.includes(box)) return false;
   if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return false;
@@ -176,7 +207,8 @@ function acceptableNewText(text: string, box: ProposalBox, seen: string): boolea
   if (extractRuleRefs(text).length > 0 || explicitRefs(text).length > 0) return false;
   const hay = norm(seen);
   const numbers = text.match(/\d[\d:.,/-]*\d|\d/g) ?? [];
-  return numbers.every((n) => hay.includes(n.toLowerCase()));
+  if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return false;
+  return isGrounded(text, seen);
 }
 
 export function validateProposals(raw: unknown, input: ValidateInput): Proposal[] {
@@ -241,9 +273,12 @@ const SYSTEM =
   'whether a protest is valid or any outcome. If nothing fits or you are unsure, return fewer ' +
   'proposals or {"proposals":[]}. Write in English. No markdown fence, no explanation.';
 const NEW_ALLOWED =
-  ' A "new" text is allowed: one short factual sentence (at most 400 characters) built ONLY from the ' +
-  'sources, attributing what a person says to that person ("The witness states that…"), never ' +
-  'presenting a claim as an established fact.';
+  ' A "new" text is allowed: one short sentence (at most 400 characters) that RESTATES what one ' +
+  'source sentence says, using the source\'s own words. Do not combine sentences, do not add any ' +
+  'detail, manoeuvre, position, tack, which boat did what, or cause that the source does not state ' +
+  'literally, and do not draw conclusions. Attribute what a person says to that person ' +
+  '("The witness states that…"); never present a claim as an established fact. If a statement is ' +
+  'not literally in the sources, leave it out.';
 const NEW_FORBIDDEN = ' Do NOT return "new" texts for this box: only candidate phrases.';
 
 export async function generateProposals(args: {
