@@ -262,9 +262,9 @@ casos con adjuntos). El resto de issues está cerrado o resuelto.
   hoy describe un GAP que ya no existe.
 - **Estado:** abierto, aplazado (sin fecha).
 
-## ISS-008 — P3 Limpieza de adjuntos al borrar un caso: verificar
+## ISS-008 — CERRADO Limpieza de adjuntos al borrar un caso
 
-- **Estado:** verificado en código (2026-10-13); falta prueba en vivo.
+- **Estado:** **cerrado (2026-10-15)**, verificado en vivo: caso de prueba `ZZ-DEL` con adjunto, borrado con DELETE (204); caso, adjunto y lista dan 404/vacío y los dos ficheros (`.md` y original) desaparecen de `data/case_attachments/`. Sin comprobar aún que `case_link` se borra en ambas direcciones. Detalle de la verificación previa en código:
   `apps/api/src/routes/caseDelete.ts` lee los `case_attachment` del caso,
   llama a `deleteAttachmentFiles` (`case-attachments/storage.ts`, `rm` con
   `force: true` del `.md` y del original) y luego borra la fila
