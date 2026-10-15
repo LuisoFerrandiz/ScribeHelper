@@ -20,6 +20,7 @@ import type {
   PartyRow,
   PersonRow,
   PhraseBox,
+  ProposalResult,
   RulesBox,
   PhraseRow,
   PhraseSearchHit,
@@ -204,6 +205,17 @@ export const api = {
     post<DraftResult>(`/cases/${caseId}/draft`, { box, currentText }),
   suggestPhrasesFromExamples: (box: ExampleSuggestionBox) =>
     request<ExampleSuggestions>(`/ai/example-suggestions/${box}`),
+  postProposals: (
+    caseId: number,
+    data: {
+      box: PhraseBox;
+      text: string;
+      notes: string;
+      extras: string;
+      context?: ChainContext;
+      candidate_ids: number[];
+    },
+  ) => post<ProposalResult>(`/cases/${caseId}/proposals`, data),
   completeInline: (caseId: number, box: RulesBox, text: string, context?: ChainContext) =>
     post<InlineCompletion>(`/cases/${caseId}/complete`, { box, text, ...(context ? { context } : {}) }),
 

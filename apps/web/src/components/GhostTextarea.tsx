@@ -48,6 +48,9 @@ export interface GhostTextareaHandle {
   // SPEC-031: the box text changed from outside (an accepted AI value): close
   // the gap session, whose positions no longer apply, and write the new text.
   replaceValue: (next: string) => void;
+  // SPEC-034 RF-018: the text currently selected in the box ('' when nothing, or
+  // only blanks, is selected). A textarea keeps its selection after losing focus.
+  getSelectedText: () => string;
 }
 
 const DEBOUNCE_MS = 900;
@@ -161,9 +164,9 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
       if (!textarea) return;
       const text = normalizePhraseText(raw);
       const current = valueRef.current;
-      const atEnd =
-        !touched.current ||
-        (textarea.selectionStart === current.length && textarea.selectionEnd === current.length);
+      // SPEC-034 RF-002: never replaces a selection — the text goes in at the END of it.
+      // A selection that reaches the end of the box counts as "at the end".
+      const atEnd = !touched.current || textarea.selectionEnd >= current.length;
       let next: string;
       let start: number;
       if (atEnd) {
@@ -171,8 +174,8 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
         start = current.length + separator.length;
         next = current + separator + text;
       } else {
-        start = textarea.selectionStart;
-        next = current.slice(0, start) + text + current.slice(textarea.selectionEnd);
+        start = textarea.selectionEnd;
+        next = current.slice(0, start) + text + current.slice(start);
       }
       setSuggestion('');
       openZone(start, text);
@@ -182,6 +185,12 @@ export const GhostTextarea = forwardRef<GhostTextareaHandle, Props>(function Gho
       setZone(null);
       setSuggestion('');
       onChange(next);
+    },
+    getSelectedText() {
+      const textarea = textareaRef.current;
+      if (!textarea) return '';
+      const selected = valueRef.current.slice(textarea.selectionStart, textarea.selectionEnd);
+      return selected.trim() ? selected : '';
     },
   }));
 

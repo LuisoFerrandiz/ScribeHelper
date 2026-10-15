@@ -8,6 +8,7 @@ import { PartyReference } from './PartyReference';
 import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
 import { SuggestionList } from './SuggestionList';
+import { ProposalsTray } from './ProposalsTray';
 import { TabBar } from './TabBar';
 import { WritingBox } from './WritingBox';
 import {
@@ -678,6 +679,17 @@ export function CaseForm({ caseId }: Props) {
         copied={!!copied.facts_found}
         below={gapPanel(factsFound, factsBoxRef, setFactsFound)}
         onCopied={() => markCopied('facts_found')}
+        tray={
+          <ProposalsTray
+            caseId={caseId}
+            box="facts_found"
+            text={factsFound}
+            notes={notes}
+            extras={[...(extraction?.facts_found_candidates ?? []), ...(notesExtraction?.facts_found_candidates ?? [])].join('\n')}
+            refreshKey={phraseRefresh}
+            onInsert={(text) => factsBoxRef.current?.insertAtCaret(text)}
+          />
+        }
         textarea={
           <GhostTextarea
             caseId={caseId}

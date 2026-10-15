@@ -284,6 +284,17 @@ export interface ChainContext {
   party_position?: string;
 }
 
+// SPEC-034: live proposals of a writing box. Keep identical to Proposal and
+// ProposalResult in apps/api/src/ai/proposals.ts (two projects, tsc will not catch drift).
+export interface Proposal {
+  text: string;
+  phrase_id: number | null;
+}
+export interface ProposalResult {
+  proposals: Proposal[];
+  ai: 'ok' | 'unavailable' | 'failed';
+}
+
 // SPEC-031: a value the AI proposes for a data gap, with the source and the literal quote.
 export interface GapFill {
   id: number;

@@ -780,6 +780,40 @@ textarea:focus {
   overflow: hidden;
 }
 
+/* SPEC-034 — proposals above the writing box: whole text, no origin, no tag. The
+   strip always keeps one line of height for the bar so the editor does not jump
+   when the cards come and go. */
+.proposals-strip {
+  margin-bottom: 8px;
+}
+
+.proposals-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+}
+
+.proposal-card {
+  text-align: left;
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.proposals-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  min-height: 1.8em;
+  font-size: 0.8em;
+}
+
+.proposals-bar button {
+  padding: 0 6px;
+  font-size: 1em;
+}
+
 /* SPEC-032 — label of a party's claim (the only suggestion that shows its origin). */
 .suggestion-tag {
   display: inline-block;
