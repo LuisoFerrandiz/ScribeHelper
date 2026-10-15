@@ -13,7 +13,6 @@ export function registerProposalsRoute(app: FastifyInstance) {
       box?: unknown;
       text?: unknown;
       notes?: unknown;
-      extras?: unknown;
       context?: unknown;
       candidate_ids?: unknown;
     };
@@ -32,7 +31,6 @@ export function registerProposalsRoute(app: FastifyInstance) {
       box: body.box as ProposalBox,
       text: body.text,
       notes: typeof body.notes === 'string' ? body.notes : '',
-      extras: typeof body.extras === 'string' ? body.extras : '',
       context: body.context,
       candidateIds,
     });

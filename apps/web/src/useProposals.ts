@@ -29,13 +29,12 @@ interface Args {
   box: PhraseBox;
   text: string;
   notes: string;
-  extras: string; // case-derived lines (protest form, hearing notes extraction) as one more source
   chain?: ChainContext;
   refreshKey?: number; // changes when the scribe saves a phrase
   instantLines?: string[]; // deterministic lines of the case (Procedural), no AI
 }
 
-export function useProposals({ caseId, box, text, notes, extras, chain, refreshKey = 0, instantLines = [] }: Args) {
+export function useProposals({ caseId, box, text, notes, chain, refreshKey = 0, instantLines = [] }: Args) {
   const [phrases, setPhrases] = useState<PhraseRow[]>([]);
   const [aiCards, setAiCards] = useState<ProposalCard[]>([]);
   const [aiState, setAiState] = useState<AiState>('idle');
@@ -59,8 +58,8 @@ export function useProposals({ caseId, box, text, notes, extras, chain, refreshK
 
   const ranked = useMemo(() => rankPhrases(phrases, text, notes), [phrases, text, notes]);
 
-  const latest = useRef({ text, notes, extras, chain, ranked });
-  latest.current = { text, notes, extras, chain, ranked };
+  const latest = useRef({ text, notes, chain, ranked });
+  latest.current = { text, notes, chain, ranked };
   const inflight = useRef(false);
   const dirty = useRef(false);
   const sentKey = useRef('');
@@ -86,14 +85,14 @@ export function useProposals({ caseId, box, text, notes, extras, chain, refreshK
       return;
     }
     const ids = l.ranked.map((p) => p.id).slice(0, 6);
-    const key = [l.text, l.notes, l.extras, ids.join(',')].join('\u0000');
+    const key = [l.text, l.notes, ids.join(',')].join('\u0000');
     if (key === sentKey.current) return;
     sentKey.current = key;
     inflight.current = true;
     dirty.current = false;
     setAiState('loading');
     api
-      .postProposals(caseId, { box, text: l.text, notes: l.notes, extras: l.extras, context: l.chain, candidate_ids: ids })
+      .postProposals(caseId, { box, text: l.text, notes: l.notes, context: l.chain, candidate_ids: ids })
       .then((res: ProposalResult) => {
         if (!alive.current || dirty.current) return; // superseded: the relaunch below replaces it
         setAiCards(res.proposals.map((p) => ({ key: `ai:${hash(p.text)}`, text: p.text })));
@@ -117,7 +116,7 @@ export function useProposals({ caseId, box, text, notes, extras, chain, refreshK
   useEffect(() => {
     schedule();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, notes, extras, ranked, fire]);
+  }, [text, notes, ranked, fire]);
 
   // RF-014: forces a new request even if nothing changed (e.g. an earlier box changed).
   const refresh = useCallback(() => {

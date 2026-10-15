@@ -7,7 +7,6 @@ interface Props {
   box: PhraseBox;
   text: string;
   notes: string;
-  extras: string;
   chain?: ChainContext;
   refreshKey?: number;
   instantLines?: string[];

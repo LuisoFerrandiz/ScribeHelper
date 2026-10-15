@@ -30,8 +30,8 @@ export const MAX_CANDIDATES = 6;
 const MAX_PROPOSALS = 3;
 const MAX_CANDIDATE_CHARS = 600;
 const MAX_TEXT_CHARS = 1500;
-const MAX_EXTRAS_CHARS = 3000;
 const MAX_NEW_CHARS = 400;
+const MIN_NEW_WORDS = 6;
 const MODEL = 'claude-haiku-4-5-20251001';
 
 const OUTCOME_WORDS =
@@ -250,7 +250,9 @@ function cleanNewText(
     if (ROLE_WORDS.test(s) && POSITION_WORDS.test(s) && !ownPairsRoleAndPosition && !ATTRIBUTION.test(s)) return false;
     return true;
   });
-  return kept.length > 0 ? kept.join(' ') : null;
+  const result = kept.join(' ');
+  // A fragment like "During the hearing:" says nothing: not worth a card.
+  return result.split(/\s+/).length >= MIN_NEW_WORDS ? result : null;
 }
 
 export function validateProposals(raw: unknown, input: ValidateInput): Proposal[] {
@@ -331,7 +333,6 @@ export async function generateProposals(args: {
   box: ProposalBox;
   text: string;
   notes: string;
-  extras: string;
   context: unknown;
   candidateIds: number[];
 }): Promise<ProposalResult> {
@@ -342,11 +343,13 @@ export async function generateProposals(args: {
   const candidates = loadCandidates(box, args.candidateIds);
   const text = args.text.slice(-MAX_TEXT_CHARS);
   const notes = clean(args.notes);
-  const extras = clean(args.extras).slice(0, MAX_EXTRAS_CHARS);
   const chain = chainContextFor(box, args.context).filter((e) => e.key !== 'party_position');
   const chainFacts = chain.find((e) => e.key === 'facts_found')?.text ?? '';
 
-  const sources = await buildSources(caseId, extras ? `${notes}\n\n${extras}` : notes, box === 'facts_found' ? text : chainFacts);
+  // Only what the scribe wrote (notes, box, earlier boxes), the protest form and the case
+  // data are sources. The candidates of the automatic notes extraction are another AI's
+  // output: never fed back as a source (it would launder its mistakes as "the notes").
+  const sources = await buildSources(caseId, notes, box === 'facts_found' ? text : chainFacts);
   const { protest_form: _form, ...withoutForm } = sources;
   const seenText = [text, ...chain.map((e) => e.text), ...Object.values(sources)].join('\n');
   const seenWithoutForm = [text, ...chain.map((e) => e.text), ...Object.values(withoutForm)].join('\n');

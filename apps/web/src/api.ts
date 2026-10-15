@@ -211,7 +211,6 @@ export const api = {
       box: PhraseBox;
       text: string;
       notes: string;
-      extras: string;
       context?: ChainContext;
       candidate_ids: number[];
     },

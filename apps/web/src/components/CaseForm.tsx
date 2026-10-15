@@ -685,7 +685,6 @@ export function CaseForm({ caseId }: Props) {
             box="facts_found"
             text={factsFound}
             notes={notes}
-            extras={[...(extraction?.facts_found_candidates ?? []), ...(notesExtraction?.facts_found_candidates ?? [])].join('\n')}
             refreshKey={phraseRefresh}
             onInsert={(text) => factsBoxRef.current?.insertAtCaret(text)}
           />
