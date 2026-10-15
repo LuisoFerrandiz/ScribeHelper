@@ -77,6 +77,14 @@ export async function suggestPhrasesFromExamples(box: ExampleSuggestionBox): Pro
     .trim();
 
   const { phrases, readable } = parsePhrases(text);
+  // One line per call so an empty result can be diagnosed from the container log:
+  // how much went in and out, why the model stopped, and (only when empty) how the
+  // answer starts. The answer is generic phrasing, never case data.
+  console.log(
+    `[example-suggestions] ${box}: examples=${examples.length} in=${message.usage.input_tokens} out=${message.usage.output_tokens} ` +
+      `stop_reason=${message.stop_reason} chars=${text.length} phrases=${phrases.length}` +
+      (phrases.length === 0 ? ` start=${JSON.stringify(text.slice(0, 200))}` : ''),
+  );
   if (!readable) {
     // Not a legitimate empty list ({"phrases": []}): the answer could not be read.
     // Say so (502) instead of a silent "no usable suggestions".
