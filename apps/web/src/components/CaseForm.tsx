@@ -8,6 +8,8 @@ import { PartyReference } from './PartyReference';
 import { ReviewTab } from './ReviewTab';
 import { RulesSuggestions } from './RulesSuggestions';
 import { ProposalsTray } from './ProposalsTray';
+import { RulesWarnings } from './RulesWarnings';
+import { useRuleRefCheck } from '../useRuleRefCheck';
 import { TabBar } from './TabBar';
 import { WritingBox } from './WritingBox';
 import {
@@ -129,6 +131,8 @@ export function CaseForm({ caseId }: Props) {
   // Per-case jury assignment is not a tab: JurySlots sits at the bottom of
   // the Review tab (D-031).
   const [caseTab, setCaseTab] = useState<CaseTab>('general');
+  // SPEC-034 RF-021: typed references the corpus does not contain (Rules tab only).
+  const unresolvedRefs = useRuleRefCheck(caseId, rulesApplicable, caseTab === 'rules');
 
   async function reload() {
     try {
@@ -714,15 +718,40 @@ export function CaseForm({ caseId }: Props) {
 
       {caseTab === 'rules' && (
         <div className="tab-panel">
-        {/* 6. Rules Applicable — SPEC-023: a writing box like the others
-            (text on the left, suggestions on the right). */}
+        {/* 6. Rules Applicable — SPEC-023 / SPEC-034: a writing box like the others; the
+            citations tray sits above the text box, its warnings under the header. */}
         <WritingBox
           label="Rules Applicable"
           copyText={formatRulesApplicable(liveCase)}
           pendingText={rulesApplicable}
-          notes={staleNote('rules_applicable')}
+          notes={
+            <>
+              {staleNote('rules_applicable')}
+              <RulesWarnings
+                missing={missingCitations(liveCase)}
+                hasText={rulesApplicable.trim() !== ''}
+                unresolved={unresolvedRefs}
+                onInsertMissing={() =>
+                  setRulesApplicable((prev) => {
+                    const refs = missingCitations(liveCase).join('\n');
+                    return prev ? `${prev}\n${refs}` : refs;
+                  })
+                }
+              />
+            </>
+          }
           copied={!!copied.rules_applicable}
           onCopied={() => markCopied('rules_applicable')}
+          tray={
+            <RulesSuggestions
+              caseId={caseId}
+              citations={caseFull.ruleCitations}
+              factsText={factsFound}
+              onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
+              onAddCitation={handleAddRule}
+              onRemoveCitation={handleRemoveRule}
+            />
+          }
           textarea={
             <GhostTextarea
               caseId={caseId}
@@ -731,25 +760,6 @@ export function CaseForm({ caseId }: Props) {
               value={rulesApplicable}
               onChange={setRulesApplicable}
               rows={6}
-            />
-          }
-          side={
-            <RulesSuggestions
-              caseId={caseId}
-              citations={caseFull.ruleCitations}
-              missing={missingCitations(liveCase)}
-              hasText={rulesApplicable.trim() !== ''}
-              factsText={factsFound}
-              rulesText={rulesApplicable}
-              onInsert={(text) => setRulesApplicable((prev) => (prev ? `${prev}\n${text}` : text))}
-              onInsertMissing={() =>
-                setRulesApplicable((prev) => {
-                  const refs = missingCitations(liveCase).join('\n');
-                  return prev ? `${prev}\n${refs}` : refs;
-                })
-              }
-              onAddCitation={handleAddRule}
-              onRemoveCitation={handleRemoveRule}
             />
           }
         />

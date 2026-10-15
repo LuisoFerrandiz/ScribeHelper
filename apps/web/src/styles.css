@@ -683,34 +683,6 @@ textarea:focus {
   background: var(--success-soft);
 }
 
-@media (max-width: 720px) {
-  .box-body-split {
-    flex-direction: column;
-  }
-
-  .suggestions-col {
-    flex: 1 1 auto;
-    width: 100%;
-  }
-}
-
-/* Textarea + suggestions sidebar, side by side on wide screens (stacks
-   on narrow ones — see the @media block above). */
-.box-body-split {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.textarea-col {
-  flex: 1 1 60%;
-  min-width: 0;
-}
-
-.suggestions-col {
-  flex: 0 0 280px;
-}
-
 /* SPEC-006 RF-006 — always visible, not a collapsible section like the
    rest of the panel; just highlights as the drafter types. */
 .party-reference {
@@ -734,6 +706,7 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 8px;
 }
 
 .suggestion-list input {
