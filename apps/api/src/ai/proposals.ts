@@ -214,27 +214,43 @@ const ATTRIBUTION = /\b(states?|stated|claims?|claimed|alleges?|alleged|reports?
 const POSITION_WORDS =
   /\b(tack|tacked|tacking|starboard|port|windward|leeward|overlap\w*|clear ahead|astern|luff\w*|bear\w*|gybe\w*|gybing|close.hauled|zone|layline|room|inside|outside)\b/i;
 
-function acceptableNewText(
+const ROLE_WORDS = /\b(initiator|respondent|protestor|protestee|protester)\b/i;
+
+const sentencesOf = (s: string) => s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+
+// Returns the text to offer, or null. Whole-text checks first (box, length, chatter,
+// outcome words, rules, numbers, boat identifier next to a position word); then SENTENCE
+// by SENTENCE: a sentence is kept only if every content word is in the sources, if what
+// it says does not hold only thanks to the protest form (one side's account) unless it
+// names whose account it is, and if it does not pair a role with a position word that
+// the scribe never paired herself. Dropped sentences are simply left out: the rest is
+// still a proposal, and the scribe edits what she inserts.
+function cleanNewText(
   text: string,
   box: ProposalBox,
   seen: string,
   seenWithoutForm: string,
   seenOwn: string,
-): boolean {
-  if (!NEW_TEXT_BOXES.includes(box)) return false;
-  if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return false;
-  if (CHATTER.test(text) || OUTCOME_WORDS.test(text)) return false;
-  if (extractRuleRefs(text).length > 0 || explicitRefs(text).length > 0) return false;
+): string | null {
+  if (!NEW_TEXT_BOXES.includes(box)) return null;
+  if (!text || text.length > MAX_NEW_CHARS || /[\r\n]/.test(text)) return null;
+  if (CHATTER.test(text) || OUTCOME_WORDS.test(text)) return null;
+  if (extractRuleRefs(text).length > 0 || explicitRefs(text).length > 0) return null;
   const hay = norm(seen);
   const numbers = text.match(/\d[\d:.,/-]*\d|\d/g) ?? [];
-  if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return false;
+  if (!numbers.every((n) => hay.includes(n.toLowerCase()))) return null;
   const ownHay = norm(seenOwn);
   const identifiers = numbers.filter((n) => /\d{3,}/.test(n));
-  if (identifiers.some((n) => !ownHay.includes(n.toLowerCase())) && POSITION_WORDS.test(text)) return false;
-  if (!isGrounded(text, seen)) return false;
-  // Holds only thanks to the protest form: one side's account, never an established fact.
-  if (!isGrounded(text, seenWithoutForm) && !ATTRIBUTION.test(text)) return false;
-  return true;
+  if (identifiers.some((n) => !ownHay.includes(n.toLowerCase())) && POSITION_WORDS.test(text)) return null;
+
+  const ownPairsRoleAndPosition = sentencesOf(seenOwn).some((s) => ROLE_WORDS.test(s) && POSITION_WORDS.test(s));
+  const kept = sentencesOf(text).filter((s) => {
+    if (!isGrounded(s, seen)) return false;
+    if (!isGrounded(s, seenWithoutForm) && !ATTRIBUTION.test(s)) return false;
+    if (ROLE_WORDS.test(s) && POSITION_WORDS.test(s) && !ownPairsRoleAndPosition && !ATTRIBUTION.test(s)) return false;
+    return true;
+  });
+  return kept.length > 0 ? kept.join(' ') : null;
 }
 
 export function validateProposals(raw: unknown, input: ValidateInput): Proposal[] {
@@ -270,9 +286,8 @@ export function validateProposals(raw: unknown, input: ValidateInput): Proposal[
       }
     } else if (kind === 'new' && typeof text === 'string') {
       const t = text.trim();
-      if (acceptableNewText(t, input.box, input.seenText, input.seenWithoutForm, input.seenOwn)) {
-        result = { text: t, phrase_id: null };
-      }
+      const cleaned = cleanNewText(t, input.box, input.seenText, input.seenWithoutForm, input.seenOwn);
+      if (cleaned) result = { text: cleaned, phrase_id: null };
     }
     if (!result) continue;
     const key = norm(result.text);
