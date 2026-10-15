@@ -1,5 +1,10 @@
 # SPEC-003 — Documentación previa (Protest Form(s))
 
+> **Nota (2026-10-15):** el `[GAP]` de `conclusion_candidate` /
+> `decision_candidate` quedó superado por SPEC-032 (D-044): esos campos se
+> sustituyeron por `party_position` (postura atribuida de una parte). Lo que
+> esta spec dice de ellos describe el estado anterior.
+
 Estado: **ya implementado y desplegado**. Esta spec documenta el
 comportamiento existente — no describe trabajo pendiente, salvo donde
 se marca explícitamente `[GAP]`.

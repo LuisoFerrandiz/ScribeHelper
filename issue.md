@@ -30,7 +30,7 @@ anterior ni sin el visto bueno del dueño en los puntos **[DECISIÓN]**.
 | 1 | ISS-003 | Sacar salida de graphify de Git y excluir `converted/` del grafo. | Bajo | [DECISIÓN] dueño |
 | 2 | ISS-004, ISS-008 | Config MCP estable y verificar borrado de adjuntos. Solo comprobar y ajustar config. | Bajo | [DECISIÓN] ISS-004 |
 | 3 | ISS-005, ISS-009 | Alinear tipos API/web; reconstruir grafo con extra `sql`. | Bajo | — |
-| 4 | ISS-002 (ISS-007 aplazado) | Spec de grounding de citas. Spec primero, código después. ISS-007 sigue abierto, sin fecha. | **ALTO** (ISS-002) | — |
+| 4 | ISS-002, ISS-007 | Spec de grounding de citas. Spec primero, código después. ISS-007 cerrado el 2026-10-15 (SPEC-032). | **ALTO** (ISS-002) | — |
 | 5 | ISS-006 | Spec de refactor de `CaseForm.tsx`, extracción por pasos. | Medio | Fases 3-4 cerradas |
 
 Orden de riesgo: la fase 4 es la de mayor riesgo por D-004 (cita falsa convincente). El
@@ -44,9 +44,8 @@ Riesgos altos (ambos cerrados el 2026-10-14):
   regresión silenciosa. Cerrado por SPEC-024.
 
 **Estado del plan (2026-10-15):** las fases 0-5 y el replanteo F1-F6 están
-hechos y desplegados. Sigue abierto solo **ISS-007** (aplazado por decisión
-del dueño, sin fecha). El resto de issues está cerrado o resuelto
-(ISS-008 e ISS-014 cerrados el 2026-10-15).
+hechos y desplegados. **No queda ningún issue abierto**: ISS-007 (SPEC-032),
+ISS-008 e ISS-014 se cerraron el 2026-10-15; el resto está cerrado o resuelto.
 
 **Pendientes (2026-10-15), sin issue propio:**
 
@@ -60,6 +59,8 @@ del dueño, sin fecha). El resto de issues está cerrado o resuelto
   comunidades.
 - Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
   `AIDraftPanel`/`draft.ts`.
+- Ideas aparcadas (micrófono en la audiencia, Deepgram y alternativas):
+  `specs/FUTURAS-SPECS.md`, FUT-001. Sin fecha.
 
 ---
 
@@ -251,9 +252,17 @@ del dueño, sin fecha). El resto de issues está cerrado o resuelto
 - **Criterio de cierre:** spec aprobada; refactor hecho sin cambio de
   comportamiento observable en `http://192.168.1.105:8086/`. **Cumplido.**
 
-## ISS-007 — P3 `conclusion_candidate` / `decision_candidate`: GAP obsoleto
+## ISS-007 — CERRADO `conclusion_candidate` / `decision_candidate`: GAP obsoleto
 
-- **Estado:** el GAP de `SPEC-003` ya no existe; verificado en código
+- **Estado:** **cerrado (2026-10-15)** por SPEC-032 (D-044, `3db493f`),
+  verificado en vivo en TEST-02. Aclaración del dueño: el formulario nunca trae
+  la conclusión ni la decisión finales, solo la postura de una parte. Los dos
+  campos se sustituyeron por `party_position` (atribuida, una por parte), con
+  sugerencia etiquetada "Party claim — not final" en Conclusion y Decision,
+  contexto de lectura para el texto fantasma en esas dos cajas y filtro de
+  reglas en el servidor. Hearing notes sin cambios. `SPEC-003` y `SPEC-020`
+  anotadas como superadas. Lo que sigue es el estado previo, de 2026-10-13:
+- **Estado previo:** el GAP de `SPEC-003` ya no existe; verificado en código
   (2026-10-13). Los dos campos **sí tienen UI**: `CaseForm.tsx` l.981 y
   l.1077 los ofrecen como "From protest form" en los paneles de sugerencias
   de Conclusion (SPEC-007) y Decision (SPEC-012), junto a "From hearing
@@ -273,7 +282,6 @@ del dueño, sin fecha). El resto de issues está cerrado o resuelto
   (`rule_citations_candidate`) y ISS-006 (tamaño de `CaseForm.tsx`), porque
   los tres tocan la misma extracción. Actualizar o archivar `SPEC-003`, que
   hoy describe un GAP que ya no existe.
-- **Estado:** abierto, aplazado (sin fecha).
 
 ## ISS-008 — CERRADO Limpieza de adjuntos al borrar un caso
 

@@ -83,7 +83,8 @@ comportamiento de inserción y las fuentes no cambian.
   de las sugerencias, como dice D-029); solo cambia dónde se monta.
 - Cambios en esquema o en cómo se extraen formulario y notas.
 - `conclusion_candidate` / `decision_candidate` (ISS-007, aplazado): siguen
-  alimentando las mismas listas.
+  alimentando las mismas listas. **Superado por SPEC-032 (D-044, 2026-10-15):**
+  se sustituyen por `party_position`, con etiqueta visible en la lista.
 - Rules Applicable y todo lo relativo a citas (fase F1; SPEC-019
   reemplazada).
 

@@ -1458,3 +1458,49 @@ anteriores de la constitución (rechazada: es append-only).
 
 **Consequences:** `issue.md` queda cerrado en todo lo hecho (ISS-010 cerrado;
 abiertos solo ISS-007, aplazado, e ISS-008, falta prueba en vivo).
+
+## D-044 · 2026-10-15 · accepted
+
+**La postura de parte del formulario de protesta es contexto atribuido, nunca
+la conclusión ni la decisión del comité (SPEC-032, ISS-007).** Un formulario de
+protesta nunca trae la conclusión ni la decisión finales: las toma el comité tras
+la audiencia. Lo que puede traer es lo que una parte sostiene que ocurrió y qué
+regla cree rota, y lo que pide. La extracción pasa a devolver
+`party_position { initiator?, respondent? }` (cada una con `conclusion` y
+`decision`) en lugar de `conclusion_candidate` / `decision_candidate`, redactada
+siempre atribuida a la parte ("The protestor states that…"). El servidor
+descarta lo que no nombre a la parte y recorta cada campo a 600 caracteres. Se
+usa de dos formas: como **sugerencia de un clic** en Conclusion y Decision, y
+como **contexto de lectura** del texto fantasma en esas dos cajas (último
+bloque, etiquetado como alegación de una parte, no final). Facts Found, Rules
+Applicable y Procedural Matters no la ven.
+
+Dos excepciones razonadas a decisiones anteriores:
+- **D-030** (el origen de una sugerencia no se muestra): la postura de parte
+  lleva una etiqueta visible, `Party claim — not final`, que no forma parte del
+  texto insertado. Es la única sugerencia con origen visible: aquí el origen
+  cambia el significado del texto (es de una parte, no del comité).
+- **D-041 / D-004** (el fantasma lee cajas anteriores y no inventa reglas): en
+  Conclusion y Decision el servidor **descarta** toda sugerencia que cite una
+  regla (`RRS 44.1`, `rule 10`…) que no esté en Facts Found, Rules Applicable,
+  Conclusion o el texto que se continúa. La postura de parte no cuenta como
+  fuente de reglas. El filtro vale también sin postura cargada.
+
+**Alternatives considered:** dejar los campos como estaban, casi siempre vacíos
+(rechazada: el formulario sí trae postura útil); tratar la postura como
+conclusión del comité (rechazada: contradice que la herramienta no decide); solo
+sugerencia visible o solo contexto de IA (rechazadas por el dueño: se quiere
+ambos); guardar la extracción en la base de datos (rechazada por el dueño:
+solo de sesión, sin migración); confiar solo en el prompt para evitar reglas de
+parte (rechazada: filtro determinista en servidor, D-004); tocar las hearing
+notes (fuera de alcance: las escribe el comité).
+
+**Consequences:** sin cambios de esquema. La extracción sigue perdiéndose al
+recargar (hay que pulsar Process otra vez). Límite aceptado: una vez el juez
+inserta la sugerencia de un clic ("The protestor states rule 10 was broken"),
+ese texto pasa a ser Conclusion o Decision y puede dar por buena esa regla en
+el filtro; es texto atribuido y visible, y no alimenta el registro de citas. El
+filtro puede descartar una sugerencia legítima que cite una regla no presente
+en las cajas. Una referencia en palabras puede pasar el filtro. Verificado en
+vivo el 2026-10-15 (`3db493f`): sugerencia etiquetada, inserción sin etiqueta,
+contexto solo en Conclusion y Decision.

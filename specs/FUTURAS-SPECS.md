@@ -185,6 +185,62 @@ en la CPU del servidor, calidad del español y fiabilidad de la diarización en
 sala quedan sin comprobar. (c) En vivo, solo después: pide HTTPS, streaming y
 diarización.
 
+### Estudio de Deepgram como motor (2026-10-15, subagente)
+
+**Veredicto.** Encaja con condiciones. Bien para "subir audio y transcribir al
+final"; el streaming en vivo no es urgente y exige HTTPS. **No encaja con
+"offline primero"**: haría falta enmienda a `constitution.md` y una entrada
+nueva en `DECISIONS.md`. Fuente: documentación oficial de Deepgram, consultada
+el 2026-10-15; [V] verificado, [S] suposición.
+
+| Punto | Dato | |
+|---|---|---|
+| Modelo | Nova-3, indicado para reuniones, varios hablantes, ruido y audio lejano | [V] |
+| Idiomas | inglés (US/GB/AU/IN/NZ) y español (`es`, `es-419`); `multi` cubre 10 idiomas con cambio de idioma en la misma conversación | [V] |
+| Diarización | Con Nova-3. En archivo: `speaker` y `speaker_confidence` por palabra (`diarize_model=latest`). En streaming solo `speaker`, más débil | [V] |
+| Keyterm | Hasta 100 términos (recomendado 20-50): nombres de barcos, "ITA 32004", terminología de vela | [V] |
+| Archivo | Máximo 2 GB; más de 10 min por petición da 504 (usar callback o fragmentar) | [V] |
+| SDK | `@deepgram/sdk` para Node; la clave queda solo en el servidor (Fastify) | [V] |
+| Región | `api.eu.deepgram.com` (misma clave) garantiza alojamiento en la UE; Nova-3 compatible | [V] |
+| Privacidad | `mip_opt_out=true`: los datos se conservan solo lo necesario para procesar. Sin él, Deepgram puede guardar fragmentos y entrenar | [V] |
+| Cumplimiento | SOC 2 Tipo 1 y 2, "GDPR ready"; el DPA se pide por contacto. No se encontró la política de retención oficial | [V]/[S] |
+| Self-hosted | Existe pero por ventas (Dedicated/Enterprise); requisitos y precio sin verificar | [S] |
+| MCP | Existe un servidor oficial (`dg mcp`) y de documentación; útil para que Claude Code transcriba archivos en desarrollo, no para la app | [V] |
+
+**Precio** (pay-as-you-go, Nova-3): archivo $0,0043/min (multilingüe $0,0052);
+streaming $0,0048/min (+$0,002 por diarizar); keyterm +$0,0013/min; crédito
+inicial de $200 sin tarjeta. Archivo multilingüe con diarización y keyterm:
+~$0,39/h. Una audiencia de 60 min ~ $0,40; 20 audiencias al año ~ $8, cubiertas
+años por el crédito inicial. Si el opt-out tiene recargo: sin verificar.
+
+**Riesgos.** El audio con voz de partes, testigos y menores sale de casa
+(tercero en EE. UU., aunque con endpoint UE y opt-out). Exige aviso y
+consentimiento previos y DPA firmado antes de usar audio real. Opt-out y endpoint
+UE fijos en el servidor, no opcionales. Borrar el audio tras transcribir.
+Transcripción opcional y rotulada "no verificada". Precisión en español con
+audio de regata (viento, motores) sin medir.
+
+**Frente a las alternativas.** Whisper local con pyannote
+(`docker-whisper`/Speaches): privacidad total y gratis, diarización más floja,
+mucha CPU y más esfuerzo. Deepgram gana en facilidad, precio y keyterms; pierde
+en privacidad y "offline primero". AssemblyAI: similar, sin comparar.
+
+**Diseño mínimo si se hace "subir audio y transcribir al final".** Endpoint
+Fastify que recibe el archivo (tope de tamaño y duración, como los adjuntos),
+llama a Deepgram con `nova-3`, `diarize_model=latest`, `punctuate`,
+`smart_format`, `keyterm`, `mip_opt_out=true` y endpoint UE, devuelve la
+transcripción y borra el audio. Sin HTTPS ni streaming. El resultado entra como
+hearing notes automáticas (reutiliza `extractNotes.ts`).
+
+**A probar con audio real (con el crédito gratuito):** diarización con 4-5
+hablantes y solapamientos; inglés y español mezclados; efecto de los keyterms
+en nombres de barco y números de vela; si el opt-out tiene recargo.
+
+**Preguntas para el dueño.** ¿Aceptas que el audio salga de casa (UE, con
+opt-out) o debe ser local? ¿Puedes conseguir un audio real, anonimizado o con
+consentimiento, para probar? ¿Los eventos recogen consentimiento de grabación,
+sobre todo con menores? ¿Quieres el DPA firmado antes de cualquier uso real?
+
 ---
 
 <!-- Añadir nuevas ideas debajo como FUT-002, FUT-003… con el mismo formato. -->
