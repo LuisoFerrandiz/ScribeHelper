@@ -47,10 +47,13 @@ Riesgos altos (ambos cerrados el 2026-10-14):
 hechos y desplegados. **No queda ningún issue abierto**: ISS-007 (SPEC-032),
 ISS-008 e ISS-014 se cerraron el 2026-10-15; el resto está cerrado o resuelto.
 
+**Hecho el 2026-10-15 tras ISS-007:** subida de reglas verificada en vivo con la
+reorganización de SPEC-033 (D-045): permanentes y de evento en dos cuadros, la
+SB20 migrada a evento como "Class rules" con 110 secciones, enmiendas citadas
+con el prefijo del documento enmendado.
+
 **Pendientes (2026-10-15), sin issue propio:**
 
-- Probar en vivo la subida de un fichero de reglas con el selector de tipo de
-  documento (`doc_type`): necesita un fichero real del dueño.
 - Opcional: `PRAGMA integrity_check` de una copia de `~/backups/scribe_helper/`.
 - Opcional: borrar la persona de prueba "ZZ Refactor Test" de producción (no
   hay interfaz para ello) y `graphify label` para nombrar comunidades.

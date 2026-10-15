@@ -1,5 +1,9 @@
 # SPEC-019 — Citas de reglas con formato único y validación por capa
 
+Nota (2026-10-15): la fila `CR` de la tabla de prefijos (`layer = 'class'`) quedó
+superada por SPEC-033 (D-045): `CR` es el prefijo de las reglas de clase como
+documento de evento.
+
 Estado: **reemplazada (2026-10-13)**, no implementar. El dueño explicó el
 modelo real de cinco fuentes y la cadena Facts → Rules → Conclusion →
 Decision; esta spec partía de citas como texto libre. Sustituta: fase F1 del

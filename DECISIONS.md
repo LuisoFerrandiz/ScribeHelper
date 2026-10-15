@@ -1504,3 +1504,46 @@ filtro puede descartar una sugerencia legítima que cite una regla no presente
 en las cajas. Una referencia en palabras puede pasar el filtro. Verificado en
 vivo el 2026-10-15 (`3db493f`): sugerencia etiquetada, inserción sin etiqueta,
 contexto solo en Conclusion y Decision.
+
+## D-045 · 2026-10-15 · accepted
+
+**Documentos permanentes y de evento; las reglas de clase pasan a ser un
+documento de evento (SPEC-033).** Sustituye lo que D-008 y D-034 decían de la
+capa `class` (material "permanente por temporada", prefijo `CR`). El dueño
+explicó el uso real: solo el reglamento (RRS), sus apéndices y las enmiendas al
+reglamento son permanentes; las reglas de clase, la NoR, las SI (IR) y las
+enmiendas de cualquiera de ellas se aplican a una regata. La pantalla "Upload
+rules" queda en dos grupos con dos cuadros bajo "Accepted" ("Permanent" y
+"Event", este con la regata elegida en la pestaña Case). `resource.doc_type`
+admite `class`, `nor`, `si` y sus enmiendas (`class_amendment`,
+`nor_amendment`, `si_amendment`); una enmienda se cita con el prefijo del
+documento que enmienda (`CR`, `NoR`, `SI`). El servidor ya solo acepta las
+capas `rrs` y `event`. La capa `class` queda como dato heredado: se sigue
+citando (`prefixFor` y `ELIGIBLE_SQL`) hasta que el arranque la migra a
+evento (la SB20, id 20, pasó a la regata TEST). La migración es idempotente,
+no tumba nunca el arranque y salta con aviso si no puede decidir la regata.
+
+Además, el parser de secciones gana un tercer estilo de títulos
+`letra.número` (`A.1 LANGUAGE`, `C.1.1 RULES`) que solo se elige si tiene
+estrictamente más títulos que los otros dos (el RRS, la NoR y las SI no
+cambian) y descarta las líneas de índice (con puntos guía, con número de
+página suelto o partidas en dos líneas). Con la SB20 pasó de 2 secciones basura
+a 110. Un cambio del parser reindexa todos los documentos una sola vez
+(`app_meta.rule_index_version`).
+
+**Alternatives considered:** dejar las reglas de clase como capa global
+(rechazada por el dueño: cada regata es de una clase); un tipo de documento por
+cada combinación documento/enmienda (rechazada: tipo + casilla "Amendment");
+mostrar todas las regatas en el cuadro de evento (rechazada: solo la actual,
+con nota del resto); migrar a mano la SB20 (rechazada: migración automática
+idempotente); reindexar siempre al arrancar (rechazada: por versión del parser).
+
+**Consequences:** cambio de datos al desplegar (tabla `app_meta`, fila de la
+SB20 y reindexado completo; verificado en producción el 2026-10-15 con copia
+previa de `data/db`). Dos documentos del mismo prefijo en una regata pueden dar
+la misma cita (la búsqueda resuelve la más reciente, como ya ocurría con NoR y
+SI). Los índices de un PDF sin puntos guía ni número final al estilo
+`A.1 Title 4` pueden colarse como secciones. Borrar una regata no limpia los
+ficheros ni las filas FTS de sus documentos de evento (ya era así para la NoR y
+las SI). `CLAUDE.md` y `constitution.md` siguen hablando de la capa `class`
+como permanente: se actualizan solo cuando el dueño lo ordene.

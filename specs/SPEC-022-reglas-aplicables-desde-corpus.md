@@ -1,5 +1,10 @@
 # SPEC-022 — Rules Applicable: citar eligiendo una regla del corpus
 
+> **Nota (2026-10-15):** SPEC-033 (D-045) sustituye la capa `class` de esta
+> spec: las reglas de clase pasan a ser documentos de evento (`doc_type`
+> `class`, cita `CR`) y la capa `class` queda solo como dato heredado.
+> `doc_type` admite ahora 6 valores. Lo demás sigue vigente.
+
 Estado: draft v3. Fase F1 del replanteo de `issue.md` (ISS-002). Opción
 A elegida por el dueño (2026-10-14): índice por regla. v3 incorpora la
 segunda revisión del `reviewer` (6 bloqueos, 8 importantes), que
