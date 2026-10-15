@@ -20,6 +20,12 @@ interface ExampleRow {
 // examples/ (base + own) for phrases a drafter could reuse in a NEW
 // case — generalized, never the specific sail numbers/boat names/dates
 // of the example they came from. Replaces "AI draft" for every box.
+// Output budget: the answer is a JSON list of phrases. Too small a budget cuts the
+// JSON mid-list and, before this limit was raised and the parser made tolerant, every
+// box silently answered "no suggestions".
+const MAX_OUTPUT_TOKENS = 3000;
+const MAX_PHRASES = 15;
+
 export async function suggestPhrasesFromExamples(box: ExampleSuggestionBox): Promise<string[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not configured on the server');
@@ -42,13 +48,13 @@ export async function suggestPhrasesFromExamples(box: ExampleSuggestionBox): Pro
     '',
     ...bodies.map((body, i) => `--- Example ${i + 1} ---\n${body}`),
     '',
-    'Return JSON only: { "phrases": string[] }',
+    `Return JSON only: { "phrases": string[] } with at most ${MAX_PHRASES} phrases, each one sentence.`,
   ].join('\n');
 
   const anthropic = new Anthropic({ apiKey });
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-5',
-    max_tokens: 1536,
+    max_tokens: MAX_OUTPUT_TOKENS,
     system:
       `You extract reusable phrases from the "${sectionName}" section of past protest committee decisions, ` +
       'for a drafter writing a different, unrelated case. ' +
@@ -70,10 +76,24 @@ export async function suggestPhrasesFromExamples(box: ExampleSuggestionBox): Pro
     .join('\n')
     .trim();
 
-  return parsePhrases(text);
+  const { phrases, readable } = parsePhrases(text);
+  if (!readable) {
+    // Not a legitimate empty list ({"phrases": []}): the answer could not be read.
+    // Say so (502) instead of a silent "no usable suggestions".
+    console.warn(`[example-suggestions] unreadable model answer for ${box}: stop_reason=${message.stop_reason}, ${text.length} chars, ${phrases.length} salvaged`);
+    if (phrases.length === 0) {
+      throw new Error(
+        message.stop_reason === 'max_tokens'
+          ? 'The model answer was cut off before it finished. Try again.'
+          : 'The model answer could not be read. Try again.',
+      );
+    }
+  }
+  return phrases;
 }
 
-function parsePhrases(text: string): string[] {
+// readable: the answer was a JSON object with a "phrases" list (possibly empty).
+export function parsePhrases(text: string): { phrases: string[]; readable: boolean } {
   const unfenced = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
   let parsed: { phrases?: unknown };
   try {
@@ -81,12 +101,31 @@ function parsePhrases(text: string): string[] {
   } catch {
     const start = unfenced.indexOf('{');
     const end = unfenced.lastIndexOf('}');
-    if (start === -1 || end <= start) return [];
+    if (start === -1 || end <= start) return { phrases: salvagePhrases(unfenced), readable: false };
     try {
       parsed = JSON.parse(unfenced.slice(start, end + 1));
     } catch {
-      return [];
+      return { phrases: salvagePhrases(unfenced), readable: false };
     }
   }
-  return Array.isArray(parsed.phrases) ? parsed.phrases.filter((p): p is string => typeof p === 'string') : [];
+  if (!Array.isArray(parsed.phrases)) return { phrases: [], readable: false };
+  return { phrases: parsed.phrases.filter((p): p is string => typeof p === 'string'), readable: true };
+}
+
+// A list cut off by the token limit ("phrases": ["a", "b", "c…) still holds complete
+// strings: keep those, drop the unfinished last one.
+function salvagePhrases(text: string): string[] {
+  const open = /"phrases"\s*:\s*\[/.exec(text);
+  if (!open) return [];
+  const out: string[] = [];
+  const re = /"((?:[^"\\]|\\.)*)"\s*(?:,|\])/g;
+  re.lastIndex = open.index + open[0].length;
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    try {
+      out.push(JSON.parse(`"${m[1]}"`) as string);
+    } catch {
+      // skip a string that is not valid JSON
+    }
+  }
+  return out.slice(0, MAX_PHRASES);
 }
