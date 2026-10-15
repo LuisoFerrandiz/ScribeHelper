@@ -54,11 +54,12 @@ con el prefijo del documento enmendado.
 
 **Hecho el 2026-10-15:** persona de prueba "ZZ Refactor Test" (id 9, sin
 referencias) borrada de producción con `DELETE /api/people/9`; `graphify update .`
-y `graphify label` ejecutados (1304 nodos, 114 comunidades).
+y `graphify label` ejecutados (1304 nodos, 114 comunidades). Backup
+`scribe_helper-20261015-1218.sqlite` comprobado en solo lectura:
+`integrity_check` ok y `foreign_key_check` vacío.
 
 **Pendientes (2026-10-15), sin issue propio:**
 
-- Opcional: `PRAGMA integrity_check` de una copia de `~/backups/scribe_helper/`.
 - Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
   `AIDraftPanel`/`draft.ts`.
 ---
