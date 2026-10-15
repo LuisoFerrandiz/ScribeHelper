@@ -1,6 +1,8 @@
 # SPEC-024 — Refactor de `CaseForm.tsx` (ISS-006)
 
-Estado: draft v2, aprobado el plan por el dueño (2026-10-14). v2
+Estado: **CERRADA (2026-10-15)**: pasos 1a a 4 hechos; el paso 5 (hooks) queda
+descartado por el dueño (riesgo alto, ~200 líneas de ganancia). Antes: draft v2,
+aprobado el plan por el dueño (2026-10-14). v2
 incorpora la revisión del subagente `reviewer` (3 bloqueos, 10
 importantes). Origen: ISS-006 (`issue.md`). **Refactor puro: sin cambio
 de comportamiento observable.** Va **antes** de SPEC-022 (F1): no se edita

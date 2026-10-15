@@ -120,12 +120,15 @@ del juez:
 
 ### Los tres almacenes de material, en detalle
 
-- **`rules/` — autoridad.** Lo único citable. Capas con precedencia: 1)
-  RRS (estable por cuadrienio, global), 2) reglas de clase (estable por
-  temporada), 3) NoR y SIs (específicas del evento), 4) enmiendas a las
-  SIs (cambian durante el evento, a veces en el mismo día), 5) Cases,
-  Calls, apelaciones nacionales (interpretativo, no prescriptivo). Las
-  capas 3 y 4 modifican la capa 1.
+- **`rules/` — autoridad.** Lo único citable. Dos grupos (`DECISIONS.md`
+  D-045): **permanentes** (RRS, sus apéndices y las enmiendas al reglamento;
+  estables por cuadrienio, globales) y **de evento** (reglas de clase, NoR,
+  SIs y las enmiendas de cualquiera de ellas; propias de una regata, las
+  enmiendas pueden cambiar durante el evento, a veces en el mismo día).
+  Una enmienda se cita con el prefijo del documento que enmienda (`CR`,
+  `NoR`, `SI`). Precedencia: RRS, reglas de clase, NoR y SIs, enmiendas;
+  las de evento modifican el RRS. Aparte, Cases, Calls y apelaciones
+  nacionales (interpretativo, no prescriptivo).
 - **`examples/` — estilo.** Decisiones previas, usadas como muestra de
   estilo para la IA y como archivo buscable. **Nunca citado como
   autoridad.** Dos conjuntos: **base** (viene con el proyecto, igual
@@ -192,8 +195,8 @@ scribe_helper/
   data/                 # el volumen, y la copia de seguridad
     rules/
       rrs/              # permanente
-      class/            # por temporada
-      event/            # se reemplaza en cada regata
+      class/            # heredado; migrado al evento al arrancar (D-045)
+      event/            # reglas de clase, NoR, SIs y enmiendas, por regata
     examples/
       base/             # viene con el proyecto
       own/              # subido por el usuario

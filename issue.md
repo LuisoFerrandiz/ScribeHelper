@@ -60,8 +60,8 @@ y `graphify label` ejecutados (1304 nodos, 114 comunidades). Backup
 
 **Pendientes (2026-10-15), sin issue propio:**
 
-- Solo si el dueño lo pide: SPEC-024 paso 5 (hooks) y volver a montar
-  `AIDraftPanel`/`draft.ts`.
+- Solo si el dueño lo pide: volver a montar `AIDraftPanel`/`draft.ts`.
+  (SPEC-024 paso 5 descartado, ver ISS-006.)
 ---
 
 ## ISS-001 — CERRADO Datos de casos versionados en Git
@@ -239,8 +239,9 @@ y `graphify label` ejecutados (1304 nodos, 114 comunidades). Backup
   redacción) y `PartiesTab`. Sin cambio de comportamiento: 18 hashes de DOM
   (9 pestañas × TEST-01 y TEST-02) idénticos en cada paso y comprobaciones de
   comportamiento en vivo. Decisión: D-035.
-- **Pendiente opcional:** paso 5 de SPEC-024 (hooks `useNotesExtraction` y
-  `useCaseSave`), solo a petición del dueño (riesgo alto, ~550-600 líneas).
+- **Paso 5 descartado (2026-10-15):** hooks `useNotesExtraction` y
+  `useCaseSave` no se harán (riesgo alto sobre el guardado, ~200 líneas de
+  ganancia). SPEC-024 queda cerrada.
 - **Evidencia (2026-10-13):** `apps/web/src/components/CaseForm.tsx` tenía 1125 líneas;
   `CaseForm()` es el nodo más conectado del grafo (36 aristas, el siguiente
   tiene 19). La comunidad "CaseForm Core" tiene cohesión 0.068 (baja).

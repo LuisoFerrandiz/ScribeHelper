@@ -1,7 +1,9 @@
 # SPEC-024 — Tareas
 
-Estado (2026-10-14): **pasos 1a a 4 hechos, desplegados y verificados**; el
-paso 5 (hooks) no se hace salvo que el dueño lo pida. `CaseForm.tsx`: 1091 →
+Estado (2026-10-15): **CERRADA.** Pasos 1a a 4 hechos, desplegados y verificados;
+el paso 5 (hooks) queda descartado por decisión del dueño (la ganancia, ~200
+líneas, no compensa el riesgo sobre el guardado; no es necesario para cumplir
+la intención de la spec). `CaseForm.tsx`: 1091 →
 758 líneas (−333); los componentes nuevos suman ~800 líneas. Cada paso
 terminó en commit, push, redeploy del dueño y comparación de DOM contra la línea base (TEST-01 y TEST-02; Parties & Witness con el
 valor actualizado, ver el plan).
@@ -35,8 +37,8 @@ Relacionado: `SPEC-024-refactor-caseform.md`, `SPEC-024-plan.md`.
 - [x] **4. `PartiesTab.tsx`** — `44cfca5`. Verificado (JSX movido idéntico salvo
   renombres; formularios a medias se conservan al cambiar de pestaña). `CopyBox`
   (no `WritingBox`) con las tres `datalist`; todo el estado en el padre.
-- [ ] **5. (solo a petición del dueño) hooks en el padre:**
-  `useNotesExtraction` y `useCaseSave`. Riesgo alto.
+- [-] **5. DESCARTADO (2026-10-15) hooks en el padre:**
+  `useNotesExtraction` y `useCaseSave`. Riesgo alto, ganancia ~200 líneas.
 - [x] **6. Cierre** (2026-10-14): `issue.md` (ISS-006 cerrado) y `DECISIONS.md`
   D-035 (política de refactor y estructura de componentes). `CLAUDE.md` no
   necesita cambios: la estructura de ficheros no es parte de su contenido.
